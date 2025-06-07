@@ -1,75 +1,143 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, StyleSheet, FlatList, Dimensions, TouchableOpacity, Text } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+import { usePodcastStore } from '@/store/podcastStore';
+import AudioPlayer from '@/components/AudioPlayer';
+import PodcastActions from '@/components/PodcastActions';
+import PodcastInfo from '@/components/PodcastInfo';
+import CommentModal from '@/components/CommentModal';
+import Colors from '@/constants/colors';
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+const { height } = Dimensions.get('window');
 
-export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
+export default function FeedScreen() {
+  const { podcasts, currentPodcastIndex, setCurrentPodcastIndex } = usePodcastStore();
+  const [activePodcastIndex, setActivePodcastIndex] = useState(0);
+  const [showComments, setShowComments] = useState(false);
+  const [selectedPodcastId, setSelectedPodcastId] = useState('');
+  const flatListRef = useRef<FlatList>(null);
+
+  const viewabilityConfig = {
+    itemVisiblePercentThreshold: 50,
+  };
+
+  const onViewableItemsChanged = useRef(({ viewableItems }: any) => {
+    if (viewableItems.length > 0) {
+      setActivePodcastIndex(viewableItems[0].index);
+      setCurrentPodcastIndex(viewableItems[0].index);
+    }
+  }).current;
+
+  const handleCommentPress = (podcastId: string) => {
+    setSelectedPodcastId(podcastId);
+    setShowComments(true);
+  };
+
+  const renderItem = ({ item, index }: any) => {
+    return (
+      <View style={styles.podcastContainer}>
+        <AudioPlayer 
+          uri={item.audioUrl} 
+          imageUrl={item.imageUrl}
+          isActive={index === activePodcastIndex} 
         />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+        
+        <PodcastInfo 
+          title={item.title}
+          host={item.host}
+          duration={item.duration}
+          description={item.description}
+          category={item.category}
+          tags={item.tags}
+        />
+        
+        <PodcastActions 
+          podcastId={item.id}
+          hostId={item.host.id}
+          hostAvatar={item.host.avatar}
+          likes={item.likes}
+          comments={item.comments}
+          shares={item.shares}
+          onCommentPress={() => handleCommentPress(item.id)}
+        />
+      </View>
+    );
+  };
+
+  return (
+    <View style={styles.container}>
+      <StatusBar style="light" />
+      
+      <View style={styles.tabsContainer}>
+        <TouchableOpacity style={styles.tabButton}>
+          <Text style={[styles.tabText, styles.activeTabText]}>For You</Text>
+          <View style={styles.activeTabIndicator} />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.tabButton}>
+          <Text style={styles.tabText}>Following</Text>
+        </TouchableOpacity>
+      </View>
+      
+      <FlatList
+        ref={flatListRef}
+        data={podcasts}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id}
+        pagingEnabled
+        showsVerticalScrollIndicator={false}
+        snapToInterval={height}
+        snapToAlignment="start"
+        decelerationRate="fast"
+        viewabilityConfig={viewabilityConfig}
+        onViewableItemsChanged={onViewableItemsChanged}
+      />
+      
+      {showComments && (
+        <CommentModal
+          visible={showComments}
+          onClose={() => setShowComments(false)}
+          podcastId={selectedPodcastId}
+        />
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: {
+    flex: 1,
+    backgroundColor: Colors.dark.background,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  podcastContainer: {
+    height,
+    backgroundColor: Colors.dark.background,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
+  tabsContainer: {
     position: 'absolute',
+    top: 50,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  tabButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  tabText: {
+    color: Colors.dark.subtext,
+    fontSize: 16,
+  },
+  activeTabText: {
+    color: Colors.dark.text,
+    fontWeight: 'bold',
+  },
+  activeTabIndicator: {
+    height: 2,
+    width: 20,
+    backgroundColor: Colors.dark.primary,
+    marginTop: 5,
   },
 });

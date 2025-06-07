@@ -1,43 +1,71 @@
+import Colors from '@/constants/colors';
+import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { Platform } from 'react-native';
-
-import { HapticTab } from '@/components/HapticTab';
-import { IconSymbol } from '@/components/ui/IconSymbol';
-import TabBarBackground from '@/components/ui/TabBarBackground';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-        tabBarBackground: TabBarBackground,
-        tabBarStyle: Platform.select({
-          ios: {
-            // Use a transparent background on iOS to show the blur effect
-            position: 'absolute',
-          },
-          default: {},
-        }),
-      }}>
+        tabBarStyle: {
+          backgroundColor: Colors.dark.background,
+          borderTopColor: Colors.dark.border,
+        },
+        tabBarActiveTintColor: Colors.dark.primary,
+        tabBarInactiveTintColor: Colors.dark.inactive,
+        tabBarShowLabel: false,
+        headerStyle: {
+          backgroundColor: Colors.dark.background,
+        },
+        headerTintColor: Colors.dark.text,
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          title: 'TechCast',
+          tabBarIcon: ({ color }) => <Ionicons name="home" size={24} color={color} />,
+          headerShown: false,
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="discover"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: 'Discover',
+          tabBarIcon: ({ color }) => <Ionicons name="search" size={24} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="create"
+        options={{
+          title: 'Record',
+          tabBarIcon: ({ color }) => (
+            <Ionicons
+              name="mic"
+              size={24}
+              color={Colors.dark.text}
+              style={{
+                backgroundColor: Colors.dark.primary,
+                borderRadius: 8,
+                padding: 10,
+              }}
+            />
+          ),
+        }}
+        listeners={() => ({
+          tabPress: (e) => {
+            // Prevent default action
+            e.preventDefault();
+            // Handle create action here
+            // For now, we'll just prevent navigation
+          },
+        })}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ color }) => <Ionicons name="person" size={24} color={color} />,
         }}
       />
     </Tabs>
