@@ -1,0 +1,119 @@
+# TikTok Style Expo React Native App - Cursor Rules
+
+## プロジェクト概要
+このプロジェクトは**eject済み**のExpo React Nativeアプリケーションです。TikTokスタイルのソーシャルメディアアプリで、動画とポッドキャストの両方に対応しています。
+
+## 技術スタック
+- **Expo SDK**: 53.0.4 (eject済み)
+- **React Native**: 0.79.1
+- **React**: 19.0.0
+- **TypeScript**: 5.8.3
+- **Expo Router**: v5 (File-based routing)
+- **State Management**: Zustand
+- **Styling**: NativeWind (Tailwind CSS for React Native)
+- **Audio Player**: React Native Track Player
+- **Native Features**: Expo Image, Video, Location, Image Picker等
+
+## フォルダ構成
+
+```
+/
+├── app/                    # メインアプリケーション（Expo Router）
+│   ├── (tabs)/            # タブベースナビゲーション
+│   │   ├── index.tsx      # ホーム画面
+│   │   ├── discover.tsx   # 発見画面
+│   │   ├── create.tsx     # 作成画面
+│   │   ├── profile.tsx    # プロフィール画面
+│   │   └── _layout.tsx    # タブレイアウト
+│   ├── _layout.tsx        # ルートレイアウト
+│   ├── modal.tsx          # モーダル画面
+│   └── +not-found.tsx     # 404画面
+│
+├── components/            # 再利用可能なコンポーネント
+│   ├── AudioPlayer.tsx    # 音声プレイヤー
+│   ├── VideoPlayer.tsx    # 動画プレイヤー
+│   ├── CommentModal.tsx   # コメントモーダル
+│   ├── VideoActions.tsx   # 動画アクション
+│   ├── PodcastActions.tsx # ポッドキャストアクション
+│   ├── ProfileHeader.tsx  # プロフィールヘッダー
+│   ├── VideoInfo.tsx      # 動画情報
+│   └── PodcastInfo.tsx    # ポッドキャスト情報
+│
+├── store/                 # Zustand状態管理
+├── hooks/                 # カスタムフック
+├── services/              # API・外部サービス
+├── utils/                 # ユーティリティ関数
+├── constants/             # 定数定義
+├── assets/                # 静的アセット
+├── mocks/                 # モックデータ
+├── scripts/               # プロジェクトスクリプト
+│
+├── ios/                   # iOS ネイティブコード（eject済み）
+├── android/               # Android ネイティブコード（eject済み）
+│
+├── package.json
+├── app.json              # Expo設定
+├── tsconfig.json         # TypeScript設定
+├── eslint.config.js      # ESLint設定
+└── expo-env.d.ts         # Expo型定義
+```
+
+## 開発ルール
+
+### 1. ファイル作成・編集時の注意点
+- **eject済みプロジェクト**のため、ネイティブフォルダ（ios/android）の変更は慎重に行う
+- Expo Router v5のファイルベースルーティングを使用
+- TypeScriptを必須とし、型安全性を重視
+- NativeWindクラスを使用してスタイリング
+
+### 2. コンポーネント設計
+- 機能別にコンポーネントを分割（Video/Audio/Profile等）
+- 再利用可能なコンポーネントは`components/`フォルダに配置
+- プロップスとステートの型定義を必須とする
+
+### 3. 状態管理
+- グローバル状態はZustandを使用
+- ローカル状態はReactのuseStateを使用
+- 状態の型定義を必須とする
+
+### 4. ナビゲーション
+- Expo Router v5のファイルベースルーティングを使用
+- タブナビゲーションは`app/(tabs)/`で管理
+- モーダルは`app/modal.tsx`で管理
+
+### 5. スタイリング
+- NativeWind（Tailwind CSS）を使用
+- インラインスタイルは最小限に留める
+- レスポンシブデザインを考慮
+
+### 6. メディア処理
+- 動画: expo-videoを使用
+- 音声: react-native-track-playerを使用
+- 画像: expo-imageを使用
+
+### 7. パフォーマンス
+- 大きなリストはFlatListを使用
+- 画像の最適化を考慮
+- メモ化（React.memo, useMemo, useCallback）を適切に使用
+
+### 8. 型定義
+- 全てのpropsとstateに型定義を追加
+- APIレスポンスの型定義を作成
+- 共通で使用する型は`types/`フォルダまたは適切な場所に定義
+
+## 実行コマンド
+```bash
+# 開発開始
+npm start
+
+# iOS実行
+npm run ios
+
+# Android実行
+npm run android
+```
+
+## 重要な注意事項
+- このプロジェクトは**eject済み**のため、Expo CLIとReact Native CLIの両方の機能が使用可能
+- ネイティブコードの変更時は、適切なビルドプロセスを実行
+- 新しいネイティブ依存関係の追加時は、iOS/Androidの両方でのビルドを確認 
