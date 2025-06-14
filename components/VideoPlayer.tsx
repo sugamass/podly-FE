@@ -1,6 +1,6 @@
 import Colors from "@/constants/Colors";
-import { ResizeMode, Video } from "expo-av";
-import React, { useEffect, useRef, useState } from "react";
+import { VideoView, useVideoPlayer } from "expo-video";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Dimensions,
@@ -17,41 +17,41 @@ interface VideoPlayerProps {
 const { width, height } = Dimensions.get("window");
 
 export default function VideoPlayer({ uri, isActive }: VideoPlayerProps) {
-  const videoRef = useRef<Video>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const player = useVideoPlayer(uri, (player) => {
+    player.loop = true;
+    player.muted = false;
+  });
+
   useEffect(() => {
-    if (videoRef.current) {
-      if (isActive) {
-        videoRef.current.playAsync();
-      } else {
-        videoRef.current.pauseAsync();
+    if (isActive) {
+      player.play();
+    } else {
+      player.pause();
+    }
+  }, [isActive, player]);
+
+  useEffect(() => {
+    const subscription = player.addListener("statusChange", (status) => {
+      if (status.status === "readyToPlay") {
+        setIsLoading(false);
       }
-    }
-  }, [isActive]);
+    });
 
-  const handlePlaybackStatusUpdate = (status: any) => {
-    if (status.isLoaded) {
-      setIsLoading(false);
-    }
-
-    // Loop video when it ends
-    if (status.didJustFinish) {
-      videoRef.current?.replayAsync();
-    }
-  };
+    return () => {
+      subscription?.remove();
+    };
+  }, [player]);
 
   return (
     <View style={styles.container}>
-      <Video
-        ref={videoRef}
-        source={{ uri }}
+      <VideoView
+        player={player}
         style={styles.video}
-        resizeMode={ResizeMode.COVER}
-        isLooping={false}
-        shouldPlay={isActive}
-        onPlaybackStatusUpdate={handlePlaybackStatusUpdate}
-        useNativeControls={false}
+        allowsFullscreen={false}
+        allowsPictureInPicture={false}
+        contentFit="cover"
       />
 
       {isLoading && (

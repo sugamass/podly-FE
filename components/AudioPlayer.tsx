@@ -1,14 +1,13 @@
 import Colors from "@/constants/Colors";
 import { usePodcastStore } from "@/store/podcastStore";
 import { Ionicons } from "@expo/vector-icons";
-import { Audio, AVPlaybackStatus } from "expo-av";
+import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Dimensions,
-  Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -28,282 +27,280 @@ export default function AudioPlayer({
   imageUrl,
   isActive,
 }: AudioPlayerProps) {
-  const sound = useRef<Audio.Sound | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [duration, setDuration] = useState(0);
   const {
     isPlaying,
     setIsPlaying,
     currentTime,
     setCurrentTime,
-    togglePlayPause,
+    duration,
+    setDuration,
+    playbackRate,
+    setPlaybackRate,
   } = usePodcastStore();
 
-  // Load and unload sound
+  // Create audio player
+  const player = useAudioPlayer({ uri });
+  const status = useAudioPlayerStatus(player);
+
+  // Handle player status updates
   useEffect(() => {
-    const loadSound = async () => {
-      if (isActive) {
-        setIsLoading(true);
-        try {
-          const { sound: newSound } = await Audio.Sound.createAsync(
-            { uri },
-            { shouldPlay: isPlaying },
-            onPlaybackStatusUpdate
-          );
-          sound.current = newSound;
+    if (status.isLoaded) {
+      setIsLoading(false);
+      setDuration(status.duration);
+      setCurrentTime(status.currentTime);
+      setIsPlaying(status.playing);
+    }
+  }, [status, setDuration, setCurrentTime, setIsPlaying]);
 
-          // Set position if we have a stored position
-          if (currentTime > 0) {
-            await sound.current.setPositionAsync(currentTime);
-          }
-        } catch (error) {
-          console.error("Error loading sound", error);
-        }
-      }
-    };
-
-    loadSound();
-
-    return () => {
-      if (sound.current) {
-        sound.current.unloadAsync();
-        sound.current = null;
-      }
-    };
-  }, [uri, isActive]);
-
-  // Handle play/pause
+  // Handle play/pause based on isActive prop
   useEffect(() => {
-    const handlePlayPause = async () => {
-      if (!sound.current) return;
-
-      try {
-        if (isPlaying) {
-          await sound.current.playAsync();
-        } else {
-          await sound.current.pauseAsync();
-        }
-      } catch (error) {
-        console.error("Error controlling playback", error);
+    if (!isLoading && status.isLoaded) {
+      if (isActive && !status.playing) {
+        player.play();
+      } else if (!isActive && status.playing) {
+        player.pause();
       }
-    };
-
-    if (isActive) {
-      handlePlayPause();
     }
-  }, [isPlaying, isActive]);
+  }, [isActive, isLoading, status.isLoaded, status.playing, player]);
 
-  const onPlaybackStatusUpdate = (status: AVPlaybackStatus) => {
-    if (!status.isLoaded) return;
-
-    setIsLoading(false);
-    setDuration(status.durationMillis || 0);
-    setCurrentTime(status.positionMillis || 0);
-
-    // If the audio finished playing
-    if (status.didJustFinish) {
-      setIsPlaying(false);
+  // Handle play/pause from store
+  useEffect(() => {
+    if (!isLoading && status.isLoaded) {
+      if (isPlaying && !status.playing) {
+        player.play();
+      } else if (!isPlaying && status.playing) {
+        player.pause();
+      }
     }
-  };
+  }, [isPlaying, isLoading, status.isLoaded, status.playing, player]);
+
+  // Update playback rate
+  useEffect(() => {
+    if (!isLoading && status.isLoaded && player.playbackRate !== playbackRate) {
+      player.setPlaybackRate(playbackRate);
+    }
+  }, [playbackRate, isLoading, status.isLoaded, player]);
 
   const handlePlayPause = () => {
-    togglePlayPause();
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (isLoading || !status.isLoaded) return;
+
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    if (status.playing) {
+      player.pause();
+      setIsPlaying(false);
+    } else {
+      player.play();
+      setIsPlaying(true);
     }
   };
 
-  const handleSkipForward = async () => {
-    if (!sound.current) return;
+  const handleSeek = (position: number) => {
+    if (isLoading || !status.isLoaded) return;
 
-    try {
-      const status = await sound.current.getStatusAsync();
-      if (!status.isLoaded) return;
-
-      const newPosition = Math.min(
-        status.positionMillis + 15000,
-        status.durationMillis || 0
-      );
-      await sound.current.setPositionAsync(newPosition);
-      setCurrentTime(newPosition);
-
-      if (Platform.OS !== "web") {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      }
-    } catch (error) {
-      console.error("Error skipping forward", error);
-    }
+    const seekTime = (position / 100) * status.duration;
+    player.seekTo(seekTime);
+    setCurrentTime(seekTime);
   };
 
-  const handleSkipBackward = async () => {
-    if (!sound.current) return;
+  const handleSpeedChange = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
-    try {
-      const status = await sound.current.getStatusAsync();
-      if (!status.isLoaded) return;
+    const speeds = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
+    const currentIndex = speeds.indexOf(playbackRate);
+    const nextIndex = (currentIndex + 1) % speeds.length;
+    const newSpeed = speeds[nextIndex];
 
-      const newPosition = Math.max(status.positionMillis - 15000, 0);
-      await sound.current.setPositionAsync(newPosition);
-      setCurrentTime(newPosition);
-
-      if (Platform.OS !== "web") {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      }
-    } catch (error) {
-      console.error("Error skipping backward", error);
-    }
+    setPlaybackRate(newSpeed);
   };
 
-  const formatTime = (milliseconds: number) => {
-    const totalSeconds = Math.floor(milliseconds / 1000);
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-    return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+  const formatTime = (timeInSeconds: number) => {
+    const minutes = Math.floor(timeInSeconds / 60);
+    const seconds = Math.floor(timeInSeconds % 60);
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   };
 
-  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+  const getPlaybackRateText = () => {
+    return `${playbackRate}x`;
+  };
+
+  const progress =
+    status.isLoaded && status.duration > 0
+      ? (status.currentTime / status.duration) * 100
+      : 0;
+
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={Colors.dark.primary} />
+        <Text style={styles.loadingText}>Loading audio...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
-      <Image source={{ uri: imageUrl }} style={styles.image} />
+      {/* Album Art */}
+      <View style={styles.imageContainer}>
+        <Image
+          source={{ uri: imageUrl }}
+          style={styles.albumImage}
+          contentFit="cover"
+        />
+      </View>
 
-      {isLoading && (
-        <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color={Colors.dark.primary} />
-        </View>
-      )}
-
-      {!isLoading && (
-        <View style={styles.controlsOverlay}>
-          <View style={styles.progressContainer}>
-            <View style={styles.progressBar}>
+      {/* Controls */}
+      <View style={styles.controlsContainer}>
+        {/* Progress Bar */}
+        <View style={styles.progressContainer}>
+          <Text style={styles.timeText}>
+            {formatTime(status.currentTime || 0)}
+          </Text>
+          <View style={styles.progressBarContainer}>
+            <TouchableOpacity
+              style={styles.progressBar}
+              onPress={(event) => {
+                const { locationX } = event.nativeEvent;
+                const progressBarWidth = width * 0.7; // Approximate width
+                const newProgress = (locationX / progressBarWidth) * 100;
+                handleSeek(Math.max(0, Math.min(100, newProgress)));
+              }}
+            >
               <View style={[styles.progressFill, { width: `${progress}%` }]} />
-            </View>
-            <View style={styles.timeContainer}>
-              <Text style={styles.timeText}>{formatTime(currentTime)}</Text>
-              <Text style={styles.timeText}>{formatTime(duration)}</Text>
-            </View>
-          </View>
-
-          <View style={styles.controls}>
-            <TouchableOpacity
-              style={styles.controlButton}
-              onPress={handleSkipBackward}
-            >
-              <Ionicons
-                name="play-skip-back"
-                size={24}
-                color={Colors.dark.text}
+              <View
+                style={[
+                  styles.progressThumb,
+                  { left: `${Math.max(0, Math.min(100, progress))}%` },
+                ]}
               />
-              <Text style={styles.skipText}>15s</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.playPauseButton}
-              onPress={handlePlayPause}
-            >
-              {isPlaying ? (
-                <Ionicons
-                  name="pause"
-                  size={30}
-                  color={Colors.dark.background}
-                />
-              ) : (
-                <Ionicons
-                  name="play"
-                  size={30}
-                  color={Colors.dark.background}
-                />
-              )}
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.controlButton}
-              onPress={handleSkipForward}
-            >
-              <Ionicons
-                name="play-skip-forward"
-                size={24}
-                color={Colors.dark.text}
-              />
-              <Text style={styles.skipText}>15s</Text>
             </TouchableOpacity>
           </View>
+          <Text style={styles.timeText}>
+            {formatTime(status.duration || 0)}
+          </Text>
         </View>
-      )}
+
+        {/* Control Buttons */}
+        <View style={styles.buttonsContainer}>
+          <TouchableOpacity
+            style={styles.speedButton}
+            onPress={handleSpeedChange}
+          >
+            <Text style={styles.speedText}>{getPlaybackRateText()}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.playButton} onPress={handlePlayPause}>
+            <Ionicons
+              name={status.playing ? "pause" : "play"}
+              size={40}
+              color="white"
+            />
+          </TouchableOpacity>
+
+          <View style={styles.spacer} />
+        </View>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    width,
-    height: Platform.OS === "web" ? height - 150 : height - 200,
-    backgroundColor: Colors.dark.background,
+    backgroundColor: "rgba(0, 0, 0, 0.9)",
+    paddingHorizontal: 20,
+    paddingVertical: 30,
+    borderRadius: 20,
+    margin: 10,
+  },
+  loadingContainer: {
+    flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    padding: 40,
   },
-  image: {
+  loadingText: {
+    color: "white",
+    marginTop: 10,
+    fontSize: 16,
+  },
+  imageContainer: {
+    alignItems: "center",
+    marginBottom: 30,
+  },
+  albumImage: {
+    width: width * 0.6,
+    height: width * 0.6,
+    borderRadius: 20,
+  },
+  controlsContainer: {
     width: "100%",
-    height: "100%",
-    opacity: 0.8,
-  },
-  loaderContainer: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-  },
-  controlsOverlay: {
-    position: "absolute",
-    bottom: 40,
-    left: 0,
-    right: 0,
-    padding: 20,
   },
   progressContainer: {
-    marginBottom: 20,
-  },
-  progressBar: {
-    height: 4,
-    backgroundColor: "rgba(255, 255, 255, 0.3)",
-    borderRadius: 2,
-    overflow: "hidden",
-  },
-  progressFill: {
-    height: "100%",
-    backgroundColor: Colors.dark.primary,
-  },
-  timeContainer: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 8,
+    alignItems: "center",
+    marginBottom: 30,
   },
   timeText: {
-    color: Colors.dark.text,
-    fontSize: 12,
+    color: "white",
+    fontSize: 14,
+    minWidth: 45,
+    textAlign: "center",
   },
-  controls: {
-    flexDirection: "row",
+  progressBarContainer: {
+    flex: 1,
+    marginHorizontal: 15,
+  },
+  progressBar: {
+    height: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.3)",
+    borderRadius: 10,
+    position: "relative",
     justifyContent: "center",
-    alignItems: "center",
   },
-  controlButton: {
-    alignItems: "center",
-    marginHorizontal: 20,
-  },
-  skipText: {
-    color: Colors.dark.text,
-    fontSize: 10,
-    marginTop: 4,
-  },
-  playPauseButton: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+  progressFill: {
+    height: 4,
     backgroundColor: Colors.dark.primary,
+    borderRadius: 2,
+    position: "absolute",
+    top: 8,
+  },
+  progressThumb: {
+    position: "absolute",
+    top: 2,
+    width: 16,
+    height: 16,
+    backgroundColor: Colors.dark.primary,
+    borderRadius: 8,
+    marginLeft: -8,
+  },
+  buttonsContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  speedButton: {
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    minWidth: 50,
+    alignItems: "center",
+  },
+  speedText: {
+    color: "white",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  playButton: {
+    backgroundColor: Colors.dark.primary,
+    width: 70,
+    height: 70,
+    borderRadius: 35,
     justifyContent: "center",
     alignItems: "center",
-    marginHorizontal: 20,
+  },
+  spacer: {
+    width: 50,
   },
 });
