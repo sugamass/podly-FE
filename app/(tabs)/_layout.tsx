@@ -1,7 +1,7 @@
-import Colors from '@/constants/colors';
-import { Ionicons } from '@expo/vector-icons';
-import { Tabs } from 'expo-router';
-import React from 'react';
+import Colors from "@/constants/Colors";
+import { Ionicons } from "@expo/vector-icons";
+import { Tabs } from "expo-router";
+import React from "react";
 
 export default function TabLayout() {
   return (
@@ -23,22 +23,26 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'TechCast',
-          tabBarIcon: ({ color }) => <Ionicons name="home" size={24} color={color} />,
+          title: "TechCast",
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="home" size={24} color={color} />
+          ),
           headerShown: false,
         }}
       />
       <Tabs.Screen
         name="discover"
         options={{
-          title: 'Discover',
-          tabBarIcon: ({ color }) => <Ionicons name="search" size={24} color={color} />,
+          title: "Discover",
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="search" size={24} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="create"
         options={{
-          title: 'Record',
+          title: "Record",
           tabBarIcon: ({ color }) => (
             <Ionicons
               name="mic"
@@ -64,8 +68,10 @@ export default function TabLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
-          tabBarIcon: ({ color }) => <Ionicons name="person" size={24} color={color} />,
+          title: "Profile",
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="person" size={24} color={color} />
+          ),
         }}
       />
     </Tabs>

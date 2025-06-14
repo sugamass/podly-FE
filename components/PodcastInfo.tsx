@@ -1,8 +1,8 @@
-import Colors from '@/constants/colors';
-import { Ionicons } from '@expo/vector-icons';
-import { Image } from 'expo-image';
-import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import Colors from "@/constants/Colors";
+import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
+import React from "react";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 interface PodcastInfoProps {
   title: string;
@@ -17,18 +17,20 @@ interface PodcastInfoProps {
   tags: string[];
 }
 
-export default function PodcastInfo({ 
-  title, 
-  host, 
-  duration, 
-  description, 
+export default function PodcastInfo({
+  title,
+  host,
+  duration,
+  description,
   category,
-  tags 
+  tags,
 }: PodcastInfoProps) {
   return (
     <View style={styles.container}>
-      <Text style={styles.title} numberOfLines={2}>{title}</Text>
-      
+      <Text style={styles.title} numberOfLines={2}>
+        {title}
+      </Text>
+
       <View style={styles.hostContainer}>
         <Image source={{ uri: host.avatar }} style={styles.hostAvatar} />
         <View>
@@ -41,26 +43,36 @@ export default function PodcastInfo({
             )}
           </View>
           <View style={styles.durationContainer}>
-            <Ionicons name="time-outline" size={12} color={Colors.dark.subtext} />
+            <Ionicons
+              name="time-outline"
+              size={12}
+              color={Colors.dark.subtext}
+            />
             <Text style={styles.durationText}>{duration}</Text>
           </View>
         </View>
       </View>
-      
-      <Text style={styles.description} numberOfLines={2}>{description}</Text>
-      
+
+      <Text style={styles.description} numberOfLines={2}>
+        {description}
+      </Text>
+
       <View style={styles.tagsContainer}>
         <View style={styles.categoryBadge}>
           <Text style={styles.categoryText}>{category}</Text>
         </View>
-        
+
         {tags.slice(0, 2).map((tag, index) => (
           <TouchableOpacity key={index} style={styles.tagButton}>
-            <Ionicons name="pricetag-outline" size={12} color={Colors.dark.text} />
+            <Ionicons
+              name="pricetag-outline"
+              size={12}
+              color={Colors.dark.text}
+            />
             <Text style={styles.tagText}>{tag}</Text>
           </TouchableOpacity>
         ))}
-        
+
         {tags.length > 2 && (
           <Text style={styles.moreTagsText}>+{tags.length - 2}</Text>
         )}
@@ -71,24 +83,24 @@ export default function PodcastInfo({
 
 const styles = StyleSheet.create({
   container: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 120,
     left: 0,
     right: 0,
     padding: 20,
-    backgroundColor: 'rgba(18, 22, 32, 0.8)',
+    backgroundColor: "rgba(18, 22, 32, 0.8)",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
   },
   title: {
     color: Colors.dark.text,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     fontSize: 18,
     marginBottom: 12,
   },
   hostContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 12,
   },
   hostAvatar: {
@@ -100,12 +112,12 @@ const styles = StyleSheet.create({
     borderColor: Colors.dark.primary,
   },
   hostNameContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   hostName: {
     color: Colors.dark.text,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginRight: 5,
   },
   verifiedBadge: {
@@ -113,17 +125,17 @@ const styles = StyleSheet.create({
     width: 16,
     height: 16,
     borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   verifiedText: {
     color: Colors.dark.text,
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   durationContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginTop: 4,
   },
   durationText: {
@@ -137,8 +149,8 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   tagsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
   },
   categoryBadge: {
     backgroundColor: Colors.dark.primary,
@@ -151,12 +163,12 @@ const styles = StyleSheet.create({
   categoryText: {
     color: Colors.dark.text,
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   tagButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
@@ -171,6 +183,6 @@ const styles = StyleSheet.create({
   moreTagsText: {
     color: Colors.dark.subtext,
     fontSize: 12,
-    alignSelf: 'center',
+    alignSelf: "center",
   },
 });

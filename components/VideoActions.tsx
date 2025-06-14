@@ -1,16 +1,19 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Image } from 'expo-image';
-import Colors from '@/constants/colors';
-import { formatNumber } from '@/utils/formatNumber';
-import { User } from '@/mocks/users';
+import Colors from "@/constants/Colors";
+import { User } from "@/mocks/users";
+import { formatNumber } from "@/utils/formatNumber";
+import { Image } from "expo-image";
+import React from "react";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 interface ProfileHeaderProps {
   user: User;
   isCurrentUser?: boolean;
 }
 
-export default function ProfileHeader({ user, isCurrentUser = false }: ProfileHeaderProps) {
+export default function ProfileHeader({
+  user,
+  isCurrentUser = false,
+}: ProfileHeaderProps) {
   return (
     <View style={styles.container}>
       <View style={styles.userInfo}>
@@ -63,7 +66,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.dark.background,
   },
   userInfo: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 20,
   },
   avatar: {
@@ -77,20 +80,20 @@ const styles = StyleSheet.create({
   username: {
     color: Colors.dark.text,
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+    flexDirection: "row",
+    justifyContent: "space-around",
     marginBottom: 20,
   },
   statItem: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   statValue: {
     color: Colors.dark.text,
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   statLabel: {
     color: Colors.dark.subtext,
@@ -101,10 +104,10 @@ const styles = StyleSheet.create({
   },
   bio: {
     color: Colors.dark.text,
-    textAlign: 'center',
+    textAlign: "center",
   },
   actionContainer: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   editButton: {
     borderWidth: 1,
@@ -115,12 +118,12 @@ const styles = StyleSheet.create({
   },
   editButtonText: {
     color: Colors.dark.text,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   actionButtons: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    width: '100%',
+    flexDirection: "row",
+    justifyContent: "center",
+    width: "100%",
   },
   followButton: {
     backgroundColor: Colors.dark.primary,
@@ -131,7 +134,7 @@ const styles = StyleSheet.create({
   },
   followButtonText: {
     color: Colors.dark.text,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   messageButton: {
     borderWidth: 1,
@@ -142,6 +145,6 @@ const styles = StyleSheet.create({
   },
   messageButtonText: {
     color: Colors.dark.text,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });

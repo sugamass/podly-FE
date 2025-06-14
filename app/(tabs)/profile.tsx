@@ -1,37 +1,45 @@
-import Colors from '@/constants/colors';
-import { podcasts } from '@/mocks/podcasts';
-import { currentUser } from '@/mocks/users';
-import { formatNumber } from '@/utils/formatNumber';
-import { Ionicons } from '@expo/vector-icons';
-import { Image } from 'expo-image';
-import React, { useState } from 'react';
-import { Dimensions, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import Colors from "@/constants/Colors";
+import { podcasts } from "@/mocks/podcasts";
+import { currentUser } from "@/mocks/users";
+import { formatNumber } from "@/utils/formatNumber";
+import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
+import React, { useState } from "react";
+import {
+  Dimensions,
+  FlatList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 const THUMBNAIL_SIZE = width / 2 - 20;
 
 const tabs = [
-  { id: 'podcasts', icon: 'headset', label: 'Podcasts' },
-  { id: 'saved', icon: 'bookmark', label: 'Saved' },
-  { id: 'liked', icon: 'heart', label: 'Liked' },
-  { id: 'history', icon: 'time', label: 'History' },
+  { id: "podcasts", icon: "headset", label: "Podcasts" },
+  { id: "saved", icon: "bookmark", label: "Saved" },
+  { id: "liked", icon: "heart", label: "Liked" },
+  { id: "history", icon: "time", label: "History" },
 ];
 
 export default function ProfileScreen() {
-  const [activeTab, setActiveTab] = useState('podcasts');
+  const [activeTab, setActiveTab] = useState("podcasts");
 
   const renderPodcastItem = ({ item }: any) => {
     return (
       <TouchableOpacity style={styles.podcastCard}>
-        <Image 
-          source={{ uri: item.imageUrl }}
-          style={styles.podcastImage}
-        />
+        <Image source={{ uri: item.imageUrl }} style={styles.podcastImage} />
         <View style={styles.podcastInfo}>
-          <Text style={styles.podcastTitle} numberOfLines={2}>{item.title}</Text>
+          <Text style={styles.podcastTitle} numberOfLines={2}>
+            {item.title}
+          </Text>
           <View style={styles.podcastStats}>
             <Text style={styles.podcastDuration}>{item.duration}</Text>
-            <Text style={styles.podcastLikes}>{formatNumber(item.likes)} likes</Text>
+            <Text style={styles.podcastLikes}>
+              {formatNumber(item.likes)} likes
+            </Text>
           </View>
         </View>
       </TouchableOpacity>
@@ -45,55 +53,65 @@ export default function ProfileScreen() {
           <Ionicons name="settings" size={24} color={Colors.dark.text} />
         </TouchableOpacity>
       </View>
-      
+
       <View style={styles.profileSection}>
         <Image source={{ uri: currentUser.avatar }} style={styles.avatar} />
         <Text style={styles.name}>{currentUser.fullName}</Text>
         <Text style={styles.username}>@{currentUser.username}</Text>
-        
+
         <Text style={styles.bio}>{currentUser.bio}</Text>
-        
+
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>{formatNumber(currentUser.podcasts)}</Text>
+            <Text style={styles.statValue}>
+              {formatNumber(currentUser.podcasts)}
+            </Text>
             <Text style={styles.statLabel}>Podcasts</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>{formatNumber(currentUser.followers)}</Text>
+            <Text style={styles.statValue}>
+              {formatNumber(currentUser.followers)}
+            </Text>
             <Text style={styles.statLabel}>Followers</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>{formatNumber(currentUser.following)}</Text>
+            <Text style={styles.statValue}>
+              {formatNumber(currentUser.following)}
+            </Text>
             <Text style={styles.statLabel}>Following</Text>
           </View>
         </View>
-        
+
         <TouchableOpacity style={styles.editButton}>
           <Text style={styles.editButtonText}>Edit Profile</Text>
         </TouchableOpacity>
       </View>
-      
+
       <View style={styles.tabsContainer}>
         {tabs.map((tab) => (
           <TouchableOpacity
             key={tab.id}
             style={[
               styles.tabButton,
-              activeTab === tab.id && styles.activeTabButton
+              activeTab === tab.id && styles.activeTabButton,
             ]}
             onPress={() => setActiveTab(tab.id)}
           >
-            <Ionicons 
-              name={tab.icon as any} 
-              size={20} 
-              color={activeTab === tab.id ? Colors.dark.primary : Colors.dark.inactive} 
+            <Ionicons
+              name={tab.icon as any}
+              size={20}
+              color={
+                activeTab === tab.id
+                  ? Colors.dark.primary
+                  : Colors.dark.inactive
+              }
             />
-            <Text 
+            <Text
               style={[
                 styles.tabLabel,
-                activeTab === tab.id && styles.activeTabLabel
+                activeTab === tab.id && styles.activeTabLabel,
               ]}
             >
               {tab.label}
@@ -101,9 +119,9 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         ))}
       </View>
-      
+
       <View style={styles.contentContainer}>
-        {activeTab === 'podcasts' ? (
+        {activeTab === "podcasts" ? (
           <FlatList
             data={podcasts.slice(0, 4)}
             renderItem={renderPodcastItem}
@@ -112,10 +130,12 @@ export default function ProfileScreen() {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.podcastGrid}
           />
-        ) : activeTab === 'history' ? (
+        ) : activeTab === "history" ? (
           <View style={styles.emptyContainer}>
             <Ionicons name="time" size={50} color={Colors.dark.inactive} />
-            <Text style={styles.emptyText}>Your listening history will appear here</Text>
+            <Text style={styles.emptyText}>
+              Your listening history will appear here
+            </Text>
           </View>
         ) : (
           <View style={styles.emptyContainer}>
@@ -136,8 +156,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.dark.background,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
+    flexDirection: "row",
+    justifyContent: "flex-end",
     padding: 15,
   },
   settingsButton: {
@@ -145,11 +165,11 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     backgroundColor: Colors.dark.card,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   profileSection: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingHorizontal: 20,
     marginBottom: 20,
   },
@@ -164,7 +184,7 @@ const styles = StyleSheet.create({
   name: {
     color: Colors.dark.text,
     fontSize: 22,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   username: {
     color: Colors.dark.subtext,
@@ -173,23 +193,23 @@ const styles = StyleSheet.create({
   },
   bio: {
     color: Colors.dark.text,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 20,
     lineHeight: 20,
   },
   statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
+    flexDirection: "row",
+    justifyContent: "space-around",
+    width: "100%",
     marginBottom: 20,
   },
   statItem: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   statValue: {
     color: Colors.dark.text,
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   statLabel: {
     color: Colors.dark.subtext,
@@ -209,16 +229,16 @@ const styles = StyleSheet.create({
   },
   editButtonText: {
     color: Colors.dark.primary,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   tabsContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     borderBottomWidth: 1,
     borderBottomColor: Colors.dark.border,
   },
   tabButton: {
     flex: 1,
-    alignItems: 'center',
+    alignItems: "center",
     paddingVertical: 12,
   },
   activeTabButton: {
@@ -244,10 +264,10 @@ const styles = StyleSheet.create({
     margin: 10,
     borderRadius: 12,
     backgroundColor: Colors.dark.card,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   podcastImage: {
-    width: '100%',
+    width: "100%",
     height: THUMBNAIL_SIZE,
   },
   podcastInfo: {
@@ -256,12 +276,12 @@ const styles = StyleSheet.create({
   podcastTitle: {
     color: Colors.dark.text,
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 5,
   },
   podcastStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   podcastDuration: {
     color: Colors.dark.subtext,
@@ -273,15 +293,15 @@ const styles = StyleSheet.create({
   },
   emptyContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
   emptyText: {
     color: Colors.dark.subtext,
     marginTop: 10,
     marginBottom: 20,
-    textAlign: 'center',
+    textAlign: "center",
   },
   browseButton: {
     backgroundColor: Colors.dark.primary,
@@ -291,6 +311,6 @@ const styles = StyleSheet.create({
   },
   browseButtonText: {
     color: Colors.dark.text,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });

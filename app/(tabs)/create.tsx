@@ -1,14 +1,14 @@
-import Colors from '@/constants/colors';
-import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import Colors from "@/constants/Colors";
+import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import React from "react";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function CreateScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Create New Podcast</Text>
-      
+
       <View style={styles.optionsContainer}>
         <TouchableOpacity style={styles.option}>
           <LinearGradient
@@ -22,7 +22,7 @@ export default function CreateScreen() {
           <Text style={styles.optionText}>Record</Text>
           <Text style={styles.optionDescription}>Start a new recording</Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity style={styles.option}>
           <LinearGradient
             colors={[Colors.dark.highlight, Colors.dark.primary]}
@@ -35,7 +35,7 @@ export default function CreateScreen() {
           <Text style={styles.optionText}>Upload</Text>
           <Text style={styles.optionDescription}>Import existing audio</Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity style={styles.option}>
           <LinearGradient
             colors={[Colors.dark.secondary, Colors.dark.highlight]}
@@ -49,20 +49,26 @@ export default function CreateScreen() {
           <Text style={styles.optionDescription}>Professional tools</Text>
         </TouchableOpacity>
       </View>
-      
+
       <View style={styles.infoContainer}>
         <Text style={styles.infoTitle}>Tips for Great Podcasts</Text>
         <View style={styles.tipItem}>
           <Text style={styles.tipNumber}>1</Text>
-          <Text style={styles.tipText}>Find a quiet space with minimal background noise</Text>
+          <Text style={styles.tipText}>
+            Find a quiet space with minimal background noise
+          </Text>
         </View>
         <View style={styles.tipItem}>
           <Text style={styles.tipNumber}>2</Text>
-          <Text style={styles.tipText}>Prepare an outline of topics to cover</Text>
+          <Text style={styles.tipText}>
+            Prepare an outline of topics to cover
+          </Text>
         </View>
         <View style={styles.tipItem}>
           <Text style={styles.tipNumber}>3</Text>
-          <Text style={styles.tipText}>Keep episodes between 10-25 minutes for optimal engagement</Text>
+          <Text style={styles.tipText}>
+            Keep episodes between 10-25 minutes for optimal engagement
+          </Text>
         </View>
       </View>
     </View>
@@ -78,38 +84,38 @@ const styles = StyleSheet.create({
   title: {
     color: Colors.dark.text,
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginTop: 20,
     marginBottom: 30,
-    textAlign: 'center',
+    textAlign: "center",
   },
   optionsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+    flexDirection: "row",
+    justifyContent: "space-around",
     marginBottom: 40,
   },
   option: {
-    alignItems: 'center',
-    width: '30%',
+    alignItems: "center",
+    width: "30%",
   },
   iconContainer: {
     width: 70,
     height: 70,
     borderRadius: 35,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 10,
   },
   optionText: {
     color: Colors.dark.text,
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 5,
   },
   optionDescription: {
     color: Colors.dark.subtext,
     fontSize: 12,
-    textAlign: 'center',
+    textAlign: "center",
   },
   infoContainer: {
     backgroundColor: Colors.dark.card,
@@ -119,12 +125,12 @@ const styles = StyleSheet.create({
   infoTitle: {
     color: Colors.dark.text,
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 15,
   },
   tipItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 12,
   },
   tipNumber: {
@@ -133,10 +139,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: Colors.dark.primary,
     color: Colors.dark.text,
-    textAlign: 'center',
+    textAlign: "center",
     lineHeight: 24,
     marginRight: 10,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   tipText: {
     color: Colors.dark.text,

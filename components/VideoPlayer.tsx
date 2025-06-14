@@ -1,14 +1,20 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { View, StyleSheet, Dimensions, ActivityIndicator , Platform } from 'react-native';
-import { Video, ResizeMode } from 'expo-av';
-import Colors from '@/constants/colors';
+import Colors from "@/constants/Colors";
+import { ResizeMode, Video } from "expo-av";
+import React, { useEffect, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  Dimensions,
+  Platform,
+  StyleSheet,
+  View,
+} from "react-native";
 
 interface VideoPlayerProps {
   uri: string;
   isActive: boolean;
 }
 
-const { width, height } = Dimensions.get('window');
+const { width, height } = Dimensions.get("window");
 
 export default function VideoPlayer({ uri, isActive }: VideoPlayerProps) {
   const videoRef = useRef<Video>(null);
@@ -28,7 +34,7 @@ export default function VideoPlayer({ uri, isActive }: VideoPlayerProps) {
     if (status.isLoaded) {
       setIsLoading(false);
     }
-    
+
     // Loop video when it ends
     if (status.didJustFinish) {
       videoRef.current?.replayAsync();
@@ -47,7 +53,7 @@ export default function VideoPlayer({ uri, isActive }: VideoPlayerProps) {
         onPlaybackStatusUpdate={handlePlaybackStatusUpdate}
         useNativeControls={false}
       />
-      
+
       {isLoading && (
         <View style={styles.loaderContainer}>
           <ActivityIndicator size="large" color={Colors.dark.primary} />
@@ -60,18 +66,18 @@ export default function VideoPlayer({ uri, isActive }: VideoPlayerProps) {
 const styles = StyleSheet.create({
   container: {
     width,
-    height: Platform.OS === 'web' ? height - 100 : height,
+    height: Platform.OS === "web" ? height - 100 : height,
     backgroundColor: Colors.dark.background,
   },
   video: {
     flex: 1,
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
   },
   loaderContainer: {
     ...StyleSheet.absoluteFillObject,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.3)",
   },
 });

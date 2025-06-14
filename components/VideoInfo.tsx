@@ -1,7 +1,7 @@
-import Colors from '@/constants/colors';
-import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import Colors from "@/constants/Colors";
+import { Ionicons } from "@expo/vector-icons";
+import React from "react";
+import { StyleSheet, Text, View } from "react-native";
 
 interface VideoInfoProps {
   username: string;
@@ -9,7 +9,11 @@ interface VideoInfoProps {
   music: string;
 }
 
-export default function VideoInfo({ username, description, music }: VideoInfoProps) {
+export default function VideoInfo({
+  username,
+  description,
+  music,
+}: VideoInfoProps) {
   return (
     <View style={styles.container}>
       <Text style={styles.username}>@{username}</Text>
@@ -24,17 +28,17 @@ export default function VideoInfo({ username, description, music }: VideoInfoPro
 
 const styles = StyleSheet.create({
   container: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 100,
     left: 10,
-    maxWidth: '70%',
+    maxWidth: "70%",
     padding: 10,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    backgroundColor: "rgba(0, 0, 0, 0.3)",
     borderRadius: 8,
   },
   username: {
     color: Colors.dark.text,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     fontSize: 16,
     marginBottom: 8,
   },
@@ -43,8 +47,8 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   musicContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   musicText: {
     color: Colors.dark.text,

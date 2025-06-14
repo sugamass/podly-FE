@@ -1,11 +1,17 @@
-import Colors from '@/constants/colors';
-import { usePodcastStore } from '@/store/podcastStore';
-import { formatNumber } from '@/utils/formatNumber';
-import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
-import { Image } from 'expo-image';
-import React from 'react';
-import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import Colors from "@/constants/Colors";
+import { usePodcastStore } from "@/store/podcastStore";
+import { formatNumber } from "@/utils/formatNumber";
+import { Ionicons } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
+import { Image } from "expo-image";
+import React from "react";
+import {
+  Platform,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 interface PodcastActionsProps {
   podcastId: string;
@@ -24,27 +30,27 @@ export default function PodcastActions({
   likes,
   comments,
   shares,
-  onCommentPress
+  onCommentPress,
 }: PodcastActionsProps) {
   const { toggleLike, isLiked, toggleSave, isSaved } = usePodcastStore();
-  
+
   const handleLike = () => {
     toggleLike(podcastId);
-    if (Platform.OS !== 'web') {
+    if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
   };
 
   const handleSave = () => {
     toggleSave(podcastId);
-    if (Platform.OS !== 'web') {
+    if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
   };
 
   const handleComment = () => {
     onCommentPress();
-    if (Platform.OS !== 'web') {
+    if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
   };
@@ -62,16 +68,20 @@ export default function PodcastActions({
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.actionButton} onPress={handleLike}>
-        <Ionicons 
-          name={liked ? "heart" : "heart-outline"} 
-          size={28} 
-          color={liked ? Colors.dark.primary : Colors.dark.text} 
+        <Ionicons
+          name={liked ? "heart" : "heart-outline"}
+          size={28}
+          color={liked ? Colors.dark.primary : Colors.dark.text}
         />
         <Text style={styles.actionText}>{formatNumber(likes)}</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.actionButton} onPress={handleComment}>
-        <Ionicons name="chatbubble-outline" size={28} color={Colors.dark.text} />
+        <Ionicons
+          name="chatbubble-outline"
+          size={28}
+          color={Colors.dark.text}
+        />
         <Text style={styles.actionText}>{formatNumber(comments)}</Text>
       </TouchableOpacity>
 
@@ -81,10 +91,10 @@ export default function PodcastActions({
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.actionButton} onPress={handleSave}>
-        <Ionicons 
-          name={saved ? "bookmark" : "bookmark-outline"} 
-          size={28} 
-          color={saved ? Colors.dark.highlight : Colors.dark.text} 
+        <Ionicons
+          name={saved ? "bookmark" : "bookmark-outline"}
+          size={28}
+          color={saved ? Colors.dark.highlight : Colors.dark.text}
         />
         <Text style={styles.actionText}>Save</Text>
       </TouchableOpacity>
@@ -94,13 +104,13 @@ export default function PodcastActions({
 
 const styles = StyleSheet.create({
   container: {
-    position: 'absolute',
+    position: "absolute",
     right: 10,
     bottom: 160,
-    alignItems: 'center',
+    alignItems: "center",
   },
   avatarContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 20,
   },
   avatar: {
@@ -111,22 +121,22 @@ const styles = StyleSheet.create({
     borderColor: Colors.dark.primary,
   },
   followIcon: {
-    position: 'absolute',
+    position: "absolute",
     bottom: -10,
     backgroundColor: Colors.dark.primary,
     width: 20,
     height: 20,
     borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   followText: {
     color: Colors.dark.text,
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   actionButton: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 20,
   },
   actionText: {

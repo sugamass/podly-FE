@@ -1,20 +1,28 @@
-import React, { useState, useRef } from 'react';
-import { View, StyleSheet, FlatList, Dimensions, TouchableOpacity, Text } from 'react-native';
-import { StatusBar } from 'expo-status-bar';
-import { usePodcastStore } from '@/store/podcastStore';
-import AudioPlayer from '@/components/AudioPlayer';
-import PodcastActions from '@/components/PodcastActions';
-import PodcastInfo from '@/components/PodcastInfo';
-import CommentModal from '@/components/CommentModal';
-import Colors from '@/constants/colors';
+import AudioPlayer from "@/components/AudioPlayer";
+import CommentModal from "@/components/CommentModal";
+import PodcastActions from "@/components/PodcastActions";
+import PodcastInfo from "@/components/PodcastInfo";
+import Colors from "@/constants/Colors";
+import { usePodcastStore } from "@/store/podcastStore";
+import { StatusBar } from "expo-status-bar";
+import React, { useRef, useState } from "react";
+import {
+  Dimensions,
+  FlatList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
-const { height } = Dimensions.get('window');
+const { height } = Dimensions.get("window");
 
 export default function FeedScreen() {
-  const { podcasts, currentPodcastIndex, setCurrentPodcastIndex } = usePodcastStore();
+  const { podcasts, currentPodcastIndex, setCurrentPodcastIndex } =
+    usePodcastStore();
   const [activePodcastIndex, setActivePodcastIndex] = useState(0);
   const [showComments, setShowComments] = useState(false);
-  const [selectedPodcastId, setSelectedPodcastId] = useState('');
+  const [selectedPodcastId, setSelectedPodcastId] = useState("");
   const flatListRef = useRef<FlatList>(null);
 
   const viewabilityConfig = {
@@ -36,13 +44,13 @@ export default function FeedScreen() {
   const renderItem = ({ item, index }: any) => {
     return (
       <View style={styles.podcastContainer}>
-        <AudioPlayer 
-          uri={item.audioUrl} 
+        <AudioPlayer
+          uri={item.audioUrl}
           imageUrl={item.imageUrl}
-          isActive={index === activePodcastIndex} 
+          isActive={index === activePodcastIndex}
         />
-        
-        <PodcastInfo 
+
+        <PodcastInfo
           title={item.title}
           host={item.host}
           duration={item.duration}
@@ -50,8 +58,8 @@ export default function FeedScreen() {
           category={item.category}
           tags={item.tags}
         />
-        
-        <PodcastActions 
+
+        <PodcastActions
           podcastId={item.id}
           hostId={item.host.id}
           hostAvatar={item.host.avatar}
@@ -67,7 +75,7 @@ export default function FeedScreen() {
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
-      
+
       <View style={styles.tabsContainer}>
         <TouchableOpacity style={styles.tabButton}>
           <Text style={[styles.tabText, styles.activeTabText]}>For You</Text>
@@ -77,7 +85,7 @@ export default function FeedScreen() {
           <Text style={styles.tabText}>Following</Text>
         </TouchableOpacity>
       </View>
-      
+
       <FlatList
         ref={flatListRef}
         data={podcasts}
@@ -91,7 +99,7 @@ export default function FeedScreen() {
         viewabilityConfig={viewabilityConfig}
         onViewableItemsChanged={onViewableItemsChanged}
       />
-      
+
       {showComments && (
         <CommentModal
           visible={showComments}
@@ -113,18 +121,18 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.dark.background,
   },
   tabsContainer: {
-    position: 'absolute',
+    position: "absolute",
     top: 50,
     left: 0,
     right: 0,
     zIndex: 10,
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
   },
   tabButton: {
     paddingHorizontal: 20,
     paddingVertical: 10,
-    alignItems: 'center',
+    alignItems: "center",
   },
   tabText: {
     color: Colors.dark.subtext,
@@ -132,7 +140,7 @@ const styles = StyleSheet.create({
   },
   activeTabText: {
     color: Colors.dark.text,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   activeTabIndicator: {
     height: 2,
