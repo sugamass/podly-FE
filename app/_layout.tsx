@@ -1,12 +1,11 @@
 import Colors from "@/constants/Colors";
-import TrackPlayerService from "@/services/TrackPlayerService";
+import { useTrackPlayerStore } from "@/store/trackPlayerStore";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
-import { useEffect } from "react";
-import TrackPlayer from "react-native-track-player";
+import React, { useEffect } from "react";
 
 export const unstable_settings = {
   initialRouteName: "(tabs)",
@@ -19,6 +18,8 @@ export default function RootLayout() {
   const [loaded, error] = useFonts({
     ...FontAwesome.font,
   });
+
+  const { setupPlayer } = useTrackPlayerStore();
 
   useEffect(() => {
     if (error) {
@@ -33,10 +34,12 @@ export default function RootLayout() {
     }
   }, [loaded]);
 
-  // Register TrackPlayer service
+  // Initialize TrackPlayer on app start
   useEffect(() => {
-    TrackPlayer.registerPlaybackService(() => TrackPlayerService);
-  }, []);
+    setupPlayer();
+  }, [setupPlayer]);
+
+  // TrackPlayer service is now registered in index.js
 
   if (!loaded) {
     return null;

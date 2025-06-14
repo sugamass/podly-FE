@@ -1,5 +1,6 @@
 import Colors from "@/constants/Colors";
 import { usePodcastStore } from "@/store/podcastStore";
+import { useTrackPlayerStore } from "@/store/trackPlayerStore";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
@@ -13,7 +14,6 @@ import {
   View,
 } from "react-native";
 import TrackPlayer, {
-  Capability,
   Event,
   State,
   Track,
@@ -35,7 +35,6 @@ export default function AudioPlayer({
   isActive,
 }: AudioPlayerProps) {
   const [isLoading, setIsLoading] = useState(true);
-  const [isInitialized, setIsInitialized] = useState(false);
   const playbackState = usePlaybackState();
   const progress = useProgress();
 
@@ -50,15 +49,35 @@ export default function AudioPlayer({
     setPlaybackRate,
   } = usePodcastStore();
 
-  // Initialize TrackPlayer
-  useEffect(() => {
-    setupPlayer();
+  const { isInitialized, setupPlayer: initializePlayer } =
+    useTrackPlayerStore();
 
-    return () => {
-      // Cleanup on unmount
-      TrackPlayer.reset();
+  // Initialize TrackPlayer and add track
+  useEffect(() => {
+    const setupPlayerAndTrack = async () => {
+      try {
+        // First initialize the player
+        await initializePlayer();
+
+        // Then add the track
+        const track: Track = {
+          id: uri, // Use uri as unique id
+          url: uri,
+          title: "Audio Track",
+          artist: "Unknown Artist",
+          artwork: imageUrl,
+        };
+
+        await TrackPlayer.add(track);
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error setting up player and track:", error);
+        setIsLoading(false);
+      }
     };
-  }, []);
+
+    setupPlayerAndTrack();
+  }, [uri, imageUrl, initializePlayer]);
 
   // Listen to playback state changes
   useEffect(() => {
@@ -73,48 +92,6 @@ export default function AudioPlayer({
       listener.remove();
     };
   }, [setIsPlaying]);
-
-  const setupPlayer = async () => {
-    try {
-      // Setup the player
-      await TrackPlayer.setupPlayer({
-        waitForBuffer: true,
-      });
-
-      // Update options
-      await TrackPlayer.updateOptions({
-        capabilities: [
-          Capability.Play,
-          Capability.Pause,
-          Capability.SkipToNext,
-          Capability.SkipToPrevious,
-          Capability.SeekTo,
-        ],
-        compactCapabilities: [
-          Capability.Play,
-          Capability.Pause,
-          Capability.SeekTo,
-        ],
-        progressUpdateEventInterval: 1,
-      });
-
-      // Add the track
-      const track: Track = {
-        id: "1",
-        url: uri,
-        title: "Audio Track",
-        artist: "Unknown Artist",
-        artwork: imageUrl,
-      };
-
-      await TrackPlayer.add(track);
-      setIsInitialized(true);
-      setIsLoading(false);
-    } catch (error) {
-      console.error("Error setting up player:", error);
-      setIsLoading(false);
-    }
-  };
 
   // Update store with current progress
   useEffect(() => {
