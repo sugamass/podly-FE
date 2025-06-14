@@ -1,7 +1,6 @@
 import Colors from "@/constants/Colors";
 import { usePodcastStore } from "@/store/podcastStore";
 import { Ionicons } from "@expo/vector-icons";
-import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import React, { useEffect, useState } from "react";
@@ -13,6 +12,14 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import TrackPlayer, {
+  Capability,
+  Event,
+  State,
+  Track,
+  usePlaybackState,
+  useProgress,
+} from "react-native-track-player";
 
 interface AudioPlayerProps {
   uri: string;
@@ -28,6 +35,10 @@ export default function AudioPlayer({
   isActive,
 }: AudioPlayerProps) {
   const [isLoading, setIsLoading] = useState(true);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const playbackState = usePlaybackState();
+  const progress = useProgress();
+
   const {
     isPlaying,
     setIsPlaying,
@@ -39,69 +50,128 @@ export default function AudioPlayer({
     setPlaybackRate,
   } = usePodcastStore();
 
-  // Create audio player
-  const player = useAudioPlayer({ uri });
-  const status = useAudioPlayerStatus(player);
-
-  // Handle player status updates
+  // Initialize TrackPlayer
   useEffect(() => {
-    if (status.isLoaded) {
+    setupPlayer();
+
+    return () => {
+      // Cleanup on unmount
+      TrackPlayer.reset();
+    };
+  }, []);
+
+  // Listen to playback state changes
+  useEffect(() => {
+    const listener = TrackPlayer.addEventListener(
+      Event.PlaybackState,
+      (data) => {
+        setIsPlaying(data.state === State.Playing);
+      }
+    );
+
+    return () => {
+      listener.remove();
+    };
+  }, [setIsPlaying]);
+
+  const setupPlayer = async () => {
+    try {
+      // Setup the player
+      await TrackPlayer.setupPlayer({
+        waitForBuffer: true,
+      });
+
+      // Update options
+      await TrackPlayer.updateOptions({
+        capabilities: [
+          Capability.Play,
+          Capability.Pause,
+          Capability.SkipToNext,
+          Capability.SkipToPrevious,
+          Capability.SeekTo,
+        ],
+        compactCapabilities: [
+          Capability.Play,
+          Capability.Pause,
+          Capability.SeekTo,
+        ],
+        progressUpdateEventInterval: 1,
+      });
+
+      // Add the track
+      const track: Track = {
+        id: "1",
+        url: uri,
+        title: "Audio Track",
+        artist: "Unknown Artist",
+        artwork: imageUrl,
+      };
+
+      await TrackPlayer.add(track);
+      setIsInitialized(true);
       setIsLoading(false);
-      setDuration(status.duration);
-      setCurrentTime(status.currentTime);
-      setIsPlaying(status.playing);
-    }
-  }, [status, setDuration, setCurrentTime, setIsPlaying]);
-
-  // Handle play/pause based on isActive prop
-  useEffect(() => {
-    if (!isLoading && status.isLoaded) {
-      if (isActive && !status.playing) {
-        player.play();
-      } else if (!isActive && status.playing) {
-        player.pause();
-      }
-    }
-  }, [isActive, isLoading, status.isLoaded, status.playing, player]);
-
-  // Handle play/pause from store
-  useEffect(() => {
-    if (!isLoading && status.isLoaded) {
-      if (isPlaying && !status.playing) {
-        player.play();
-      } else if (!isPlaying && status.playing) {
-        player.pause();
-      }
-    }
-  }, [isPlaying, isLoading, status.isLoaded, status.playing, player]);
-
-  // Update playback rate
-  useEffect(() => {
-    if (!isLoading && status.isLoaded && player.playbackRate !== playbackRate) {
-      player.setPlaybackRate(playbackRate);
-    }
-  }, [playbackRate, isLoading, status.isLoaded, player]);
-
-  const handlePlayPause = () => {
-    if (isLoading || !status.isLoaded) return;
-
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-
-    if (status.playing) {
-      player.pause();
-      setIsPlaying(false);
-    } else {
-      player.play();
-      setIsPlaying(true);
+    } catch (error) {
+      console.error("Error setting up player:", error);
+      setIsLoading(false);
     }
   };
 
-  const handleSeek = (position: number) => {
-    if (isLoading || !status.isLoaded) return;
+  // Update store with current progress
+  useEffect(() => {
+    if (progress.position !== undefined) {
+      setCurrentTime(progress.position);
+    }
+    if (progress.duration !== undefined) {
+      setDuration(progress.duration);
+    }
+  }, [progress, setCurrentTime, setDuration]);
 
-    const seekTime = (position / 100) * status.duration;
-    player.seekTo(seekTime);
-    setCurrentTime(seekTime);
+  // Handle play/pause based on isActive prop
+  useEffect(() => {
+    if (!isInitialized) return;
+
+    if (isActive && playbackState.state !== State.Playing) {
+      TrackPlayer.play();
+    } else if (!isActive && playbackState.state === State.Playing) {
+      TrackPlayer.pause();
+    }
+  }, [isActive, isInitialized, playbackState]);
+
+  // Handle play/pause from store
+  useEffect(() => {
+    if (!isInitialized) return;
+
+    if (isPlaying && playbackState.state !== State.Playing) {
+      TrackPlayer.play();
+    } else if (!isPlaying && playbackState.state === State.Playing) {
+      TrackPlayer.pause();
+    }
+  }, [isPlaying, isInitialized, playbackState]);
+
+  // Update playback rate
+  useEffect(() => {
+    if (!isInitialized) return;
+
+    TrackPlayer.setRate(playbackRate);
+  }, [playbackRate, isInitialized]);
+
+  const handlePlayPause = async () => {
+    if (!isInitialized) return;
+
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    if (playbackState.state === State.Playing) {
+      await TrackPlayer.pause();
+    } else {
+      await TrackPlayer.play();
+    }
+  };
+
+  const handleSeek = async (position: number) => {
+    if (!isInitialized || !progress.duration) return;
+
+    const seekTime = (position / 100) * progress.duration;
+    await TrackPlayer.seekTo(seekTime);
   };
 
   const handleSpeedChange = () => {
@@ -125,9 +195,9 @@ export default function AudioPlayer({
     return `${playbackRate}x`;
   };
 
-  const progress =
-    status.isLoaded && status.duration > 0
-      ? (status.currentTime / status.duration) * 100
+  const progressPercentage =
+    progress.duration && progress.duration > 0
+      ? (progress.position / progress.duration) * 100
       : 0;
 
   if (isLoading) {
@@ -155,29 +225,36 @@ export default function AudioPlayer({
         {/* Progress Bar */}
         <View style={styles.progressContainer}>
           <Text style={styles.timeText}>
-            {formatTime(status.currentTime || 0)}
+            {formatTime(progress.position || 0)}
           </Text>
           <View style={styles.progressBarContainer}>
             <TouchableOpacity
               style={styles.progressBar}
               onPress={(event) => {
                 const { locationX } = event.nativeEvent;
-                const progressBarWidth = width * 0.7; // Approximate width
+                const progressBarWidth = width * 0.7;
                 const newProgress = (locationX / progressBarWidth) * 100;
                 handleSeek(Math.max(0, Math.min(100, newProgress)));
               }}
             >
-              <View style={[styles.progressFill, { width: `${progress}%` }]} />
+              <View
+                style={[
+                  styles.progressFill,
+                  { width: `${progressPercentage}%` },
+                ]}
+              />
               <View
                 style={[
                   styles.progressThumb,
-                  { left: `${Math.max(0, Math.min(100, progress))}%` },
+                  {
+                    left: `${Math.max(0, Math.min(100, progressPercentage))}%`,
+                  },
                 ]}
               />
             </TouchableOpacity>
           </View>
           <Text style={styles.timeText}>
-            {formatTime(status.duration || 0)}
+            {formatTime(progress.duration || 0)}
           </Text>
         </View>
 
@@ -192,7 +269,7 @@ export default function AudioPlayer({
 
           <TouchableOpacity style={styles.playButton} onPress={handlePlayPause}>
             <Ionicons
-              name={status.playing ? "pause" : "play"}
+              name={playbackState.state === State.Playing ? "pause" : "play"}
               size={40}
               color="white"
             />

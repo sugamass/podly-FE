@@ -1,10 +1,12 @@
 import Colors from "@/constants/Colors";
+import TrackPlayerService from "@/services/TrackPlayerService";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
+import TrackPlayer from "react-native-track-player";
 
 export const unstable_settings = {
   initialRouteName: "(tabs)",
@@ -30,6 +32,11 @@ export default function RootLayout() {
       SplashScreen.hideAsync();
     }
   }, [loaded]);
+
+  // Register TrackPlayer service
+  useEffect(() => {
+    TrackPlayer.registerPlaybackService(() => TrackPlayerService);
+  }, []);
 
   if (!loaded) {
     return null;
