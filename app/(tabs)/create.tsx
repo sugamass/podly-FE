@@ -1,77 +1,138 @@
 import Colors from "@/constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { router } from "expo-router";
 import React from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  FlatList,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+
+// モック下書きデータ
+const mockDrafts = [
+  {
+    id: "1",
+    title: "量子コンピュータについて",
+    duration: "2分",
+    createdAt: "2024-01-15",
+    status: "draft",
+  },
+  {
+    id: "2",
+    title: "AI技術の未来",
+    duration: "3分",
+    createdAt: "2024-01-14",
+    status: "generating",
+  },
+];
 
 export default function CreateScreen() {
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Create New Podcast</Text>
+  const handleCreateNew = () => {
+    router.push("/create-script");
+  };
 
-      <View style={styles.optionsContainer}>
-        <TouchableOpacity style={styles.option}>
+  const handleDraftPress = (draft: any) => {
+    // TODO: 下書き編集画面への遷移
+    console.log("下書き選択:", draft.title);
+  };
+
+  const renderDraftItem = ({ item }: { item: any }) => (
+    <TouchableOpacity
+      style={styles.draftItem}
+      onPress={() => handleDraftPress(item)}
+    >
+      <View style={styles.draftInfo}>
+        <Text style={styles.draftTitle}>{item.title}</Text>
+        <View style={styles.draftMeta}>
+          <Text style={styles.draftDuration}>{item.duration}</Text>
+          <Text style={styles.draftDate}>{item.createdAt}</Text>
+        </View>
+      </View>
+      <View style={styles.draftStatus}>
+        {item.status === "draft" && (
+          <View style={styles.statusBadge}>
+            <Text style={styles.statusText}>下書き</Text>
+          </View>
+        )}
+        {item.status === "generating" && (
+          <View style={[styles.statusBadge, styles.generatingBadge]}>
+            <Text style={styles.statusText}>生成中</Text>
+          </View>
+        )}
+        <Ionicons
+          name="chevron-forward"
+          size={20}
+          color={Colors.dark.subtext}
+        />
+      </View>
+    </TouchableOpacity>
+  );
+
+  return (
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      {/* ヘッダー */}
+      <View style={styles.header}>
+        <Text style={styles.title}>新しいポッドキャストを作る</Text>
+        <Text style={styles.subtitle}>
+          AIがあなたの代わりに魅力的なポッドキャストを作成します
+        </Text>
+      </View>
+
+      {/* 新規作成ボタン */}
+      <View style={styles.createContainer}>
+        <TouchableOpacity style={styles.createButton} onPress={handleCreateNew}>
           <LinearGradient
             colors={[Colors.dark.primary, Colors.dark.secondary]}
-            style={styles.iconContainer}
+            style={styles.createGradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
           >
-            <Ionicons name="mic" size={30} color={Colors.dark.text} />
+            <View style={styles.createContent}>
+              <Ionicons name="add-circle" size={48} color={Colors.dark.text} />
+              <Text style={styles.createTitle}>原稿を新規作成</Text>
+              <Text style={styles.createDescription}>
+                テーマや参考URLから
+                {"\n"}AIが自動で原稿を生成します
+              </Text>
+            </View>
           </LinearGradient>
-          <Text style={styles.optionText}>Record</Text>
-          <Text style={styles.optionDescription}>Start a new recording</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.option}>
-          <LinearGradient
-            colors={[Colors.dark.highlight, Colors.dark.primary]}
-            style={styles.iconContainer}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          >
-            <Ionicons name="cloud-upload" size={30} color={Colors.dark.text} />
-          </LinearGradient>
-          <Text style={styles.optionText}>Upload</Text>
-          <Text style={styles.optionDescription}>Import existing audio</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.option}>
-          <LinearGradient
-            colors={[Colors.dark.secondary, Colors.dark.highlight]}
-            style={styles.iconContainer}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          >
-            <Ionicons name="headset" size={30} color={Colors.dark.text} />
-          </LinearGradient>
-          <Text style={styles.optionText}>Studio</Text>
-          <Text style={styles.optionDescription}>Professional tools</Text>
         </TouchableOpacity>
       </View>
 
-      <View style={styles.infoContainer}>
-        <Text style={styles.infoTitle}>Tips for Great Podcasts</Text>
-        <View style={styles.tipItem}>
-          <Text style={styles.tipNumber}>1</Text>
-          <Text style={styles.tipText}>
-            Find a quiet space with minimal background noise
-          </Text>
+      {/* 下書き一覧 */}
+      <View style={styles.draftsSection}>
+        <View style={styles.draftsHeader}>
+          <Text style={styles.draftsTitle}>下書き一覧</Text>
+          <Text style={styles.draftsCount}>{mockDrafts.length}件</Text>
         </View>
-        <View style={styles.tipItem}>
-          <Text style={styles.tipNumber}>2</Text>
-          <Text style={styles.tipText}>
-            Prepare an outline of topics to cover
-          </Text>
-        </View>
-        <View style={styles.tipItem}>
-          <Text style={styles.tipNumber}>3</Text>
-          <Text style={styles.tipText}>
-            Keep episodes between 10-25 minutes for optimal engagement
-          </Text>
-        </View>
+
+        {mockDrafts.length > 0 ? (
+          <FlatList
+            data={mockDrafts}
+            renderItem={renderDraftItem}
+            keyExtractor={(item) => item.id}
+            scrollEnabled={false}
+            ItemSeparatorComponent={() => <View style={styles.separator} />}
+          />
+        ) : (
+          <View style={styles.emptyDrafts}>
+            <Ionicons
+              name="document-outline"
+              size={48}
+              color={Colors.dark.inactive}
+            />
+            <Text style={styles.emptyText}>下書きはありません</Text>
+            <Text style={styles.emptySubtext}>
+              上記から新しいポッドキャストを作成してみましょう
+            </Text>
+          </View>
+        )}
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
@@ -79,73 +140,140 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.dark.background,
-    padding: 20,
+  },
+  header: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 30,
+    alignItems: "center",
   },
   title: {
     color: Colors.dark.text,
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: "bold",
-    marginTop: 20,
-    marginBottom: 30,
+    marginBottom: 8,
     textAlign: "center",
   },
-  optionsContainer: {
-    flexDirection: "row",
-    justifyContent: "space-around",
+  subtitle: {
+    color: Colors.dark.subtext,
+    fontSize: 16,
+    textAlign: "center",
+    lineHeight: 22,
+  },
+  createContainer: {
+    paddingHorizontal: 20,
     marginBottom: 40,
   },
-  option: {
-    alignItems: "center",
-    width: "30%",
+  createButton: {
+    borderRadius: 20,
+    overflow: "hidden",
   },
-  iconContainer: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    justifyContent: "center",
+  createGradient: {
+    paddingVertical: 32,
+    paddingHorizontal: 24,
     alignItems: "center",
-    marginBottom: 10,
   },
-  optionText: {
+  createContent: {
+    alignItems: "center",
+  },
+  createTitle: {
+    color: Colors.dark.text,
+    fontSize: 24,
+    fontWeight: "bold",
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  createDescription: {
+    color: Colors.dark.text,
+    fontSize: 16,
+    textAlign: "center",
+    lineHeight: 22,
+    opacity: 0.9,
+  },
+  draftsSection: {
+    paddingHorizontal: 20,
+    paddingBottom: 40,
+  },
+  draftsHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  draftsTitle: {
+    color: Colors.dark.text,
+    fontSize: 20,
+    fontWeight: "bold",
+  },
+  draftsCount: {
+    color: Colors.dark.subtext,
+    fontSize: 14,
+  },
+  draftItem: {
+    backgroundColor: Colors.dark.card,
+    borderRadius: 12,
+    padding: 16,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  draftInfo: {
+    flex: 1,
+  },
+  draftTitle: {
     color: Colors.dark.text,
     fontSize: 16,
     fontWeight: "bold",
-    marginBottom: 5,
+    marginBottom: 4,
   },
-  optionDescription: {
+  draftMeta: {
+    flexDirection: "row",
+  },
+  draftDuration: {
     color: Colors.dark.subtext,
-    fontSize: 12,
-    textAlign: "center",
+    fontSize: 14,
+    marginRight: 12,
   },
-  infoContainer: {
-    backgroundColor: Colors.dark.card,
+  draftDate: {
+    color: Colors.dark.subtext,
+    fontSize: 14,
+  },
+  draftStatus: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  statusBadge: {
+    backgroundColor: Colors.dark.primary,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
     borderRadius: 12,
-    padding: 20,
+    marginRight: 8,
   },
-  infoTitle: {
+  generatingBadge: {
+    backgroundColor: Colors.dark.highlight,
+  },
+  statusText: {
+    color: Colors.dark.text,
+    fontSize: 12,
+    fontWeight: "bold",
+  },
+  separator: {
+    height: 12,
+  },
+  emptyDrafts: {
+    alignItems: "center",
+    paddingVertical: 40,
+  },
+  emptyText: {
     color: Colors.dark.text,
     fontSize: 18,
     fontWeight: "bold",
-    marginBottom: 15,
+    marginTop: 16,
+    marginBottom: 8,
   },
-  tipItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  tipNumber: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: Colors.dark.primary,
-    color: Colors.dark.text,
+  emptySubtext: {
+    color: Colors.dark.subtext,
+    fontSize: 14,
     textAlign: "center",
-    lineHeight: 24,
-    marginRight: 10,
-    fontWeight: "bold",
-  },
-  tipText: {
-    color: Colors.dark.text,
-    flex: 1,
+    lineHeight: 20,
   },
 });

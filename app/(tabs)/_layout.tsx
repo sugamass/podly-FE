@@ -42,28 +42,11 @@ export default function TabLayout() {
       <Tabs.Screen
         name="create"
         options={{
-          title: "Record",
+          title: "Create",
           tabBarIcon: ({ color }) => (
-            <Ionicons
-              name="mic"
-              size={24}
-              color={Colors.dark.text}
-              style={{
-                backgroundColor: Colors.dark.primary,
-                borderRadius: 8,
-                padding: 10,
-              }}
-            />
+            <Ionicons name="add-circle" size={28} color={color} />
           ),
         }}
-        listeners={() => ({
-          tabPress: (e) => {
-            // Prevent default action
-            e.preventDefault();
-            // Handle create action here
-            // For now, we'll just prevent navigation
-          },
-        })}
       />
       <Tabs.Screen
         name="profile"
