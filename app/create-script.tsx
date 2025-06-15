@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   Alert,
@@ -20,6 +20,7 @@ type DurationOption = "1分" | "2分" | "3分";
 type ToneOption = "カジュアル" | "フォーマル" | "論理的" | "ユーモア";
 
 export default function CreateScriptScreen() {
+  const router = useRouter();
   const [theme, setTheme] = useState("");
   const [referenceUrls, setReferenceUrls] = useState<string[]>([""]);
   const [webSearch, setWebSearch] = useState(true);
@@ -99,8 +100,14 @@ export default function CreateScriptScreen() {
       Alert.alert("エラー", "原稿が空です");
       return;
     }
-    // TODO: 音声生成画面への遷移
-    Alert.alert("次のステップ", "音声生成画面に進みます");
+
+    // 音声生成画面への遷移
+    router.push({
+      pathname: "/create-audio",
+      params: {
+        script: generatedScript,
+      },
+    });
   };
 
   return (
