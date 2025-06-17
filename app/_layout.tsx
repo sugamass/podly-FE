@@ -1,4 +1,5 @@
 import Colors from "@/constants/Colors";
+import { useAuth } from "@/hooks/useAuth";
 import { useTrackPlayerStore } from "@/store/trackPlayerStore";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { useFonts } from "expo-font";
@@ -6,6 +7,7 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect } from "react";
+import { ActivityIndicator, View } from "react-native";
 
 export const unstable_settings = {
   initialRouteName: "(tabs)",
@@ -20,6 +22,7 @@ export default function RootLayout() {
   });
 
   const { setupPlayer } = useTrackPlayerStore();
+  const { loading: authLoading, initialized } = useAuth();
 
   useEffect(() => {
     if (error) {
@@ -41,8 +44,19 @@ export default function RootLayout() {
 
   // TrackPlayer service is now registered in index.js
 
-  if (!loaded) {
-    return null;
+  if (!loaded || !initialized) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: Colors.dark.background,
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <ActivityIndicator size="large" color={Colors.dark.primary} />
+      </View>
+    );
   }
 
   return <RootLayoutNav />;

@@ -1,4 +1,6 @@
+import { AuthModal } from "@/components/AuthModal";
 import Colors from "@/constants/Colors";
+import { useAuth } from "@/hooks/useAuth";
 import { podcasts } from "@/mocks/podcasts";
 import { currentUser } from "@/mocks/users";
 import { formatNumber } from "@/utils/formatNumber";
@@ -6,6 +8,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import React, { useState } from "react";
 import {
+  Alert,
   Dimensions,
   FlatList,
   StyleSheet,
@@ -26,6 +29,25 @@ const tabs = [
 
 export default function ProfileScreen() {
   const [activeTab, setActiveTab] = useState("podcasts");
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const { user, profile, isAuthenticated, signOut } = useAuth();
+
+  const handleSignOut = () => {
+    Alert.alert("ログアウト", "ログアウトしてもよろしいですか？", [
+      { text: "キャンセル", style: "cancel" },
+      {
+        text: "ログアウト",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await signOut();
+          } catch (error) {
+            Alert.alert("エラー", "ログアウトに失敗しました");
+          }
+        },
+      },
+    ]);
+  };
 
   const renderPodcastItem = ({ item }: any) => {
     return (
@@ -46,20 +68,62 @@ export default function ProfileScreen() {
     );
   };
 
+  // 認証されていない場合の表示
+  if (!isAuthenticated) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.unauthenticatedContainer}>
+          <Ionicons
+            name="person-circle"
+            size={80}
+            color={Colors.dark.inactive}
+          />
+          <Text style={styles.unauthenticatedTitle}>ログインが必要です</Text>
+          <Text style={styles.unauthenticatedSubtitle}>
+            プロフィールを表示するにはログインしてください
+          </Text>
+          <TouchableOpacity
+            style={styles.loginButton}
+            onPress={() => setShowAuthModal(true)}
+          >
+            <Text style={styles.loginButtonText}>ログイン / サインアップ</Text>
+          </TouchableOpacity>
+        </View>
+        <AuthModal
+          visible={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+        />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.settingsButton}>
-          <Ionicons name="settings" size={24} color={Colors.dark.text} />
+        <TouchableOpacity style={styles.settingsButton} onPress={handleSignOut}>
+          <Ionicons name="log-out" size={24} color={Colors.dark.text} />
         </TouchableOpacity>
       </View>
 
       <View style={styles.profileSection}>
-        <Image source={{ uri: currentUser.avatar }} style={styles.avatar} />
-        <Text style={styles.name}>{currentUser.fullName}</Text>
-        <Text style={styles.username}>@{currentUser.username}</Text>
+        <Image
+          source={{ uri: profile?.avatar_url || currentUser.avatar }}
+          style={styles.avatar}
+        />
+        <Text style={styles.name}>
+          {profile?.full_name ||
+            profile?.username ||
+            user?.email ||
+            currentUser.fullName}
+        </Text>
+        <Text style={styles.username}>
+          @
+          {profile?.username ||
+            user?.email?.split("@")[0] ||
+            currentUser.username}
+        </Text>
 
-        <Text style={styles.bio}>{currentUser.bio}</Text>
+        <Text style={styles.bio}>{profile?.bio || currentUser.bio}</Text>
 
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
@@ -85,7 +149,7 @@ export default function ProfileScreen() {
         </View>
 
         <TouchableOpacity style={styles.editButton}>
-          <Text style={styles.editButtonText}>Edit Profile</Text>
+          <Text style={styles.editButtonText}>プロフィールを編集</Text>
         </TouchableOpacity>
       </View>
 
@@ -310,6 +374,34 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   browseButtonText: {
+    color: Colors.dark.text,
+    fontWeight: "bold",
+  },
+  unauthenticatedContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  unauthenticatedTitle: {
+    color: Colors.dark.text,
+    fontSize: 22,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  unauthenticatedSubtitle: {
+    color: Colors.dark.subtext,
+    textAlign: "center",
+    marginBottom: 20,
+    lineHeight: 20,
+  },
+  loginButton: {
+    backgroundColor: Colors.dark.primary,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+  },
+  loginButtonText: {
     color: Colors.dark.text,
     fontWeight: "bold",
   },
