@@ -1,3 +1,4 @@
+import Colors from "@/constants/Colors";
 import { useAuth } from "@/hooks/useAuth";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
@@ -8,6 +9,7 @@ import {
   Modal,
   Platform,
   ScrollView,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
@@ -17,10 +19,17 @@ import {
 interface AuthModalProps {
   visible: boolean;
   onClose: () => void;
+  forceSignUp?: boolean; // 初回起動時にサインアップを強制
+  allowClose?: boolean; // モーダルを閉じることを許可するか
 }
 
-export function AuthModal({ visible, onClose }: AuthModalProps) {
-  const [isSignUp, setIsSignUp] = useState(false);
+export function AuthModal({
+  visible,
+  onClose,
+  forceSignUp = false,
+  allowClose = true,
+}: AuthModalProps) {
+  const [isSignUp, setIsSignUp] = useState(forceSignUp);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
@@ -37,6 +46,7 @@ export function AuthModal({ visible, onClose }: AuthModalProps) {
   };
 
   const handleClose = () => {
+    if (!allowClose) return; // モーダルを閉じることが許可されていない場合
     resetForm();
     onClose();
   };
@@ -83,13 +93,12 @@ export function AuthModal({ visible, onClose }: AuthModalProps) {
         Alert.alert(
           "登録完了",
           "メールアドレスに確認リンクを送信しました。メールを確認してアカウントを有効化してください。",
-          [{ text: "OK", onPress: handleClose }]
+          [{ text: "OK" }]
         );
       } else {
         await signIn(email.trim(), password);
-        Alert.alert("ログイン成功", "ようこそ！", [
-          { text: "OK", onPress: handleClose },
-        ]);
+        // ログイン成功時はアラートを表示せず、自動的にアプリに入る
+        handleClose();
       }
     } catch (error) {
       console.error("Auth error:", error);
@@ -131,30 +140,34 @@ export function AuthModal({ visible, onClose }: AuthModalProps) {
       visible={visible}
       animationType="slide"
       presentationStyle="pageSheet"
-      onRequestClose={handleClose}
+      onRequestClose={allowClose ? handleClose : undefined}
     >
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        <View className="flex-1 bg-black">
+        <View style={styles.container}>
           {/* Header */}
-          <View className="flex-row items-center justify-between p-4 pt-12">
-            <TouchableOpacity onPress={handleClose}>
-              <Ionicons name="close" size={24} color="white" />
-            </TouchableOpacity>
-            <Text className="text-white text-lg font-bold">
+          <View style={styles.header}>
+            {allowClose ? (
+              <TouchableOpacity onPress={handleClose}>
+                <Ionicons name="close" size={24} color={Colors.dark.text} />
+              </TouchableOpacity>
+            ) : (
+              <View style={{ width: 24 }} />
+            )}
+            <Text style={styles.headerTitle}>
               {isSignUp ? "アカウント作成" : "ログイン"}
             </Text>
             <View style={{ width: 24 }} />
           </View>
 
-          <ScrollView className="flex-1 px-6">
-            <View className="py-8">
-              <Text className="text-white text-2xl font-bold mb-2 text-center">
+          <ScrollView style={styles.scrollView}>
+            <View style={styles.content}>
+              <Text style={styles.title}>
                 {isSignUp ? "Podlyへようこそ" : "おかえりなさい"}
               </Text>
-              <Text className="text-gray-400 text-center mb-8">
+              <Text style={styles.subtitle}>
                 {isSignUp
                   ? "新しいアカウントを作成してください"
                   : "アカウントにログインしてください"}
@@ -162,14 +175,12 @@ export function AuthModal({ visible, onClose }: AuthModalProps) {
 
               {/* Username field (signup only) */}
               {isSignUp && (
-                <View className="mb-4">
-                  <Text className="text-white mb-2 font-medium">
-                    ユーザー名
-                  </Text>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.inputLabel}>ユーザー名</Text>
                   <TextInput
-                    className="bg-gray-800 text-white p-4 rounded-lg border border-gray-700"
+                    style={styles.textInput}
                     placeholder="ユーザー名を入力"
-                    placeholderTextColor="#9CA3AF"
+                    placeholderTextColor={Colors.dark.inactive}
                     value={username}
                     onChangeText={setUsername}
                     autoCapitalize="none"
@@ -179,14 +190,12 @@ export function AuthModal({ visible, onClose }: AuthModalProps) {
               )}
 
               {/* Email field */}
-              <View className="mb-4">
-                <Text className="text-white mb-2 font-medium">
-                  メールアドレス
-                </Text>
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>メールアドレス</Text>
                 <TextInput
-                  className="bg-gray-800 text-white p-4 rounded-lg border border-gray-700"
+                  style={styles.textInput}
                   placeholder="メールアドレスを入力"
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={Colors.dark.inactive}
                   value={email}
                   onChangeText={setEmail}
                   keyboardType="email-address"
@@ -196,12 +205,12 @@ export function AuthModal({ visible, onClose }: AuthModalProps) {
               </View>
 
               {/* Password field */}
-              <View className="mb-4">
-                <Text className="text-white mb-2 font-medium">パスワード</Text>
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>パスワード</Text>
                 <TextInput
-                  className="bg-gray-800 text-white p-4 rounded-lg border border-gray-700"
+                  style={styles.textInput}
                   placeholder="パスワードを入力（6文字以上）"
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={Colors.dark.inactive}
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry
@@ -210,14 +219,12 @@ export function AuthModal({ visible, onClose }: AuthModalProps) {
 
               {/* Confirm password field (signup only) */}
               {isSignUp && (
-                <View className="mb-6">
-                  <Text className="text-white mb-2 font-medium">
-                    パスワード確認
-                  </Text>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.inputLabel}>パスワード確認</Text>
                   <TextInput
-                    className="bg-gray-800 text-white p-4 rounded-lg border border-gray-700"
+                    style={styles.textInput}
                     placeholder="パスワードを再入力"
-                    placeholderTextColor="#9CA3AF"
+                    placeholderTextColor={Colors.dark.inactive}
                     value={confirmPassword}
                     onChangeText={setConfirmPassword}
                     secureTextEntry
@@ -227,24 +234,29 @@ export function AuthModal({ visible, onClose }: AuthModalProps) {
 
               {/* Submit button */}
               <TouchableOpacity
-                className={`p-4 rounded-lg mb-4 ${
-                  loading ? "bg-gray-600" : "bg-red-500"
-                }`}
+                style={[
+                  styles.submitButton,
+                  loading && styles.submitButtonDisabled,
+                ]}
                 onPress={handleAuth}
                 disabled={loading}
               >
                 {loading ? (
-                  <ActivityIndicator color="white" />
+                  <ActivityIndicator color={Colors.dark.text} />
                 ) : (
-                  <Text className="text-white text-center font-bold text-lg">
+                  <Text style={styles.submitButtonText}>
                     {isSignUp ? "アカウント作成" : "ログイン"}
                   </Text>
                 )}
               </TouchableOpacity>
 
               {/* Toggle mode */}
-              <TouchableOpacity onPress={toggleMode} disabled={loading}>
-                <Text className="text-gray-400 text-center">
+              <TouchableOpacity
+                onPress={toggleMode}
+                disabled={loading}
+                style={styles.toggleButton}
+              >
+                <Text style={styles.toggleText}>
                   {isSignUp
                     ? "すでにアカウントをお持ちですか？ ログイン"
                     : "アカウントをお持ちでない方は アカウント作成"}
@@ -276,9 +288,9 @@ export function AuthGuard({ children, fallback }: AuthGuardProps) {
 
   if (!initialized || loading) {
     return (
-      <View className="flex-1 bg-black items-center justify-center">
-        <ActivityIndicator size="large" color="white" />
-        <Text className="text-white mt-4">読み込み中...</Text>
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={Colors.dark.primary} />
+        <Text style={styles.loadingText}>読み込み中...</Text>
       </View>
     );
   }
@@ -287,13 +299,13 @@ export function AuthGuard({ children, fallback }: AuthGuardProps) {
     return (
       <>
         {fallback || (
-          <View className="flex-1 bg-black items-center justify-center">
-            <Text className="text-white text-xl mb-4">ログインが必要です</Text>
+          <View style={styles.authRequiredContainer}>
+            <Text style={styles.authRequiredTitle}>ログインが必要です</Text>
             <TouchableOpacity
-              className="bg-red-500 px-8 py-3 rounded-lg"
+              style={styles.authRequiredButton}
               onPress={() => setShowAuthModal(true)}
             >
-              <Text className="text-white font-bold">ログイン</Text>
+              <Text style={styles.authRequiredButtonText}>ログイン</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -307,3 +319,132 @@ export function AuthGuard({ children, fallback }: AuthGuardProps) {
 
   return <>{children}</>;
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.dark.background,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingTop: 48,
+    paddingBottom: 16,
+  },
+  headerTitle: {
+    color: Colors.dark.text,
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  scrollView: {
+    flex: 1,
+    paddingHorizontal: 24,
+  },
+  content: {
+    paddingVertical: 32,
+  },
+  title: {
+    color: Colors.dark.text,
+    fontSize: 28,
+    fontWeight: "bold",
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  subtitle: {
+    color: Colors.dark.subtext,
+    fontSize: 16,
+    textAlign: "center",
+    marginBottom: 32,
+    lineHeight: 24,
+  },
+  inputContainer: {
+    marginBottom: 16,
+  },
+  inputLabel: {
+    color: Colors.dark.text,
+    fontSize: 16,
+    fontWeight: "500",
+    marginBottom: 8,
+  },
+  textInput: {
+    backgroundColor: Colors.dark.card,
+    color: Colors.dark.text,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.dark.border,
+    fontSize: 16,
+  },
+  submitButton: {
+    backgroundColor: Colors.dark.primary,
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 16,
+    marginTop: 8,
+  },
+  submitButtonDisabled: {
+    backgroundColor: Colors.dark.inactive,
+  },
+  submitButtonText: {
+    color: Colors.dark.text,
+    textAlign: "center",
+    fontWeight: "bold",
+    fontSize: 18,
+  },
+  toggleButton: {
+    paddingVertical: 8,
+  },
+  toggleText: {
+    color: Colors.dark.subtext,
+    textAlign: "center",
+    fontSize: 14,
+  },
+  forceSignUpText: {
+    color: Colors.dark.inactive,
+    textAlign: "center",
+    fontSize: 14,
+  },
+  firstTimeUserInfo: {
+    color: Colors.dark.subtext,
+    textAlign: "center",
+    fontSize: 12,
+    marginTop: 12,
+    lineHeight: 18,
+    paddingHorizontal: 8,
+  },
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: Colors.dark.background,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  loadingText: {
+    color: Colors.dark.text,
+    marginTop: 16,
+    fontSize: 16,
+  },
+  authRequiredContainer: {
+    flex: 1,
+    backgroundColor: Colors.dark.background,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  authRequiredTitle: {
+    color: Colors.dark.text,
+    fontSize: 20,
+    marginBottom: 16,
+  },
+  authRequiredButton: {
+    backgroundColor: Colors.dark.primary,
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  authRequiredButtonText: {
+    color: Colors.dark.text,
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+});

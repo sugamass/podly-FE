@@ -1,4 +1,3 @@
-import { AuthModal } from "@/components/AuthModal";
 import Colors from "@/constants/Colors";
 import { useAuth } from "@/hooks/useAuth";
 import { podcasts } from "@/mocks/podcasts";
@@ -29,7 +28,6 @@ const tabs = [
 
 export default function ProfileScreen() {
   const [activeTab, setActiveTab] = useState("podcasts");
-  const [showAuthModal, setShowAuthModal] = useState(false);
   const { user, profile, isAuthenticated, signOut } = useAuth();
 
   const handleSignOut = () => {
@@ -68,34 +66,7 @@ export default function ProfileScreen() {
     );
   };
 
-  // 認証されていない場合の表示
-  if (!isAuthenticated) {
-    return (
-      <View style={styles.container}>
-        <View style={styles.unauthenticatedContainer}>
-          <Ionicons
-            name="person-circle"
-            size={80}
-            color={Colors.dark.inactive}
-          />
-          <Text style={styles.unauthenticatedTitle}>ログインが必要です</Text>
-          <Text style={styles.unauthenticatedSubtitle}>
-            プロフィールを表示するにはログインしてください
-          </Text>
-          <TouchableOpacity
-            style={styles.loginButton}
-            onPress={() => setShowAuthModal(true)}
-          >
-            <Text style={styles.loginButtonText}>ログイン / サインアップ</Text>
-          </TouchableOpacity>
-        </View>
-        <AuthModal
-          visible={showAuthModal}
-          onClose={() => setShowAuthModal(false)}
-        />
-      </View>
-    );
-  }
+  // アプリレベルで認証チェックしているため、この画面では認証済みユーザーのみが表示される
 
   return (
     <View style={styles.container}>
@@ -374,34 +345,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   browseButtonText: {
-    color: Colors.dark.text,
-    fontWeight: "bold",
-  },
-  unauthenticatedContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-  unauthenticatedTitle: {
-    color: Colors.dark.text,
-    fontSize: 22,
-    fontWeight: "bold",
-    marginBottom: 10,
-  },
-  unauthenticatedSubtitle: {
-    color: Colors.dark.subtext,
-    textAlign: "center",
-    marginBottom: 20,
-    lineHeight: 20,
-  },
-  loginButton: {
-    backgroundColor: Colors.dark.primary,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-  },
-  loginButtonText: {
     color: Colors.dark.text,
     fontWeight: "bold",
   },
