@@ -7,26 +7,26 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0A33B3F77298D7A18EC2A944 /* libPods-TikTokStyleApp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4349946FB1A1AC8715D28D86 /* libPods-TikTokStyleApp.a */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
-		34FC9306714AA84F5A1E4A82 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9B5CC0A1ADFD272BCBAFB5E /* ExpoModulesProvider.swift */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
-		86D43D2166518F3077D95557 /* libPods-TikTokStyleApp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 8D27F1F435CAFF8184136D95 /* libPods-TikTokStyleApp.a */; };
+		7A3CA55A1C6587E4AF7211ED /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 078F40BFF2EB2C4943BE3A02 /* PrivacyInfo.xcprivacy */; };
+		AE7C00C8333A804FF8793B28 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E5CB293785E4A5AD0F41727 /* ExpoModulesProvider.swift */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
-		D4EBFB79783408D98192AD1B /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 3CC81FC1831E3EE3E1C219E6 /* PrivacyInfo.xcprivacy */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		12746760B7B29DB3366D2916 /* Pods-TikTokStyleApp.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-TikTokStyleApp.release.xcconfig"; path = "Target Support Files/Pods-TikTokStyleApp/Pods-TikTokStyleApp.release.xcconfig"; sourceTree = "<group>"; };
+		078F40BFF2EB2C4943BE3A02 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = TikTokStyleApp/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		126F5D5AEA7D847DAC78B5AF /* Pods-TikTokStyleApp.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-TikTokStyleApp.release.xcconfig"; path = "Target Support Files/Pods-TikTokStyleApp/Pods-TikTokStyleApp.release.xcconfig"; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* TikTokStyleApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TikTokStyleApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = TikTokStyleApp/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = TikTokStyleApp/Info.plist; sourceTree = "<group>"; };
-		3CC81FC1831E3EE3E1C219E6 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = TikTokStyleApp/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		8D27F1F435CAFF8184136D95 /* libPods-TikTokStyleApp.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-TikTokStyleApp.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		3E5CB293785E4A5AD0F41727 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-TikTokStyleApp/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		4349946FB1A1AC8715D28D86 /* libPods-TikTokStyleApp.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-TikTokStyleApp.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		8B4378393A8D738A61A4584E /* Pods-TikTokStyleApp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-TikTokStyleApp.debug.xcconfig"; path = "Target Support Files/Pods-TikTokStyleApp/Pods-TikTokStyleApp.debug.xcconfig"; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = TikTokStyleApp/SplashScreen.storyboard; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		D981906B2530D085C7DB804E /* Pods-TikTokStyleApp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-TikTokStyleApp.debug.xcconfig"; path = "Target Support Files/Pods-TikTokStyleApp/Pods-TikTokStyleApp.debug.xcconfig"; sourceTree = "<group>"; };
-		D9B5CC0A1ADFD272BCBAFB5E /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-TikTokStyleApp/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = TikTokStyleApp/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* TikTokStyleApp-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "TikTokStyleApp-Bridging-Header.h"; path = "TikTokStyleApp/TikTokStyleApp-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -37,21 +37,13 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				86D43D2166518F3077D95557 /* libPods-TikTokStyleApp.a in Frameworks */,
+				0A33B3F77298D7A18EC2A944 /* libPods-TikTokStyleApp.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		0BB777F06D4D1B6BD766A5D4 /* ExpoModulesProviders */ = {
-			isa = PBXGroup;
-			children = (
-				8D7D463CA28C4457F6E4E25A /* TikTokStyleApp */,
-			);
-			name = ExpoModulesProviders;
-			sourceTree = "<group>";
-		};
 		13B07FAE1A68108700A75B9A /* TikTokStyleApp */ = {
 			isa = PBXGroup;
 			children = (
@@ -61,7 +53,7 @@
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				3CC81FC1831E3EE3E1C219E6 /* PrivacyInfo.xcprivacy */,
+				078F40BFF2EB2C4943BE3A02 /* PrivacyInfo.xcprivacy */,
 			);
 			name = TikTokStyleApp;
 			sourceTree = "<group>";
@@ -70,16 +62,24 @@
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				8D27F1F435CAFF8184136D95 /* libPods-TikTokStyleApp.a */,
+				4349946FB1A1AC8715D28D86 /* libPods-TikTokStyleApp.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		81D59C933C28247787AC34AA /* Pods */ = {
+		5E35AE227D20CE64F6D42F0C /* TikTokStyleApp */ = {
 			isa = PBXGroup;
 			children = (
-				D981906B2530D085C7DB804E /* Pods-TikTokStyleApp.debug.xcconfig */,
-				12746760B7B29DB3366D2916 /* Pods-TikTokStyleApp.release.xcconfig */,
+				3E5CB293785E4A5AD0F41727 /* ExpoModulesProvider.swift */,
+			);
+			name = TikTokStyleApp;
+			sourceTree = "<group>";
+		};
+		7943DCA474C510E0A908C0AF /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				8B4378393A8D738A61A4584E /* Pods-TikTokStyleApp.debug.xcconfig */,
+				126F5D5AEA7D847DAC78B5AF /* Pods-TikTokStyleApp.release.xcconfig */,
 			);
 			name = Pods;
 			path = Pods;
@@ -99,8 +99,8 @@
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
-				81D59C933C28247787AC34AA /* Pods */,
-				0BB777F06D4D1B6BD766A5D4 /* ExpoModulesProviders */,
+				7943DCA474C510E0A908C0AF /* Pods */,
+				D80653072A3B7B0A06CD0A2C /* ExpoModulesProviders */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -115,14 +115,6 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		8D7D463CA28C4457F6E4E25A /* TikTokStyleApp */ = {
-			isa = PBXGroup;
-			children = (
-				D9B5CC0A1ADFD272BCBAFB5E /* ExpoModulesProvider.swift */,
-			);
-			name = TikTokStyleApp;
-			sourceTree = "<group>";
-		};
 		BB2F792B24A3F905000567C9 /* Supporting */ = {
 			isa = PBXGroup;
 			children = (
@@ -130,6 +122,14 @@
 			);
 			name = Supporting;
 			path = TikTokStyleApp/Supporting;
+			sourceTree = "<group>";
+		};
+		D80653072A3B7B0A06CD0A2C /* ExpoModulesProviders */ = {
+			isa = PBXGroup;
+			children = (
+				5E35AE227D20CE64F6D42F0C /* TikTokStyleApp */,
+			);
+			name = ExpoModulesProviders;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -140,13 +140,13 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "TikTokStyleApp" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
-				183FCEE69A45DD9C8FA099B2 /* [Expo] Configure project */,
+				6D959503DE628F3854E6C00A /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
-				5DB06542309D0D3040F8B3C2 /* [CP] Embed Pods Frameworks */,
+				B31AB136E6E7CBE6FE8722BB /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -196,7 +196,7 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				D4EBFB79783408D98192AD1B /* PrivacyInfo.xcprivacy in Resources */,
+				7A3CA55A1C6587E4AF7211ED /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -240,7 +240,7 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		183FCEE69A45DD9C8FA099B2 /* [Expo] Configure project */ = {
+		6D959503DE628F3854E6C00A /* [Expo] Configure project */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -258,24 +258,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-TikTokStyleApp/expo-configure-project.sh\"\n";
-		};
-		5DB06542309D0D3040F8B3C2 /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-TikTokStyleApp/Pods-TikTokStyleApp-frameworks.sh",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputPaths = (
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-TikTokStyleApp/Pods-TikTokStyleApp-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
 		};
 		800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -317,6 +299,24 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-TikTokStyleApp/Pods-TikTokStyleApp-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
+		B31AB136E6E7CBE6FE8722BB /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-TikTokStyleApp/Pods-TikTokStyleApp-frameworks.sh",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-TikTokStyleApp/Pods-TikTokStyleApp-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -325,7 +325,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
-				34FC9306714AA84F5A1E4A82 /* ExpoModulesProvider.swift in Sources */,
+				AE7C00C8333A804FF8793B28 /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -334,7 +334,7 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = D981906B2530D085C7DB804E /* Pods-TikTokStyleApp.debug.xcconfig */;
+			baseConfigurationReference = 8B4378393A8D738A61A4584E /* Pods-TikTokStyleApp.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -370,7 +370,7 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 12746760B7B29DB3366D2916 /* Pods-TikTokStyleApp.release.xcconfig */;
+			baseConfigurationReference = 126F5D5AEA7D847DAC78B5AF /* Pods-TikTokStyleApp.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;

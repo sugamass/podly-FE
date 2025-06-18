@@ -2,14 +2,17 @@ import Colors from "@/constants/Colors";
 import { useAuth } from "@/hooks/useAuth";
 import { podcasts } from "@/mocks/podcasts";
 import { currentUser } from "@/mocks/users";
+import { useAuthStore } from "@/store/authStore";
 import { formatNumber } from "@/utils/formatNumber";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
-import React, { useState } from "react";
+import { router, useFocusEffect } from "expo-router";
+import React, { useCallback, useState } from "react";
 import {
   Alert,
   Dimensions,
   FlatList,
+  RefreshControl,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -28,7 +31,32 @@ const tabs = [
 
 export default function ProfileScreen() {
   const [activeTab, setActiveTab] = useState("podcasts");
+  const [refreshing, setRefreshing] = useState(false);
   const { user, profile, isAuthenticated, signOut } = useAuth();
+  const { initialize, loadProfile } = useAuthStore();
+
+  // 画面フォーカス時にプロフィールを再読み込み
+  useFocusEffect(
+    useCallback(() => {
+      if (user?.id) {
+        refreshProfile();
+      }
+    }, [user?.id])
+  );
+
+  const refreshProfile = async () => {
+    try {
+      setRefreshing(true);
+      // プロフィール情報を最新状態にする
+      if (user?.id) {
+        await loadProfile(user.id);
+      }
+    } catch (error) {
+      console.error("Profile refresh error:", error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const handleSignOut = () => {
     Alert.alert("ログアウト", "ログアウトしてもよろしいですか？", [
@@ -45,6 +73,10 @@ export default function ProfileScreen() {
         },
       },
     ]);
+  };
+
+  const handleEditProfile = () => {
+    router.push("/edit-profile");
   };
 
   const renderPodcastItem = ({ item }: any) => {
@@ -119,7 +151,7 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        <TouchableOpacity style={styles.editButton}>
+        <TouchableOpacity style={styles.editButton} onPress={handleEditProfile}>
           <Text style={styles.editButtonText}>プロフィールを編集</Text>
         </TouchableOpacity>
       </View>
@@ -164,6 +196,14 @@ export default function ProfileScreen() {
             numColumns={2}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.podcastGrid}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={refreshProfile}
+                tintColor={Colors.dark.primary}
+                colors={[Colors.dark.primary]}
+              />
+            }
           />
         ) : activeTab === "history" ? (
           <View style={styles.emptyContainer}>
