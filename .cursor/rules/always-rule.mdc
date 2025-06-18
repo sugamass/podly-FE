@@ -1,3 +1,8 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
 # TikTok Style Expo React Native App - Cursor Rules
 
 ## プロジェクト概要
@@ -12,6 +17,7 @@
 - **State Management**: Zustand
 - **Styling**: NativeWind (Tailwind CSS for React Native)
 - **Audio Player**: React Native Track Player
+- **Backend as a Service (BaaS)**: Supabase
 - **Native Features**: Expo Image, Video, Location, Image Picker等
 
 ## フォルダ構成
@@ -101,19 +107,48 @@
 - APIレスポンスの型定義を作成
 - 共通で使用する型は`types/`フォルダまたは適切な場所に定義
 
-## 実行コマンド
-```bash
-# 開発開始
-npm start
+### 9. バックエンド・API設計
+- **BaaS**: Supabaseを使用してバックエンド機能を提供
+- **データベースアクセス**: APIを叩く際は、Supabaseクライアントを使用して直接DBにアクセス
+- **認証**: Supabase Authを使用してユーザー認証を管理
+- **リアルタイム機能**: Supabase Realtimeを使用してリアルタイムデータ同期
+- **ファイルストレージ**: Supabase Storageを使用して動画・音声・画像ファイルを管理
+- **API設計**:
+  - REST APIの代わりにSupabaseクライアントのメソッドを使用
+  - データベース操作は`supabase.from().select()`, `supabase.from().insert()`等を使用
+  - 認証が必要な操作では、適切なRow Level Security (RLS)ポリシーを設定
 
-# iOS実行
-npm run ios
-
-# Android実行
-npm run android
-```
 
 ## 重要な注意事項
 - このプロジェクトは**eject済み**のため、Expo CLIとReact Native CLIの両方の機能が使用可能
 - ネイティブコードの変更時は、適切なビルドプロセスを実行
-- 新しいネイティブ依存関係の追加時は、iOS/Androidの両方でのビルドを確認 
+- 新しいネイティブ依存関係の追加時は、iOS/Androidの両方でのビルドを確認
+
+## 10. UIデザインテーマ
+### テーマ: 「プロフェッショナル・ミニマリズム」
+このアプリのUIは**ダークモード特化の没入型メディア体験**をコンセプトとしています。
+
+#### カラーパレット
+- **Background**: #121620 (深いダークブルー背景)
+- **Card**: #1E2430 (マットなチャコール)  
+- **Primary**: #4F7CFF (プロフェッショナルブルー)
+- **Secondary**: #6AD5E8 (ソフトティールアクセント)
+- **Highlight**: #F2994A (オレンジハイライト)
+- **Text**: #FFFFFF (メインテキスト)
+- **Subtext**: #A0A7B5 (サブテキスト)
+
+#### デザイン原則
+- **フルスクリーン没入**: TikTok風の画面いっぱいを使った動画・音声体験
+- **ミニマル情報設計**: 必要な情報のみを適切なタイミングで表示
+- **ジェスチャーベース**: スワイプ中心の直感的操作
+- **触覚フィードバック**: Hapticsによる操作感の向上
+- **統一されたボーダー半径**: 8pxでソフトな印象
+- **カード型レイアウト**: 情報のグルーピング
+- **グラデーション**: CTAボタンでの効果的活用
+
+#### コンポーネント統一ルール
+- アイコンはIoniconsで統一
+- 状態表現の明確性（アクティブ/非アクティブ）
+- オーバーレイコントロールで操作性を保持
+- リアルタイム反応（いいね、再生状態など）
+- プログレスインジケーターで進行状況を可視化 
