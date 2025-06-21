@@ -33,6 +33,14 @@ export default function VideoPlayer({ uri, isActive }: VideoPlayerProps) {
   }, [isActive, player]);
 
   useEffect(() => {
+    return () => {
+      if (player && typeof player.release === "function") {
+        player.release();
+      }
+    };
+  }, [player]);
+
+  useEffect(() => {
     const subscription = player.addListener("statusChange", (status) => {
       if (status.status === "readyToPlay") {
         setIsLoading(false);

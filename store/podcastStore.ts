@@ -10,6 +10,7 @@ interface PodcastState {
   playbackRate: number;
   likedPodcasts: Set<string>;
   savedPodcasts: Set<string>;
+  cleanup: () => void;
 
   setCurrentPodcastIndex: (index: number) => void;
   togglePlayPause: () => void;
@@ -32,6 +33,17 @@ export const usePodcastStore = create<PodcastState>((set, get) => ({
   playbackRate: 1.0,
   likedPodcasts: new Set<string>(),
   savedPodcasts: new Set<string>(),
+
+  cleanup: () => {
+    set({
+      likedPodcasts: new Set<string>(),
+      isPlaying: false,
+      currentTime: 0,
+      duration: 0,
+      playbackRate: 1.0,
+      currentPodcastIndex: 0,
+    });
+  },
 
   setCurrentPodcastIndex: (index: number) => {
     set({

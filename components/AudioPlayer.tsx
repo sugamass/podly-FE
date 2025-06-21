@@ -59,6 +59,9 @@ export default function AudioPlayer({
         // First initialize the player
         await initializePlayer();
 
+        // 🔧 FIX: 古いトラックをクリアしてから新しいトラックを追加
+        await TrackPlayer.reset();
+
         // Then add the track
         const track: Track = {
           id: uri, // Use uri as unique id
@@ -77,6 +80,11 @@ export default function AudioPlayer({
     };
 
     setupPlayerAndTrack();
+
+    // 🔧 FIX: コンポーネントのアンマウント時にクリーンアップ
+    return () => {
+      TrackPlayer.reset().catch(console.error);
+    };
   }, [uri, imageUrl, initializePlayer]);
 
   // Listen to playback state changes

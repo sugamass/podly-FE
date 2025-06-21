@@ -1,6 +1,7 @@
 import { AuthModal } from "@/components/AuthModal";
 import Colors from "@/constants/Colors";
 import { useAuth } from "@/hooks/useAuth";
+import { cleanupTrackPlayerService } from "@/services/TrackPlayerService";
 import { useTrackPlayerStore } from "@/store/trackPlayerStore";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { useFonts } from "expo-font";
@@ -8,7 +9,7 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, Text, View } from "react-native";
+import { ActivityIndicator, AppState, Text, View } from "react-native";
 
 export const unstable_settings = {
   initialRouteName: "(tabs)",
@@ -43,6 +44,25 @@ export default function RootLayout() {
   useEffect(() => {
     setupPlayer();
   }, [setupPlayer]);
+
+  // 🔧 FIX: アプリケーションの状態変化を監視してクリーンアップ
+  useEffect(() => {
+    const handleAppStateChange = (nextAppState: string) => {
+      if (nextAppState === "background" || nextAppState === "inactive") {
+        cleanupTrackPlayerService();
+      }
+    };
+
+    const subscription = AppState.addEventListener(
+      "change",
+      handleAppStateChange
+    );
+
+    return () => {
+      subscription?.remove();
+      cleanupTrackPlayerService();
+    };
+  }, []);
 
   // Show auth modal when app is loaded and user is not authenticated
   useEffect(() => {

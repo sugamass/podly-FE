@@ -98,6 +98,15 @@ export default function FeedScreen() {
         decelerationRate="fast"
         viewabilityConfig={viewabilityConfig}
         onViewableItemsChanged={onViewableItemsChanged}
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={1}
+        windowSize={3}
+        initialNumToRender={1}
+        getItemLayout={(data, index) => ({
+          length: height,
+          offset: height * index,
+          index,
+        })}
       />
 
       {showComments && (
