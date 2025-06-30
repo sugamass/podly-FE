@@ -35,6 +35,7 @@ export default function AudioPlayer({
   isActive,
 }: AudioPlayerProps) {
   const [isLoading, setIsLoading] = useState(true);
+  const [localIsPlaying, setLocalIsPlaying] = useState(false);
   const playbackState = usePlaybackState();
   const progress = useProgress();
 
@@ -87,19 +88,34 @@ export default function AudioPlayer({
     };
   }, [uri, imageUrl, initializePlayer]);
 
-  // Listen to playback state changes
+  // Listen to playback state changes - ONE TIME ONLY
   useEffect(() => {
     const listener = TrackPlayer.addEventListener(
       Event.PlaybackState,
       (data) => {
-        setIsPlaying(data.state === State.Playing);
+        const isCurrentlyPlaying = data.state === State.Playing;
+        setLocalIsPlaying(isCurrentlyPlaying);
+        // Only update global store when necessary
+        if (isCurrentlyPlaying !== isPlaying) {
+          setIsPlaying(isCurrentlyPlaying);
+        }
       }
     );
 
     return () => {
       listener.remove();
     };
-  }, [setIsPlaying]);
+  }, []); // Empty dependency array - set up once only
+
+  // Sync localIsPlaying with actual playback state
+  useEffect(() => {
+    if (playbackState.state !== undefined) {
+      const isCurrentlyPlaying = playbackState.state === State.Playing;
+      if (localIsPlaying !== isCurrentlyPlaying) {
+        setLocalIsPlaying(isCurrentlyPlaying);
+      }
+    }
+  }, [playbackState.state, localIsPlaying]);
 
   // Update store with current progress
   useEffect(() => {
@@ -111,27 +127,29 @@ export default function AudioPlayer({
     }
   }, [progress, setCurrentTime, setDuration]);
 
-  // Handle play/pause based on isActive prop
+  // Handle isActive changes - separate from playback state
   useEffect(() => {
-    if (!isInitialized) return;
+    if (!isInitialized || isLoading) return;
 
-    if (isActive && playbackState.state !== State.Playing) {
-      TrackPlayer.play();
-    } else if (!isActive && playbackState.state === State.Playing) {
-      TrackPlayer.pause();
-    }
-  }, [isActive, isInitialized, playbackState]);
+    const handleActiveChange = async () => {
+      try {
+        const currentState = await TrackPlayer.getPlaybackState();
 
-  // Handle play/pause from store
-  useEffect(() => {
-    if (!isInitialized) return;
+        if (isActive && currentState.state !== State.Playing) {
+          await TrackPlayer.play();
+        } else if (!isActive && currentState.state === State.Playing) {
+          await TrackPlayer.pause();
+        }
+      } catch (error) {
+        console.error("Error handling active change:", error);
+      }
+    };
 
-    if (isPlaying && playbackState.state !== State.Playing) {
-      TrackPlayer.play();
-    } else if (!isPlaying && playbackState.state === State.Playing) {
-      TrackPlayer.pause();
-    }
-  }, [isPlaying, isInitialized, playbackState]);
+    // Add a small delay to prevent rapid state changes
+    const timeout = setTimeout(handleActiveChange, 100);
+
+    return () => clearTimeout(timeout);
+  }, [isActive, isInitialized, isLoading]);
 
   // Update playback rate
   useEffect(() => {
@@ -145,10 +163,17 @@ export default function AudioPlayer({
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
-    if (playbackState.state === State.Playing) {
-      await TrackPlayer.pause();
-    } else {
-      await TrackPlayer.play();
+    try {
+      // Get current state directly from TrackPlayer
+      const currentState = await TrackPlayer.getPlaybackState();
+
+      if (currentState.state === State.Playing) {
+        await TrackPlayer.pause();
+      } else {
+        await TrackPlayer.play();
+      }
+    } catch (error) {
+      console.error("Error toggling play/pause:", error);
     }
   };
 
@@ -196,17 +221,18 @@ export default function AudioPlayer({
 
   return (
     <View style={styles.container}>
-      {/* Album Art */}
-      <View style={styles.imageContainer}>
-        <Image
-          source={{ uri: imageUrl }}
-          style={styles.albumImage}
-          contentFit="cover"
-        />
-      </View>
+      {/* Background Image */}
+      <Image
+        source={{ uri: imageUrl }}
+        style={styles.backgroundImage}
+        contentFit="cover"
+      />
 
-      {/* Controls */}
-      <View style={styles.controlsContainer}>
+      {/* Dark Overlay for better contrast */}
+      <View style={styles.overlay} />
+
+      {/* Controls Overlay */}
+      <View style={styles.controlsOverlay}>
         {/* Progress Bar */}
         <View style={styles.progressContainer}>
           <Text style={styles.timeText}>
@@ -269,17 +295,38 @@ export default function AudioPlayer({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "rgba(0, 0, 0, 0.9)",
+    width: width,
+    height: height,
+    position: "relative",
+  },
+  backgroundImage: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: width,
+    height: height,
+  },
+  overlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: width,
+    height: height,
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
+  },
+  controlsOverlay: {
+    position: "absolute",
+    bottom: 400,
+    left: 0,
+    right: 0,
     paddingHorizontal: 20,
-    paddingVertical: 30,
-    borderRadius: 20,
-    margin: 10,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     padding: 40,
+    backgroundColor: Colors.dark.background,
   },
   loadingText: {
     color: "white",
@@ -302,12 +349,17 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 30,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderRadius: 15,
   },
   timeText: {
     color: "white",
     fontSize: 14,
     minWidth: 45,
     textAlign: "center",
+    fontWeight: "600",
   },
   progressBarContainer: {
     flex: 1,
@@ -335,34 +387,56 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.dark.primary,
     borderRadius: 8,
     marginLeft: -8,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   buttonsContainer: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+    borderRadius: 15,
   },
   speedButton: {
     backgroundColor: "rgba(255, 255, 255, 0.2)",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
     borderRadius: 20,
-    minWidth: 50,
+    minWidth: 60,
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.3)",
   },
   speedText: {
     color: "white",
-    fontSize: 14,
-    fontWeight: "600",
+    fontSize: 15,
+    fontWeight: "700",
   },
   playButton: {
     backgroundColor: Colors.dark.primary,
-    width: 70,
-    height: 70,
-    borderRadius: 35,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     justifyContent: "center",
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+    elevation: 8,
   },
   spacer: {
-    width: 50,
+    width: 60,
   },
 });
