@@ -113,6 +113,7 @@ alwaysApply: true
 - **認証**: Supabase Authを使用してユーザー認証を管理
 - **リアルタイム機能**: Supabase Realtimeを使用してリアルタイムデータ同期
 - **ファイルストレージ**: Supabase Storageを使用して動画・音声・画像ファイルを管理
+- **データベーススキーマ**: テーブル構造やリレーションシップを確認する際は、必ず`docs/db_schema.md`を参照する
 - **API設計**:
   - REST APIの代わりにSupabaseクライアントのメソッドを使用
   - データベース操作は`supabase.from().select()`, `supabase.from().insert()`等を使用
