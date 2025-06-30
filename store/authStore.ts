@@ -4,11 +4,11 @@ import { create } from "zustand";
 
 export interface Profile {
   id: string;
-  username: string | null;
-  full_name: string | null;
+  username: string;
   avatar_url: string | null;
   bio: string | null;
   created_at: string;
+  updated_at: string;
 }
 
 interface AuthState {
@@ -18,12 +18,14 @@ interface AuthState {
   loading: boolean;
   initialized: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, username?: string) => Promise<void>;
+  signUp: (email: string, password: string, username: string) => Promise<void>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<Profile>) => Promise<void>;
   initialize: () => Promise<void>;
   setLoading: (loading: boolean) => void;
   loadProfile: (userId: string) => Promise<void>;
+  checkUsernameAvailability: (username: string) => Promise<boolean>;
+  createUserProfile: (userId: string, username: string) => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -57,26 +59,49 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  signUp: async (email: string, password: string, username?: string) => {
+  signUp: async (email: string, password: string, username: string) => {
     try {
       set({ loading: true });
+
+      // ユーザー名の重複チェック
+      const isUsernameAvailable = await get().checkUsernameAvailability(
+        username
+      );
+      if (!isUsernameAvailable) {
+        throw new Error("このユーザー名は既に使用されています");
+      }
+
+      // Supabase Authでユーザー作成
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            username: username.trim(),
+          },
+        },
       });
 
       if (error) throw error;
 
-      // サインアップ成功時にプロフィールを作成
-      if (data.user && username) {
-        const { error: profileError } = await supabase.from("profiles").insert({
-          id: data.user.id,
-          username,
-          full_name: username,
-        });
+      if (data.user) {
+        // プロフィール作成は必須処理
+        // 失敗した場合はサインアップ全体を失敗扱いにする
+        try {
+          await get().createUserProfile(data.user.id, username.trim());
+          console.log("プロフィールが正常に作成されました");
 
-        if (profileError) {
+          // プロフィール情報を読み込み
+          if (data.user.email_confirmed_at) {
+            // メール確認済みの場合はプロフィールも読み込む
+            await get().loadProfile(data.user.id);
+          }
+        } catch (profileError) {
           console.error("Profile creation error:", profileError);
+          // プロフィール作成に失敗した場合はサインアップ全体を失敗扱いにする
+          throw new Error(
+            "アカウント作成中にエラーが発生しました。もう一度お試しください。"
+          );
         }
       }
     } catch (error) {
@@ -84,6 +109,43 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       throw error;
     } finally {
       set({ loading: false });
+    }
+  },
+
+  createUserProfile: async (userId: string, username: string) => {
+    try {
+      // プロフィールが既に存在するかチェック
+      const { data: existingProfile, error: checkError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("id", userId)
+        .single();
+
+      // 既に存在する場合は作成をスキップ
+      if (existingProfile) {
+        console.log("プロフィールは既に存在します");
+        return;
+      }
+
+      // プロフィールを作成
+      const { error: insertError } = await supabase.from("profiles").insert({
+        id: userId,
+        username: username,
+        avatar_url: null,
+        bio: null,
+      });
+
+      if (insertError) {
+        console.error("Profile insert error:", insertError);
+        throw new Error(
+          "プロフィールの作成に失敗しました。もう一度お試しください。"
+        );
+      }
+
+      console.log("プロフィールが正常に作成されました:", { userId, username });
+    } catch (error) {
+      console.error("Create profile error:", error);
+      throw error;
     }
   },
 
@@ -113,7 +175,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       const { data, error } = await supabase
         .from("profiles")
-        .update(updates)
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString(),
+        })
         .eq("id", user.id)
         .select()
         .single();
@@ -139,17 +204,41 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         throw error;
       }
 
-      set({ profile: data });
+      if (data) {
+        set({ profile: data });
+      } else {
+        // プロフィールが存在しない場合の処理
+        console.log("プロフィールが見つかりません:", userId);
+        set({ profile: null });
+      }
     } catch (error) {
       console.error("Load profile error:", error);
-      // プロフィールが存在しない場合は作成
-      if (!get().profile) {
-        await supabase.from("profiles").insert({
-          id: userId,
-          username: null,
-          full_name: null,
-        });
+      set({ profile: null });
+    }
+  },
+
+  checkUsernameAvailability: async (username: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("username", username.trim())
+        .single();
+
+      if (error && error.code === "PGRST116") {
+        // レコードが見つからない場合は利用可能
+        return true;
       }
+
+      if (error) {
+        throw error;
+      }
+
+      // レコードが見つかった場合は既に使用されている
+      return false;
+    } catch (error) {
+      console.error("Username availability check error:", error);
+      return false;
     }
   },
 
@@ -187,9 +276,26 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           profile: session?.user ? get().profile : null,
         });
 
-        // ログイン時にプロフィールを読み込み
-        if (session?.user && event === "SIGNED_IN") {
+        // ログイン時またはメール確認時にプロフィールを読み込み
+        if (
+          session?.user &&
+          (event === "SIGNED_IN" || event === "TOKEN_REFRESHED")
+        ) {
           await get().loadProfile(session.user.id);
+
+          // プロフィールが存在しない場合、メタデータからユーザー名を取得して作成
+          const currentProfile = get().profile;
+          if (!currentProfile && session.user.user_metadata?.username) {
+            try {
+              await get().createUserProfile(
+                session.user.id,
+                session.user.user_metadata.username
+              );
+              await get().loadProfile(session.user.id);
+            } catch (profileError) {
+              console.error("Auto profile creation failed:", profileError);
+            }
+          }
         }
 
         // ログアウト時にプロフィールをクリア

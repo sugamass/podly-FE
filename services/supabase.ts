@@ -27,97 +27,220 @@ export interface Database {
       profiles: {
         Row: {
           id: string;
-          username: string | null;
-          full_name: string | null;
+          username: string;
           avatar_url: string | null;
           bio: string | null;
           created_at: string;
+          updated_at: string;
         };
         Insert: {
           id: string;
-          username?: string | null;
-          full_name?: string | null;
+          username: string;
           avatar_url?: string | null;
           bio?: string | null;
           created_at?: string;
+          updated_at?: string;
         };
         Update: {
           id?: string;
-          username?: string | null;
-          full_name?: string | null;
+          username?: string;
           avatar_url?: string | null;
           bio?: string | null;
-          created_at?: string;
-        };
-      };
-      videos: {
-        Row: {
-          id: string;
-          title: string;
-          description: string | null;
-          video_url: string;
-          thumbnail_url: string | null;
-          user_id: string;
-          created_at: string;
-          likes_count: number;
-          comments_count: number;
-        };
-        Insert: {
-          id?: string;
-          title: string;
-          description?: string | null;
-          video_url: string;
-          thumbnail_url?: string | null;
-          user_id: string;
-          created_at?: string;
-          likes_count?: number;
-          comments_count?: number;
-        };
-        Update: {
-          id?: string;
-          title?: string;
-          description?: string | null;
-          video_url?: string;
-          thumbnail_url?: string | null;
-          user_id?: string;
-          created_at?: string;
-          likes_count?: number;
-          comments_count?: number;
+          updated_at?: string;
         };
       };
       podcasts: {
         Row: {
           id: string;
           title: string;
-          description: string | null;
-          audio_url: string;
-          thumbnail_url: string | null;
-          user_id: string;
+          summary: string | null;
+          script_content: string;
+          audio_url: string | null;
+          duration: number | null;
+          genre_id: string | null;
+          creator_id: string | null;
+          source_urls: string[] | null;
+          speakers: string[] | null;
+          bgm_id: string | null;
+          published_at: string | null;
           created_at: string;
-          likes_count: number;
-          duration: number;
+          updated_at: string;
+          like_count: number | null;
+          streams: number | null;
+          save_count: number | null;
+          situation: string | null;
+          voices: string[] | null;
         };
         Insert: {
           id?: string;
           title: string;
-          description?: string | null;
-          audio_url: string;
-          thumbnail_url?: string | null;
-          user_id: string;
+          summary?: string | null;
+          script_content: string;
+          audio_url?: string | null;
+          duration?: number | null;
+          genre_id?: string | null;
+          creator_id?: string | null;
+          source_urls?: string[] | null;
+          speakers?: string[] | null;
+          bgm_id?: string | null;
+          published_at?: string | null;
           created_at?: string;
-          likes_count?: number;
-          duration?: number;
+          updated_at?: string;
+          like_count?: number | null;
+          streams?: number | null;
+          save_count?: number | null;
+          situation?: string | null;
+          voices?: string[] | null;
         };
         Update: {
           id?: string;
           title?: string;
-          description?: string | null;
-          audio_url?: string;
-          thumbnail_url?: string | null;
-          user_id?: string;
+          summary?: string | null;
+          script_content?: string;
+          audio_url?: string | null;
+          duration?: number | null;
+          genre_id?: string | null;
+          creator_id?: string | null;
+          source_urls?: string[] | null;
+          speakers?: string[] | null;
+          bgm_id?: string | null;
+          published_at?: string | null;
           created_at?: string;
-          likes_count?: number;
-          duration?: number;
+          updated_at?: string;
+          like_count?: number | null;
+          streams?: number | null;
+          save_count?: number | null;
+          situation?: string | null;
+          voices?: string[] | null;
+        };
+      };
+      genres: {
+        Row: {
+          id: string;
+          name: string;
+          description: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          description?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          description?: string | null;
+          created_at?: string;
+        };
+      };
+      likes: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          podcast_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id?: string | null;
+          podcast_id?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string | null;
+          podcast_id?: string | null;
+          created_at?: string;
+        };
+      };
+      saves: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          podcast_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id?: string | null;
+          podcast_id?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string | null;
+          podcast_id?: string | null;
+          created_at?: string;
+        };
+      };
+      follows: {
+        Row: {
+          id: string;
+          follower_id: string | null;
+          following_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          follower_id?: string | null;
+          following_id?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          follower_id?: string | null;
+          following_id?: string | null;
+          created_at?: string;
+        };
+      };
+      play_history: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          podcast_id: string | null;
+          progress: number;
+          completed: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id?: string | null;
+          podcast_id?: string | null;
+          progress?: number;
+          completed?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string | null;
+          podcast_id?: string | null;
+          progress?: number;
+          completed?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      bgm: {
+        Row: {
+          id: string;
+          name: string;
+          description: string | null;
+          file_url: string | null;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          description?: string | null;
+          file_url?: string | null;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          description?: string | null;
+          file_url?: string | null;
         };
       };
     };
