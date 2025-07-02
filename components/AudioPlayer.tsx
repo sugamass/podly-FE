@@ -25,6 +25,7 @@ interface AudioPlayerProps {
   uri: string;
   imageUrl: string;
   isActive: boolean;
+  onTogglePlayPause?: () => void;
 }
 
 const { width, height } = Dimensions.get("window");
@@ -33,6 +34,7 @@ export default function AudioPlayer({
   uri,
   imageUrl,
   isActive,
+  onTogglePlayPause,
 }: AudioPlayerProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [localIsPlaying, setLocalIsPlaying] = useState(false);
@@ -177,39 +179,6 @@ export default function AudioPlayer({
     }
   };
 
-  const handleSeek = async (position: number) => {
-    if (!isInitialized || !progress.duration) return;
-
-    const seekTime = (position / 100) * progress.duration;
-    await TrackPlayer.seekTo(seekTime);
-  };
-
-  const handleSpeedChange = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-
-    const speeds = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
-    const currentIndex = speeds.indexOf(playbackRate);
-    const nextIndex = (currentIndex + 1) % speeds.length;
-    const newSpeed = speeds[nextIndex];
-
-    setPlaybackRate(newSpeed);
-  };
-
-  const formatTime = (timeInSeconds: number) => {
-    const minutes = Math.floor(timeInSeconds / 60);
-    const seconds = Math.floor(timeInSeconds % 60);
-    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
-  };
-
-  const getPlaybackRateText = () => {
-    return `${playbackRate}x`;
-  };
-
-  const progressPercentage =
-    progress.duration && progress.duration > 0
-      ? (progress.position / progress.duration) * 100
-      : 0;
-
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -220,7 +189,11 @@ export default function AudioPlayer({
   }
 
   return (
-    <View style={styles.container}>
+    <TouchableOpacity
+      style={styles.container}
+      activeOpacity={1}
+      onPress={handlePlayPause}
+    >
       {/* Background Image */}
       <Image
         source={{ uri: imageUrl }}
@@ -231,65 +204,18 @@ export default function AudioPlayer({
       {/* Dark Overlay for better contrast */}
       <View style={styles.overlay} />
 
-      {/* Controls Overlay */}
-      <View style={styles.controlsOverlay}>
-        {/* Progress Bar */}
-        <View style={styles.progressContainer}>
-          <Text style={styles.timeText}>
-            {formatTime(progress.position || 0)}
-          </Text>
-          <View style={styles.progressBarContainer}>
-            <TouchableOpacity
-              style={styles.progressBar}
-              onPress={(event) => {
-                const { locationX } = event.nativeEvent;
-                const progressBarWidth = width * 0.7;
-                const newProgress = (locationX / progressBarWidth) * 100;
-                handleSeek(Math.max(0, Math.min(100, newProgress)));
-              }}
-            >
-              <View
-                style={[
-                  styles.progressFill,
-                  { width: `${progressPercentage}%` },
-                ]}
-              />
-              <View
-                style={[
-                  styles.progressThumb,
-                  {
-                    left: `${Math.max(0, Math.min(100, progressPercentage))}%`,
-                  },
-                ]}
-              />
-            </TouchableOpacity>
-          </View>
-          <Text style={styles.timeText}>
-            {formatTime(progress.duration || 0)}
-          </Text>
+      {/* Pause Icon - Show when paused */}
+      {playbackState.state === State.Paused && (
+        <View style={styles.pauseIconContainer}>
+          <Ionicons
+            name="pause"
+            size={80}
+            color="white"
+            style={styles.pauseIcon}
+          />
         </View>
-
-        {/* Control Buttons */}
-        <View style={styles.buttonsContainer}>
-          <TouchableOpacity
-            style={styles.speedButton}
-            onPress={handleSpeedChange}
-          >
-            <Text style={styles.speedText}>{getPlaybackRateText()}</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.playButton} onPress={handlePlayPause}>
-            <Ionicons
-              name={playbackState.state === State.Playing ? "pause" : "play"}
-              size={40}
-              color="white"
-            />
-          </TouchableOpacity>
-
-          <View style={styles.spacer} />
-        </View>
-      </View>
-    </View>
+      )}
+    </TouchableOpacity>
   );
 }
 
@@ -313,13 +239,6 @@ const styles = StyleSheet.create({
     width: width,
     height: height,
     backgroundColor: "rgba(0, 0, 0, 0.4)",
-  },
-  controlsOverlay: {
-    position: "absolute",
-    bottom: 400,
-    left: 0,
-    right: 0,
-    paddingHorizontal: 20,
   },
   loadingContainer: {
     flex: 1,
@@ -345,98 +264,26 @@ const styles = StyleSheet.create({
   controlsContainer: {
     width: "100%",
   },
-  progressContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 30,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    borderRadius: 15,
-  },
-  timeText: {
-    color: "white",
-    fontSize: 14,
-    minWidth: 45,
-    textAlign: "center",
-    fontWeight: "600",
-  },
-  progressBarContainer: {
-    flex: 1,
-    marginHorizontal: 15,
-  },
-  progressBar: {
-    height: 20,
-    backgroundColor: "rgba(255, 255, 255, 0.3)",
-    borderRadius: 10,
-    position: "relative",
-    justifyContent: "center",
-  },
-  progressFill: {
-    height: 4,
-    backgroundColor: Colors.dark.primary,
-    borderRadius: 2,
+  pauseIconContainer: {
     position: "absolute",
-    top: 8,
-  },
-  progressThumb: {
-    position: "absolute",
-    top: 2,
-    width: 16,
-    height: 16,
-    backgroundColor: Colors.dark.primary,
-    borderRadius: 8,
-    marginLeft: -8,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  buttonsContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    paddingVertical: 20,
-    paddingHorizontal: 20,
-    borderRadius: 15,
-  },
-  speedButton: {
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
-    minWidth: 60,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.3)",
-  },
-  speedText: {
-    color: "white",
-    fontSize: 15,
-    fontWeight: "700",
-  },
-  playButton: {
-    backgroundColor: Colors.dark.primary,
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    top: height / 2 - 50,
+    left: width / 2 - 50,
+    width: 100,
+    height: 100,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    borderRadius: 50,
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 4,
     },
     shadowOpacity: 0.3,
-    shadowRadius: 4.65,
+    shadowRadius: 6,
     elevation: 8,
   },
-  spacer: {
-    width: 60,
+  pauseIcon: {
+    opacity: 0.9,
   },
 });

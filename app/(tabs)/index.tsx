@@ -50,24 +50,30 @@ export default function FeedScreen() {
           isActive={index === activePodcastIndex}
         />
 
-        <PodcastInfo
-          title={item.title}
-          host={item.host}
-          duration={item.duration}
-          description={item.description}
-          category={item.category}
-          tags={item.tags}
-        />
+        <View pointerEvents="box-none" style={styles.overlayContent}>
+          <View pointerEvents="auto">
+            <PodcastInfo
+              title={item.title}
+              host={item.host}
+              duration={item.duration}
+              description={item.description}
+              category={item.category}
+              tags={item.tags}
+            />
+          </View>
 
-        <PodcastActions
-          podcastId={item.id}
-          hostId={item.host.id}
-          hostAvatar={item.host.avatar}
-          likes={item.likes}
-          comments={item.comments}
-          shares={item.shares}
-          onCommentPress={() => handleCommentPress(item.id)}
-        />
+          <View pointerEvents="auto">
+            <PodcastActions
+              podcastId={item.id}
+              hostId={item.host.id}
+              hostAvatar={item.host.avatar}
+              likes={item.likes}
+              comments={item.comments}
+              shares={item.shares}
+              onCommentPress={() => handleCommentPress(item.id)}
+            />
+          </View>
+        </View>
       </View>
     );
   };
@@ -156,5 +162,14 @@ const styles = StyleSheet.create({
     width: 20,
     backgroundColor: Colors.dark.primary,
     marginTop: 5,
+  },
+  overlayContent: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: "space-between",
+    padding: 10,
   },
 });
