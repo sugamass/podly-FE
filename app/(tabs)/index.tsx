@@ -4,6 +4,7 @@ import PodcastActions from "@/components/PodcastActions";
 import PodcastInfo from "@/components/PodcastInfo";
 import Colors from "@/constants/Colors";
 import { usePodcastStore } from "@/store/podcastStore";
+import { useFocusEffect } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useRef, useState } from "react";
 import {
@@ -14,6 +15,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import TrackPlayer from "react-native-track-player";
 
 const { height } = Dimensions.get("window");
 
@@ -24,6 +26,16 @@ export default function FeedScreen() {
   const [showComments, setShowComments] = useState(false);
   const [selectedPodcastId, setSelectedPodcastId] = useState("");
   const flatListRef = useRef<FlatList>(null);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      return () => {
+        TrackPlayer.pause().catch((error) => {
+          console.error("音声停止エラー:", error);
+        });
+      };
+    }, [])
+  );
 
   const viewabilityConfig = {
     itemVisiblePercentThreshold: 50,

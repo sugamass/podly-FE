@@ -105,7 +105,7 @@ export default function PodcastActions({
 const styles = StyleSheet.create({
   container: {
     position: "absolute",
-    right: 10,
+    right: 4,
     bottom: 160,
     alignItems: "center",
   },
