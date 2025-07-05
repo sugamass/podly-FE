@@ -29,7 +29,7 @@ export default function EditProfileScreen() {
   const [newAvatarUri, setNewAvatarUri] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     username: profile?.username || "",
-    fullName: profile?.full_name || "",
+    fullName: profile?.display_name || "",
     bio: profile?.bio || "",
   });
 
@@ -82,7 +82,7 @@ export default function EditProfileScreen() {
 
       const updates = {
         username: formData.username.trim(),
-        full_name: formData.fullName.trim() || null,
+        display_name: formData.fullName.trim() || null,
         bio: formData.bio.trim() || null,
         avatar_url: finalAvatarUrl || null,
       };

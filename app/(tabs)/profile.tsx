@@ -9,10 +9,10 @@ import { Image } from "expo-image";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
-  Alert,
   Dimensions,
   FlatList,
   RefreshControl,
+  SafeAreaView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -58,23 +58,6 @@ export default function ProfileScreen() {
     }
   };
 
-  const handleSignOut = () => {
-    Alert.alert("ログアウト", "ログアウトしてもよろしいですか？", [
-      { text: "キャンセル", style: "cancel" },
-      {
-        text: "ログアウト",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            await signOut();
-          } catch (error) {
-            Alert.alert("エラー", "ログアウトに失敗しました");
-          }
-        },
-      },
-    ]);
-  };
-
   const handleEditProfile = () => {
     router.push("/edit-profile");
   };
@@ -101,20 +84,14 @@ export default function ProfileScreen() {
   // アプリレベルで認証チェックしているため、この画面では認証済みユーザーのみが表示される
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.settingsButton} onPress={handleSignOut}>
-          <Ionicons name="log-out" size={24} color={Colors.dark.text} />
-        </TouchableOpacity>
-      </View>
-
+    <SafeAreaView style={styles.container}>
       <View style={styles.profileSection}>
         <Image
           source={{ uri: profile?.avatar_url || currentUser.avatar }}
           style={styles.avatar}
         />
         <Text style={styles.name}>
-          {profile?.full_name ||
+          {profile?.display_name ||
             profile?.username ||
             user?.email ||
             currentUser.fullName}
@@ -221,7 +198,7 @@ export default function ProfileScreen() {
           </View>
         )}
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -230,76 +207,64 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.dark.background,
   },
-  header: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    padding: 15,
-  },
-  settingsButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.dark.card,
-    justifyContent: "center",
-    alignItems: "center",
-  },
   profileSection: {
     alignItems: "center",
     paddingHorizontal: 20,
-    marginBottom: 20,
+    marginBottom: 15,
   },
   avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    marginBottom: 15,
-    borderWidth: 3,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    marginBottom: 10,
+    borderWidth: 2,
     borderColor: Colors.dark.primary,
   },
   name: {
     color: Colors.dark.text,
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: "bold",
   },
   username: {
     color: Colors.dark.subtext,
-    fontSize: 16,
-    marginBottom: 15,
+    fontSize: 14,
+    marginBottom: 10,
   },
   bio: {
     color: Colors.dark.text,
     textAlign: "center",
-    marginBottom: 20,
-    lineHeight: 20,
+    marginBottom: 15,
+    lineHeight: 18,
+    fontSize: 12,
   },
   statsContainer: {
     flexDirection: "row",
     justifyContent: "space-around",
     width: "100%",
-    marginBottom: 20,
+    marginBottom: 15,
   },
   statItem: {
     alignItems: "center",
   },
   statValue: {
     color: Colors.dark.text,
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "bold",
   },
   statLabel: {
     color: Colors.dark.subtext,
-    fontSize: 14,
+    fontSize: 12,
   },
   statDivider: {
     width: 1,
-    height: 30,
+    height: 25,
     backgroundColor: Colors.dark.border,
   },
   editButton: {
     borderWidth: 1,
     borderColor: Colors.dark.primary,
-    paddingVertical: 8,
-    paddingHorizontal: 30,
+    paddingVertical: 6,
+    paddingHorizontal: 25,
     borderRadius: 20,
   },
   editButtonText: {
