@@ -8,7 +8,6 @@ import {
   Platform,
   ScrollView,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -197,10 +196,7 @@ export default function CreateAudioScreen() {
     <SafeAreaView style={{ flex: 1, backgroundColor: Colors.dark.background }}>
       <Stack.Screen
         options={{
-          title: "音声を生成",
-          headerStyle: { backgroundColor: Colors.dark.background },
-          headerTintColor: Colors.dark.text,
-          headerTitleStyle: { fontWeight: "bold" },
+          headerShown: false,
         }}
       />
 
@@ -212,31 +208,31 @@ export default function CreateAudioScreen() {
           style={{ flex: 1, padding: 20 }}
           showsVerticalScrollIndicator={false}
         >
-          {/* ヘッダーセクション */}
-          <View style={{ marginBottom: 32 }}>
+          {/* 戻るボタン */}
+          <TouchableOpacity
+            style={{
+              alignSelf: "flex-start",
+              paddingVertical: 8,
+              paddingHorizontal: 12,
+              marginBottom: 20,
+              backgroundColor: Colors.dark.card,
+              borderRadius: 8,
+              flexDirection: "row",
+              alignItems: "center",
+            }}
+            onPress={() => router.back()}
+          >
+            <Ionicons name="arrow-back" size={20} color={Colors.dark.text} />
             <Text
               style={{
-                fontSize: 24,
-                fontWeight: "bold",
+                marginLeft: 8,
                 color: Colors.dark.text,
-                textAlign: "center",
-                marginBottom: 8,
-              }}
-            >
-              🎤 音声生成設定
-            </Text>
-            <Text
-              style={{
                 fontSize: 16,
-                color: Colors.dark.subtext,
-                textAlign: "center",
-                lineHeight: 22,
               }}
             >
-              ボイスと音質を選択して
-              {"\n"}高品質な音声を生成します
+              戻る
             </Text>
-          </View>
+          </TouchableOpacity>
 
           {/* ボイス選択セクション */}
           <View
@@ -522,57 +518,6 @@ export default function CreateAudioScreen() {
               ))}
             </View>
           )}
-
-          {/* 原稿編集セクション */}
-          <View
-            style={{
-              backgroundColor: Colors.dark.card,
-              borderRadius: 16,
-              padding: 20,
-              marginBottom: 24,
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 18,
-                fontWeight: "bold",
-                color: Colors.dark.text,
-                marginBottom: 16,
-              }}
-            >
-              📝 原稿編集
-            </Text>
-
-            <TextInput
-              style={{
-                backgroundColor: Colors.dark.background,
-                borderRadius: 12,
-                padding: 16,
-                color: Colors.dark.text,
-                fontSize: 16,
-                borderWidth: 1,
-                borderColor: Colors.dark.border,
-                minHeight: 200,
-                textAlignVertical: "top",
-              }}
-              placeholder="原稿を編集できます..."
-              placeholderTextColor={Colors.dark.subtext}
-              value={script}
-              onChangeText={setScript}
-              multiline
-            />
-
-            <Text
-              style={{
-                fontSize: 12,
-                color: Colors.dark.subtext,
-                textAlign: "right",
-                marginTop: 8,
-              }}
-            >
-              {script.length}文字
-            </Text>
-          </View>
 
           {/* アクションボタン */}
           <View style={{ flexDirection: "row", gap: 12, marginBottom: 32 }}>

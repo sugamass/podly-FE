@@ -118,6 +118,12 @@ alwaysApply: true
   - REST APIの代わりにSupabaseクライアントのメソッドを使用
   - データベース操作は`supabase.from().select()`, `supabase.from().insert()`等を使用
   - 認証が必要な操作では、適切なRow Level Security (RLS)ポリシーを設定
+- **例外: 外部API使用**:
+  - **原稿生成**: Supabaseではなくアプリケーションサーバー側で用意されたAPIを使用
+  - **音声生成**: Supabaseではなくアプリケーションサーバー側で用意されたAPIを使用
+  - **実装場所**: 外部API連携は`services/`フォルダ内に専用のサービスファイルを作成（例: `services/scriptGenerator.ts`, `services/audioGenerator.ts`）
+  - **エラーハンドリング**: アプリケーションサーバーAPIの接続エラーや制限に対する適切なエラーハンドリングを実装
+  - **設定管理**: APIエンドポイントやAPIキーは環境変数として管理し、コードに直接記述しない
 
 ### 10. データベースマイグレーション・責務分離
 - **重要**: データベースマイグレーションファイル（*.sql）やスキーマ変更はフロントエンドの責務ではない

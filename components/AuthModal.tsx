@@ -6,9 +6,8 @@ import React, { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  KeyboardAvoidingView,
   Modal,
-  Platform,
+  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -231,175 +230,168 @@ export function AuthModal({
     <Modal
       visible={visible}
       animationType="slide"
-      presentationStyle="pageSheet"
+      presentationStyle="fullScreen"
       onRequestClose={allowClose ? handleClose : undefined}
     >
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-      >
-        <View style={styles.container}>
-          {/* Header */}
-          <View style={styles.header}>
-            {allowClose ? (
-              <TouchableOpacity onPress={handleClose}>
+      <SafeAreaView style={styles.container}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.content}>
+            {allowClose && (
+              <TouchableOpacity
+                onPress={handleClose}
+                style={styles.closeButton}
+              >
                 <Ionicons name="close" size={24} color={Colors.dark.text} />
               </TouchableOpacity>
-            ) : (
-              <View style={{ width: 24 }} />
             )}
-            <Text style={styles.headerTitle}>
-              {isSignUp ? "アカウント作成" : "ログイン"}
+            <Text style={styles.title}>
+              {isSignUp ? "Podlyへようこそ" : "おかえりなさい"}
             </Text>
-            <View style={{ width: 24 }} />
-          </View>
+            <Text style={styles.subtitle}>
+              {isSignUp
+                ? "新しいアカウントを作成してください"
+                : "アカウントにログインしてください"}
+            </Text>
 
-          <ScrollView style={styles.scrollView}>
-            <View style={styles.content}>
-              <Text style={styles.title}>
-                {isSignUp ? "Podlyへようこそ" : "おかえりなさい"}
-              </Text>
-              <Text style={styles.subtitle}>
-                {isSignUp
-                  ? "新しいアカウントを作成してください"
-                  : "アカウントにログインしてください"}
-              </Text>
-
-              {/* Username field (signup only) */}
-              {isSignUp && (
-                <View style={styles.inputContainer}>
-                  <Text style={styles.inputLabel}>ユーザー名</Text>
-                  <View style={styles.usernameInputContainer}>
-                    <TextInput
-                      style={[
-                        styles.textInput,
-                        username.length >= 3 &&
-                          usernameAvailable === true &&
-                          styles.textInputSuccess,
-                        username.length >= 3 &&
-                          usernameAvailable === false &&
-                          styles.textInputError,
-                      ]}
-                      placeholder="ユーザー名を入力（3文字以上、英数字_のみ）"
-                      placeholderTextColor={Colors.dark.inactive}
-                      value={username}
-                      onChangeText={setUsername}
-                      autoCapitalize="none"
-                      autoCorrect={false}
-                    />
-                    {username.length >= 3 && (
-                      <View style={styles.usernameStatus}>
-                        {usernameCheckLoading ? (
-                          <ActivityIndicator
-                            size="small"
-                            color={Colors.dark.primary}
-                          />
-                        ) : usernameAvailable === true ? (
-                          <Ionicons
-                            name="checkmark-circle"
-                            size={20}
-                            color="#10B981"
-                          />
-                        ) : usernameAvailable === false ? (
-                          <Ionicons
-                            name="close-circle"
-                            size={20}
-                            color="#EF4444"
-                          />
-                        ) : null}
-                      </View>
-                    )}
-                  </View>
-                  {username.length >= 3 && usernameAvailable === false && (
-                    <Text style={styles.usernameErrorText}>
-                      このユーザー名は既に使用されています
-                    </Text>
-                  )}
-                  {username.length >= 3 && usernameAvailable === true && (
-                    <Text style={styles.usernameSuccessText}>
-                      このユーザー名は利用可能です
-                    </Text>
+            {/* Username field (signup only) */}
+            {isSignUp && (
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>ユーザー名</Text>
+                <View style={styles.usernameInputContainer}>
+                  <TextInput
+                    style={[
+                      styles.textInput,
+                      username.length >= 3 &&
+                        usernameAvailable === true &&
+                        styles.textInputSuccess,
+                      username.length >= 3 &&
+                        usernameAvailable === false &&
+                        styles.textInputError,
+                    ]}
+                    placeholder="ユーザー名を入力（3文字以上、英数字_のみ）"
+                    placeholderTextColor={Colors.dark.inactive}
+                    value={username}
+                    onChangeText={setUsername}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                  {username.length >= 3 && (
+                    <View style={styles.usernameStatus}>
+                      {usernameCheckLoading ? (
+                        <ActivityIndicator
+                          size="small"
+                          color={Colors.dark.primary}
+                        />
+                      ) : usernameAvailable === true ? (
+                        <Ionicons
+                          name="checkmark-circle"
+                          size={20}
+                          color="#10B981"
+                        />
+                      ) : usernameAvailable === false ? (
+                        <Ionicons
+                          name="close-circle"
+                          size={20}
+                          color="#EF4444"
+                        />
+                      ) : null}
+                    </View>
                   )}
                 </View>
-              )}
-
-              {/* Email field */}
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>メールアドレス</Text>
-                <TextInput
-                  style={styles.textInput}
-                  placeholder="メールアドレスを入力"
-                  placeholderTextColor={Colors.dark.inactive}
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                />
+                {username.length >= 3 && usernameAvailable === false && (
+                  <Text style={styles.usernameErrorText}>
+                    このユーザー名は既に使用されています
+                  </Text>
+                )}
+                {username.length >= 3 && usernameAvailable === true && (
+                  <Text style={styles.usernameSuccessText}>
+                    このユーザー名は利用可能です
+                  </Text>
+                )}
               </View>
+            )}
 
-              {/* Password field */}
+            {/* Email field */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>メールアドレス</Text>
+              <TextInput
+                style={styles.textInput}
+                placeholder="メールアドレスを入力"
+                placeholderTextColor={Colors.dark.inactive}
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            </View>
+
+            {/* Password field */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>パスワード</Text>
+              <TextInput
+                style={styles.textInput}
+                placeholder="パスワードを入力（6文字以上）"
+                placeholderTextColor={Colors.dark.inactive}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+              />
+            </View>
+
+            {/* Confirm password field (signup only) */}
+            {isSignUp && (
               <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>パスワード</Text>
+                <Text style={styles.inputLabel}>パスワード確認</Text>
                 <TextInput
                   style={styles.textInput}
-                  placeholder="パスワードを入力（6文字以上）"
+                  placeholder="パスワードを再入力"
                   placeholderTextColor={Colors.dark.inactive}
-                  value={password}
-                  onChangeText={setPassword}
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
                   secureTextEntry
                 />
               </View>
+            )}
 
-              {/* Confirm password field (signup only) */}
-              {isSignUp && (
-                <View style={styles.inputContainer}>
-                  <Text style={styles.inputLabel}>パスワード確認</Text>
-                  <TextInput
-                    style={styles.textInput}
-                    placeholder="パスワードを再入力"
-                    placeholderTextColor={Colors.dark.inactive}
-                    value={confirmPassword}
-                    onChangeText={setConfirmPassword}
-                    secureTextEntry
-                  />
-                </View>
-              )}
-
-              {/* Submit button */}
-              <TouchableOpacity
-                style={[
-                  styles.submitButton,
-                  loading && styles.submitButtonDisabled,
-                ]}
-                onPress={handleAuth}
-                disabled={loading}
-              >
-                {loading ? (
-                  <ActivityIndicator color={Colors.dark.text} />
-                ) : (
-                  <Text style={styles.submitButtonText}>
-                    {isSignUp ? "アカウント作成" : "ログイン"}
-                  </Text>
-                )}
-              </TouchableOpacity>
-
-              {/* Toggle mode */}
-              <TouchableOpacity
-                onPress={toggleMode}
-                disabled={loading}
-                style={styles.toggleButton}
-              >
-                <Text style={styles.toggleText}>
-                  {isSignUp
-                    ? "すでにアカウントをお持ちですか？ ログイン"
-                    : "アカウントをお持ちでない方は アカウント作成"}
+            {/* Submit button */}
+            <TouchableOpacity
+              style={[
+                styles.submitButton,
+                loading && styles.submitButtonDisabled,
+              ]}
+              onPress={handleAuth}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color={Colors.dark.text} />
+              ) : (
+                <Text style={styles.submitButtonText}>
+                  {isSignUp ? "アカウント作成" : "ログイン"}
                 </Text>
-              </TouchableOpacity>
-            </View>
-          </ScrollView>
-        </View>
-      </KeyboardAvoidingView>
+              )}
+            </TouchableOpacity>
+
+            {/* Toggle mode */}
+            <TouchableOpacity
+              onPress={toggleMode}
+              disabled={loading}
+              style={styles.toggleButton}
+            >
+              <Text style={styles.toggleText}>
+                {isSignUp
+                  ? "すでにアカウントをお持ちですか？ ログイン"
+                  : "アカウントをお持ちでない方は アカウント作成"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
     </Modal>
   );
 }
@@ -422,10 +414,10 @@ export function AuthGuard({ children, fallback }: AuthGuardProps) {
 
   if (!initialized || loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <SafeAreaView style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={Colors.dark.primary} />
         <Text style={styles.loadingText}>読み込み中...</Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
@@ -433,7 +425,7 @@ export function AuthGuard({ children, fallback }: AuthGuardProps) {
     return (
       <>
         {fallback || (
-          <View style={styles.authRequiredContainer}>
+          <SafeAreaView style={styles.authRequiredContainer}>
             <Text style={styles.authRequiredTitle}>ログインが必要です</Text>
             <TouchableOpacity
               style={styles.authRequiredButton}
@@ -441,7 +433,7 @@ export function AuthGuard({ children, fallback }: AuthGuardProps) {
             >
               <Text style={styles.authRequiredButtonText}>ログイン</Text>
             </TouchableOpacity>
-          </View>
+          </SafeAreaView>
         )}
         <AuthModal
           visible={showAuthModal}
@@ -459,6 +451,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.dark.background,
   },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 32,
+  },
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -472,12 +471,15 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
   },
-  scrollView: {
+  content: {
     flex: 1,
     paddingHorizontal: 24,
+    paddingVertical: 16,
   },
-  content: {
-    paddingVertical: 32,
+  closeButton: {
+    alignSelf: "flex-end",
+    padding: 8,
+    marginBottom: 16,
   },
   title: {
     color: Colors.dark.text,
