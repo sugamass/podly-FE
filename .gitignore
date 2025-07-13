@@ -37,3 +37,7 @@ yarn-error.*
 .vercel
 
 .env
+
+.mcp.json
+
+.cursor/mcp.json

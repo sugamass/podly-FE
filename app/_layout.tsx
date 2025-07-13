@@ -71,6 +71,13 @@ export default function RootLayout() {
     }
   }, [loaded, initialized, isAuthenticated]);
 
+  // ログアウト時にもAuthModalを確実に表示する
+  useEffect(() => {
+    if (initialized && !isAuthenticated && !authLoading) {
+      setShowAuthModal(true);
+    }
+  }, [initialized, isAuthenticated, authLoading]);
+
   // TrackPlayer service is now registered in index.js
 
   if (!loaded || !initialized) {
@@ -128,7 +135,7 @@ export default function RootLayout() {
         </View>
         <AuthModal
           visible={showAuthModal}
-          forceSignUp={true}
+          forceSignUp={false}
           allowClose={false}
           onClose={() => {
             // 認証が完了するまでモーダルを閉じることはできません

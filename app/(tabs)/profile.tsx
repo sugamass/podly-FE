@@ -1,4 +1,5 @@
 import Colors from "@/constants/Colors";
+import { ProfileMenuModal } from "@/components/ProfileMenuModal";
 import { useAuth } from "@/hooks/useAuth";
 import { podcasts } from "@/mocks/podcasts";
 import { currentUser } from "@/mocks/users";
@@ -32,6 +33,7 @@ const tabs = [
 export default function ProfileScreen() {
   const [activeTab, setActiveTab] = useState("podcasts");
   const [refreshing, setRefreshing] = useState(false);
+  const [showMenuModal, setShowMenuModal] = useState(false);
   const { user, profile, isAuthenticated, signOut } = useAuth();
   const { initialize, loadProfile } = useAuthStore();
 
@@ -85,6 +87,16 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <View style={styles.headerSpacer} />
+        <TouchableOpacity
+          style={styles.menuButton}
+          onPress={() => setShowMenuModal(true)}
+        >
+          <Ionicons name="menu" size={24} color={Colors.dark.text} />
+        </TouchableOpacity>
+      </View>
+
       <View style={styles.profileSection}>
         <Image
           source={{ uri: profile?.avatar_url || currentUser.avatar }}
@@ -198,6 +210,11 @@ export default function ProfileScreen() {
           </View>
         )}
       </View>
+
+      <ProfileMenuModal
+        visible={showMenuModal}
+        onClose={() => setShowMenuModal(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -206,6 +223,21 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.dark.background,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 8,
+  },
+  headerSpacer: {
+    width: 24, // メニューボタンと同じ幅でバランスを取る
+  },
+  menuButton: {
+    padding: 8,
+    borderRadius: 8,
   },
   profileSection: {
     alignItems: "center",

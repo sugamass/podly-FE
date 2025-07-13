@@ -26,18 +26,20 @@ export interface Database {
     Tables: {
       profiles: {
         Row: {
-          id: string;
+          id: string; // UUID (auth.users.id との連携のため)
           username: string;
           avatar_url: string | null;
           bio: string | null;
+          display_name: string | null;
           created_at: string;
           updated_at: string;
         };
         Insert: {
-          id: string;
+          id: string; // UUID (auth.users.id との連携のため)
           username: string;
           avatar_url?: string | null;
           bio?: string | null;
+          display_name?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -46,6 +48,7 @@ export interface Database {
           username?: string;
           avatar_url?: string | null;
           bio?: string | null;
+          display_name?: string | null;
           updated_at?: string;
         };
       };
@@ -58,7 +61,7 @@ export interface Database {
           audio_url: string | null;
           duration: number | null;
           genre_id: string | null;
-          creator_id: string | null;
+          creator_id: string | null; // UUID (profiles.id参照)
           source_urls: string[] | null;
           speakers: string[] | null;
           bgm_id: string | null;
@@ -72,14 +75,14 @@ export interface Database {
           voices: string[] | null;
         };
         Insert: {
-          id?: string;
+          id: string;
           title: string;
           summary?: string | null;
           script_content: string;
           audio_url?: string | null;
           duration?: number | null;
           genre_id?: string | null;
-          creator_id?: string | null;
+          creator_id?: string | null; // UUID (profiles.id参照)
           source_urls?: string[] | null;
           speakers?: string[] | null;
           bgm_id?: string | null;
@@ -100,7 +103,7 @@ export interface Database {
           audio_url?: string | null;
           duration?: number | null;
           genre_id?: string | null;
-          creator_id?: string | null;
+          creator_id?: string | null; // UUID (profiles.id参照)
           source_urls?: string[] | null;
           speakers?: string[] | null;
           bgm_id?: string | null;
@@ -122,7 +125,7 @@ export interface Database {
           created_at: string;
         };
         Insert: {
-          id?: string;
+          id: string;
           name: string;
           description?: string | null;
           created_at?: string;
@@ -137,19 +140,19 @@ export interface Database {
       likes: {
         Row: {
           id: string;
-          user_id: string | null;
+          user_id: string | null; // UUID (profiles.id参照)
           podcast_id: string | null;
           created_at: string;
         };
         Insert: {
-          id?: string;
-          user_id?: string | null;
+          id: string;
+          user_id?: string | null; // UUID (profiles.id参照)
           podcast_id?: string | null;
           created_at?: string;
         };
         Update: {
           id?: string;
-          user_id?: string | null;
+          user_id?: string | null; // UUID (profiles.id参照)
           podcast_id?: string | null;
           created_at?: string;
         };
@@ -157,19 +160,19 @@ export interface Database {
       saves: {
         Row: {
           id: string;
-          user_id: string | null;
+          user_id: string | null; // UUID (profiles.id参照)
           podcast_id: string | null;
           created_at: string;
         };
         Insert: {
-          id?: string;
-          user_id?: string | null;
+          id: string;
+          user_id?: string | null; // UUID (profiles.id参照)
           podcast_id?: string | null;
           created_at?: string;
         };
         Update: {
           id?: string;
-          user_id?: string | null;
+          user_id?: string | null; // UUID (profiles.id参照)
           podcast_id?: string | null;
           created_at?: string;
         };
@@ -177,27 +180,27 @@ export interface Database {
       follows: {
         Row: {
           id: string;
-          follower_id: string | null;
-          following_id: string | null;
+          follower_id: string | null; // UUID (profiles.id参照)
+          following_id: string | null; // UUID (profiles.id参照)
           created_at: string;
         };
         Insert: {
-          id?: string;
-          follower_id?: string | null;
-          following_id?: string | null;
+          id: string;
+          follower_id?: string | null; // UUID (profiles.id参照)
+          following_id?: string | null; // UUID (profiles.id参照)
           created_at?: string;
         };
         Update: {
           id?: string;
-          follower_id?: string | null;
-          following_id?: string | null;
+          follower_id?: string | null; // UUID (profiles.id参照)
+          following_id?: string | null; // UUID (profiles.id参照)
           created_at?: string;
         };
       };
       play_history: {
         Row: {
           id: string;
-          user_id: string | null;
+          user_id: string | null; // UUID (profiles.id参照)
           podcast_id: string | null;
           progress: number;
           completed: boolean;
@@ -205,8 +208,8 @@ export interface Database {
           updated_at: string;
         };
         Insert: {
-          id?: string;
-          user_id?: string | null;
+          id: string;
+          user_id?: string | null; // UUID (profiles.id参照)
           podcast_id?: string | null;
           progress?: number;
           completed?: boolean;
@@ -215,7 +218,7 @@ export interface Database {
         };
         Update: {
           id?: string;
-          user_id?: string | null;
+          user_id?: string | null; // UUID (profiles.id参照)
           podcast_id?: string | null;
           progress?: number;
           completed?: boolean;
@@ -231,7 +234,7 @@ export interface Database {
           file_url: string | null;
         };
         Insert: {
-          id?: string;
+          id: string;
           name: string;
           description?: string | null;
           file_url?: string | null;
