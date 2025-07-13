@@ -1,10 +1,9 @@
 import Colors from "@/constants/Colors";
-import { usePodcastStore } from "@/store/podcastStore";
 import { formatNumber } from "@/utils/formatNumber";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
-import React from "react";
+import React, { useState } from "react";
 import {
   Platform,
   StyleSheet,
@@ -21,6 +20,8 @@ interface PodcastActionsProps {
   comments: number;
   shares: number;
   onCommentPress: () => void;
+  isLiked: boolean;
+  isSaved: boolean;
 }
 
 export default function PodcastActions({
@@ -32,17 +33,18 @@ export default function PodcastActions({
   shares,
   onCommentPress,
 }: PodcastActionsProps) {
-  const { toggleLike, isLiked, toggleSave, isSaved } = usePodcastStore();
+  const [isLiked, setIsLiked] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
 
   const handleLike = () => {
-    toggleLike(podcastId);
+    setIsLiked(!isLiked);
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
   };
 
   const handleSave = () => {
-    toggleSave(podcastId);
+    setIsSaved(!isSaved);
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
@@ -55,9 +57,6 @@ export default function PodcastActions({
     }
   };
 
-  const liked = isLiked(podcastId);
-  const saved = isSaved(podcastId);
-
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.avatarContainer}>
@@ -69,9 +68,9 @@ export default function PodcastActions({
 
       <TouchableOpacity style={styles.actionButton} onPress={handleLike}>
         <Ionicons
-          name={liked ? "heart" : "heart-outline"}
+          name={isLiked ? "heart" : "heart-outline"}
           size={28}
-          color={liked ? Colors.dark.primary : Colors.dark.text}
+          color={isLiked ? Colors.dark.primary : Colors.dark.text}
         />
         <Text style={styles.actionText}>{formatNumber(likes)}</Text>
       </TouchableOpacity>
@@ -92,9 +91,9 @@ export default function PodcastActions({
 
       <TouchableOpacity style={styles.actionButton} onPress={handleSave}>
         <Ionicons
-          name={saved ? "bookmark" : "bookmark-outline"}
+          name={isSaved ? "bookmark" : "bookmark-outline"}
           size={28}
-          color={saved ? Colors.dark.highlight : Colors.dark.text}
+          color={isSaved ? Colors.dark.highlight : Colors.dark.text}
         />
         <Text style={styles.actionText}>Save</Text>
       </TouchableOpacity>

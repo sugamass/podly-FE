@@ -38,19 +38,13 @@ export default function AudioPlayer({
 }: AudioPlayerProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [localIsPlaying, setLocalIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
   const playbackState = usePlaybackState();
   const progress = useProgress();
 
-  const {
-    isPlaying,
-    setIsPlaying,
-    currentTime,
-    setCurrentTime,
-    duration,
-    setDuration,
-    playbackRate,
-    setPlaybackRate,
-  } = usePodcastStore();
+  const { isPlaying, setIsPlaying, playbackRate, setPlaybackRate } =
+    usePodcastStore();
 
   const { isInitialized, setupPlayer: initializePlayer } =
     useTrackPlayerStore();

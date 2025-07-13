@@ -6,7 +6,7 @@ import Colors from "@/constants/Colors";
 import { usePodcastStore } from "@/store/podcastStore";
 import { useFocusEffect } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useRef, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import {
   Dimensions,
   FlatList,
@@ -20,11 +20,10 @@ import TrackPlayer from "react-native-track-player";
 const { height } = Dimensions.get("window");
 
 export default function FeedScreen() {
-  const { podcasts, currentPodcastIndex, setCurrentPodcastIndex } =
-    usePodcastStore();
-  const [activePodcastIndex, setActivePodcastIndex] = useState(0);
-  const [showComments, setShowComments] = useState(false);
-  const [selectedPodcastId, setSelectedPodcastId] = useState("");
+  const { podcasts } = usePodcastStore();
+  const [activePodcastIndex, setActivePodcastIndex] = useState<number>(0);
+  const [showComments, setShowComments] = useState<boolean>(false);
+  const [selectedPodcastId, setSelectedPodcastId] = useState<string>("");
   const flatListRef = useRef<FlatList>(null);
 
   useFocusEffect(
@@ -44,51 +43,57 @@ export default function FeedScreen() {
   const onViewableItemsChanged = useRef(({ viewableItems }: any) => {
     if (viewableItems.length > 0) {
       setActivePodcastIndex(viewableItems[0].index);
-      setCurrentPodcastIndex(viewableItems[0].index);
     }
   }).current;
 
-  const handleCommentPress = (podcastId: string) => {
+  const handleCommentPress = useCallback((podcastId: string) => {
     setSelectedPodcastId(podcastId);
     setShowComments(true);
-  };
+  }, []);
 
-  const renderItem = ({ item, index }: any) => {
-    return (
-      <View style={styles.podcastContainer}>
-        <AudioPlayer
-          uri={item.audioUrl}
-          imageUrl={item.imageUrl}
-          isActive={index === activePodcastIndex}
-        />
+  const renderItem = useCallback(
+    ({ item, index }: any) => {
+      console.log("item", item);
+      console.log("index", index);
+      return (
+        <View style={styles.podcastContainer}>
+          <AudioPlayer
+            uri={item.audioUrl}
+            imageUrl={item.imageUrl}
+            isActive={index === activePodcastIndex}
+          />
 
-        <View pointerEvents="box-none" style={styles.overlayContent}>
-          <View pointerEvents="auto">
-            <PodcastInfo
-              title={item.title}
-              host={item.host}
-              duration={item.duration}
-              description={item.description}
-              category={item.category}
-              tags={item.tags}
-            />
-          </View>
+          <View pointerEvents="box-none" style={styles.overlayContent}>
+            <View pointerEvents="auto">
+              <PodcastInfo
+                title={item.title}
+                host={item.host}
+                duration={item.duration}
+                description={item.description}
+                category={item.category}
+                tags={item.tags}
+              />
+            </View>
 
-          <View pointerEvents="auto">
-            <PodcastActions
-              podcastId={item.id}
-              hostId={item.host.id}
-              hostAvatar={item.host.avatar}
-              likes={item.likes}
-              comments={item.comments}
-              shares={item.shares}
-              onCommentPress={() => handleCommentPress(item.id)}
-            />
+            <View pointerEvents="auto">
+              <PodcastActions
+                podcastId={item.id}
+                hostId={item.host.id}
+                hostAvatar={item.host.avatar}
+                likes={item.likes}
+                comments={item.comments}
+                shares={item.shares}
+                onCommentPress={() => handleCommentPress(item.id)}
+                isLiked={item.isLiked}
+                isSaved={item.isSaved}
+              />
+            </View>
           </View>
         </View>
-      </View>
-    );
-  };
+      );
+    },
+    [activePodcastIndex, handleCommentPress] // 依存配列に activePodcastIndex と handleCommentPress を指定
+  );
 
   return (
     <View style={styles.container}>
@@ -120,11 +125,12 @@ export default function FeedScreen() {
         maxToRenderPerBatch={1}
         windowSize={3}
         initialNumToRender={1}
-        getItemLayout={(data, index) => ({
-          length: height,
-          offset: height * index,
-          index,
-        })}
+        initialScrollIndex={0}
+        // getItemLayout={(_, index) => ({
+        //   length: height,
+        //   offset: height * index,
+        //   index,
+        // })}
       />
 
       {showComments && (

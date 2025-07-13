@@ -17,11 +17,13 @@ export interface Podcast {
   category: string;
   tags: string[];
   timestamp: number;
+  isLiked: boolean;
+  isSaved: boolean;
 }
 
 export const podcasts: Podcast[] = [
   {
-    id: "1",
+    id: "c8a1f4e7-2b9d-4f6a-7e3c-5b8f1a4d9c2e",
     audioUrl:
       "https://podly-dev-audio-files.s3.amazonaws.com/tmp_full_hls/82257d80_d42a_4aa3_9566_3aee75fa3b5f.m3u8",
     imageUrl:
@@ -43,9 +45,11 @@ export const podcasts: Podcast[] = [
     category: "Technology",
     tags: ["AI", "Business", "Technology", "Digital Transformation"],
     timestamp: Date.now() - 3600000,
+    isLiked: false,
+    isSaved: false,
   },
   {
-    id: "2",
+    id: "a7f2b8e4-9c3d-4f7a-8b1e-5d6c9a2f4e8b",
     audioUrl:
       "https://podly-dev-audio-files.s3.amazonaws.com/tmp_full_hls/4db2d4ef_a15f_43dd_9e16_797eeac12d15.m3u8",
     imageUrl:
@@ -67,5 +71,7 @@ export const podcasts: Podcast[] = [
     category: "Finance",
     tags: ["ESG", "Investing", "Sustainability", "Finance"],
     timestamp: Date.now() - 86400000,
+    isLiked: false,
+    isSaved: false,
   },
 ];
