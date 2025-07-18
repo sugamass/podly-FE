@@ -6,7 +6,7 @@ import Colors from "@/constants/Colors";
 import { usePodcastStore } from "@/store/podcastStore";
 import { useFocusEffect } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useRef, useState, useEffect } from "react";
 import {
   Dimensions,
   FlatList,
@@ -20,11 +20,15 @@ import TrackPlayer from "react-native-track-player";
 const { height } = Dimensions.get("window");
 
 export default function FeedScreen() {
-  const { podcasts } = usePodcastStore();
+  const { podcasts, switchToPodcast } = usePodcastStore();
   const [activePodcastIndex, setActivePodcastIndex] = useState<number>(0);
   const [showComments, setShowComments] = useState<boolean>(false);
   const [selectedPodcastId, setSelectedPodcastId] = useState<string>("");
   const flatListRef = useRef<FlatList>(null);
+
+  useEffect(() => {
+    switchToPodcast(0);
+  }, [switchToPodcast]);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -42,7 +46,9 @@ export default function FeedScreen() {
 
   const onViewableItemsChanged = useRef(({ viewableItems }: any) => {
     if (viewableItems.length > 0) {
-      setActivePodcastIndex(viewableItems[0].index);
+      const newIndex = viewableItems[0].index;
+      setActivePodcastIndex(newIndex);
+      switchToPodcast(newIndex);
     }
   }).current;
 
@@ -58,12 +64,12 @@ export default function FeedScreen() {
       return (
         <View style={styles.podcastContainer}>
           <AudioPlayer
-            uri={item.audioUrl}
+            podcastId={item.id}
             imageUrl={item.imageUrl}
             isActive={index === activePodcastIndex}
           />
 
-          <View pointerEvents="box-none" style={styles.overlayContent}>
+          <View pointerEvents="box-none">
             <View pointerEvents="auto">
               <PodcastInfo
                 title={item.title}
@@ -180,14 +186,5 @@ const styles = StyleSheet.create({
     width: 20,
     backgroundColor: Colors.dark.primary,
     marginTop: 5,
-  },
-  overlayContent: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: "space-between",
-    padding: 10,
   },
 });
