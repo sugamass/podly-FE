@@ -2,7 +2,7 @@ import { AuthModal } from "@/components/AuthModal";
 import Colors from "@/constants/Colors";
 import { useAuth } from "@/hooks/useAuth";
 import { cleanupTrackPlayerService } from "@/services/TrackPlayerService";
-import { useTrackPlayerStore } from "@/store/trackPlayerStore";
+import { audioPlayerService } from "@/services/AudioPlayerService";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
@@ -23,7 +23,6 @@ export default function RootLayout() {
     ...FontAwesome.font,
   });
 
-  const { setupPlayer } = useTrackPlayerStore();
   const { loading: authLoading, initialized, isAuthenticated } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
 
@@ -40,16 +39,17 @@ export default function RootLayout() {
     }
   }, [loaded, initialized]);
 
-  // Initialize TrackPlayer on app start
+  // Initialize AudioPlayerService on app start
   useEffect(() => {
-    setupPlayer();
-  }, [setupPlayer]);
+    audioPlayerService.initialize();
+  }, []);
 
   // 🔧 FIX: アプリケーションの状態変化を監視してクリーンアップ
   useEffect(() => {
     const handleAppStateChange = (nextAppState: string) => {
       if (nextAppState === "background" || nextAppState === "inactive") {
         cleanupTrackPlayerService();
+        audioPlayerService.cleanup();
       }
     };
 
@@ -61,6 +61,7 @@ export default function RootLayout() {
     return () => {
       subscription?.remove();
       cleanupTrackPlayerService();
+      audioPlayerService.cleanup();
     };
   }, []);
 

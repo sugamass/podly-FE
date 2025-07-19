@@ -49,7 +49,7 @@ export const useTrackPlayerStore = create<TrackPlayerState>((set, get) => ({
           Capability.Pause,
           Capability.SeekTo,
         ],
-        progressUpdateEventInterval: 1,
+        // progressUpdateEventInterval を削除：リスナーが無いため不要
       });
 
       set({ isInitialized: true });

@@ -6,25 +6,57 @@ import Colors from "@/constants/Colors";
 import { usePodcastStore } from "@/store/podcastStore";
 import { useFocusEffect } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useCallback, useRef, useState, useEffect } from "react";
+import React, { useCallback, useRef, useState, useEffect, useMemo } from "react";
 import {
   Dimensions,
   FlatList,
+  Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
 import TrackPlayer from "react-native-track-player";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { getItemHeight, getScreenDimensions } from "@/utils/screenUtils";
 
-const { height } = Dimensions.get("window");
+const { width } = Dimensions.get("window");
 
 export default function FeedScreen() {
   const { podcasts, switchToPodcast } = usePodcastStore();
   const [activePodcastIndex, setActivePodcastIndex] = useState<number>(0);
   const [showComments, setShowComments] = useState<boolean>(false);
   const [selectedPodcastId, setSelectedPodcastId] = useState<string>("");
+  const [tabBarHeight, setTabBarHeight] = useState<number>(0);
   const flatListRef = useRef<FlatList>(null);
+  const safeAreaInsets = useSafeAreaInsets();
+
+  const itemHeight = useMemo(() => {
+    const height = getItemHeight(safeAreaInsets, tabBarHeight);
+    console.log('📏 Item Height:', height, 'Tab Bar Height:', tabBarHeight);
+    return height;
+  }, [safeAreaInsets, tabBarHeight]);
+
+  // コンテナの高さを測定してタブバーの高さを算出
+  const handleContainerLayout = useCallback((event: any) => {
+    const { height: containerHeight } = event.nativeEvent.layout;
+    const { height: windowHeight } = Dimensions.get('window');
+    
+    // コンテナの高さと画面の高さの差からタブバーの高さを算出
+    const calculatedTabBarHeight = windowHeight - containerHeight - safeAreaInsets.top;
+    const finalTabBarHeight = Math.max(0, calculatedTabBarHeight);
+    
+    console.log('🔍 Height Debug:', {
+      windowHeight,
+      containerHeight,
+      safeAreaTop: safeAreaInsets.top,
+      safeAreaBottom: safeAreaInsets.bottom,
+      calculatedTabBarHeight,
+      finalTabBarHeight
+    });
+    
+    setTabBarHeight(finalTabBarHeight);
+  }, [safeAreaInsets.top, safeAreaInsets.bottom]);
 
   useEffect(() => {
     switchToPodcast(0);
@@ -62,7 +94,7 @@ export default function FeedScreen() {
       console.log("item", item);
       console.log("index", index);
       return (
-        <View style={styles.podcastContainer}>
+        <View style={[styles.podcastContainer, { height: itemHeight }]}>
           <AudioPlayer
             podcastId={item.id}
             imageUrl={item.imageUrl}
@@ -98,11 +130,11 @@ export default function FeedScreen() {
         </View>
       );
     },
-    [activePodcastIndex, handleCommentPress] // 依存配列に activePodcastIndex と handleCommentPress を指定
+    [activePodcastIndex, handleCommentPress, itemHeight] // 依存配列に itemHeight を追加
   );
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} onLayout={handleContainerLayout}>
       <StatusBar style="light" />
 
       <View style={styles.tabsContainer}>
@@ -122,7 +154,7 @@ export default function FeedScreen() {
         keyExtractor={(item) => item.id}
         pagingEnabled
         showsVerticalScrollIndicator={false}
-        snapToInterval={height}
+        snapToInterval={itemHeight}
         snapToAlignment="start"
         decelerationRate="fast"
         viewabilityConfig={viewabilityConfig}
@@ -132,11 +164,11 @@ export default function FeedScreen() {
         windowSize={3}
         initialNumToRender={1}
         initialScrollIndex={0}
-        // getItemLayout={(_, index) => ({
-        //   length: height,
-        //   offset: height * index,
-        //   index,
-        // })}
+        getItemLayout={(_, index) => ({
+          length: itemHeight,
+          offset: itemHeight * index,
+          index,
+        })}
       />
 
       {showComments && (
@@ -156,7 +188,6 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.dark.background,
   },
   podcastContainer: {
-    height,
     backgroundColor: Colors.dark.background,
   },
   tabsContainer: {

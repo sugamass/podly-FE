@@ -1,4 +1,4 @@
-import TrackPlayer, { State, Track, RepeatMode } from 'react-native-track-player';
+import TrackPlayer, { State, Track, RepeatMode, Capability } from 'react-native-track-player';
 
 export interface PodcastTrack {
   id: string;
@@ -18,10 +18,34 @@ class AudioPlayerService {
     if (this.isInitialized) return;
     
     try {
-      await TrackPlayer.setupPlayer({
-        autoHandleInterruptions: true,
-        autoUpdateMetadata: true,
-      });
+      // 既に初期化されているかチェック
+      const activeTrackIndex = await TrackPlayer.getActiveTrackIndex().catch(() => null);
+      
+      if (activeTrackIndex === null) {
+        // まだ初期化されていない場合のみセットアップ
+        await TrackPlayer.setupPlayer({
+          autoHandleInterruptions: true,
+          autoUpdateMetadata: true,
+          waitForBuffer: true,
+        });
+        
+        // updateOptionsを設定（progressUpdateEventIntervalは不要）
+        await TrackPlayer.updateOptions({
+          capabilities: [
+            Capability.Play,
+            Capability.Pause,
+            Capability.SkipToNext,
+            Capability.SkipToPrevious,
+            Capability.SeekTo,
+          ],
+          compactCapabilities: [
+            Capability.Play,
+            Capability.Pause,
+            Capability.SeekTo,
+          ],
+        });
+      }
+      
       await TrackPlayer.setRepeatMode(RepeatMode.Off);
       this.isInitialized = true;
     } catch (error) {

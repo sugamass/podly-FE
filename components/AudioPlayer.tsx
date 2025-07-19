@@ -9,20 +9,23 @@ import {
   StyleSheet,
   TouchableOpacity,
   View,
+  ViewStyle,
 } from "react-native";
 
 interface AudioPlayerProps {
   podcastId: string;
   imageUrl: string;
   isActive: boolean;
+  style?: ViewStyle;
 }
 
-const { width, height } = Dimensions.get("window");
+const { width } = Dimensions.get("window");
 
 export default function AudioPlayer({
   podcastId,
   imageUrl,
   isActive,
+  style,
 }: AudioPlayerProps) {
   const { isPlaying, togglePlayPause, currentPlayingPodcastId } = usePodcastStore();
 
@@ -36,7 +39,7 @@ export default function AudioPlayer({
 
   return (
     <TouchableOpacity
-      style={styles.container}
+      style={[styles.container, style]}
       activeOpacity={1}
       onPress={handlePlayPause}
     >
@@ -68,7 +71,7 @@ export default function AudioPlayer({
 const styles = StyleSheet.create({
   container: {
     width: width,
-    height: height,
+    flex: 1,
     position: "relative",
   },
   backgroundImage: {
@@ -76,14 +79,14 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     width: width,
-    height: height,
+    height: "100%",
   },
   overlay: {
     position: "absolute",
     top: 0,
     left: 0,
     width: width,
-    height: height,
+    height: "100%",
     backgroundColor: "rgba(0, 0, 0, 0.4)",
   },
   loadingContainer: {
@@ -112,10 +115,12 @@ const styles = StyleSheet.create({
   },
   pauseIconContainer: {
     position: "absolute",
-    top: height / 2 - 50,
-    left: width / 2 - 50,
+    top: "50%",
+    left: "50%",
     width: 100,
     height: 100,
+    marginTop: -50,
+    marginLeft: -50,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "rgba(0, 0, 0, 0.7)",
