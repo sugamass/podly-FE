@@ -3,23 +3,27 @@ import { usePodcastStore } from "@/store/podcastStore";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
-import React from "react";
+import React, { useState } from "react";
 import {
   Dimensions,
   StyleSheet,
   TouchableOpacity,
   View,
   ViewStyle,
+  Text,
 } from "react-native";
 
 interface AudioPlayerProps {
   podcastId: string;
-  imageUrl: string;
+  imageUrl: string | null;
   isActive: boolean;
   style?: ViewStyle;
 }
 
 const { width } = Dimensions.get("window");
+
+// デフォルト画像URL
+const DEFAULT_IMAGE_URL = "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80";
 
 export default function AudioPlayer({
   podcastId,
@@ -28,6 +32,8 @@ export default function AudioPlayer({
   style,
 }: AudioPlayerProps) {
   const { isPlaying, togglePlayPause, currentPlayingPodcastId } = usePodcastStore();
+  const [imageError, setImageError] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   const handlePlayPause = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -36,6 +42,21 @@ export default function AudioPlayer({
 
   const isCurrentPodcast = currentPlayingPodcastId === podcastId;
   const showPauseIcon = isCurrentPodcast && !isPlaying;
+  
+  // 画像URLが存在しない場合はデフォルト画像を使用
+  const displayImageUrl = imageUrl || DEFAULT_IMAGE_URL;
+
+  // デバッグ情報をログ出力
+  React.useEffect(() => {
+    console.log('AudioPlayer Debug:', {
+      podcastId,
+      originalImageUrl: imageUrl,
+      displayImageUrl,
+      isActive,
+      imageError,
+      imageLoaded
+    });
+  }, [podcastId, imageUrl, displayImageUrl, isActive, imageError, imageLoaded]);
 
   return (
     <TouchableOpacity
@@ -45,13 +66,34 @@ export default function AudioPlayer({
     >
       {/* Background Image */}
       <Image
-        source={{ uri: imageUrl }}
+        source={{ uri: displayImageUrl }}
         style={styles.backgroundImage}
         contentFit="cover"
+        placeholder="https://via.placeholder.com/400x400/1a1a2e/ffffff?text=Loading"
+        onLoad={() => setImageLoaded(true)}
+        onError={(error) => {
+          console.error('Image load error:', error);
+          setImageError(true);
+        }}
       />
 
       {/* Dark Overlay for better contrast */}
       <View style={styles.overlay} />
+
+      {/* デバッグ情報表示（開発時のみ） */}
+      {!imageLoaded && !imageError && (
+        <View style={styles.debugContainer}>
+          <Text style={styles.debugText}>画像読み込み中...</Text>
+          <Text style={styles.debugText}>URL: {displayImageUrl}</Text>
+        </View>
+      )}
+
+      {imageError && (
+        <View style={styles.debugContainer}>
+          <Text style={styles.debugText}>画像読み込みエラー</Text>
+          <Text style={styles.debugText}>URL: {displayImageUrl}</Text>
+        </View>
+      )}
 
       {/* Pause Icon - Show when paused */}
       {showPauseIcon && (
@@ -136,5 +178,20 @@ const styles = StyleSheet.create({
   },
   pauseIcon: {
     opacity: 0.9,
+  },
+  debugContainer: {
+    position: "absolute",
+    top: 50,
+    left: 20,
+    right: 20,
+    backgroundColor: "rgba(255, 0, 0, 0.8)",
+    padding: 10,
+    borderRadius: 8,
+    zIndex: 10,
+  },
+  debugText: {
+    color: "white",
+    fontSize: 12,
+    marginBottom: 5,
   },
 });

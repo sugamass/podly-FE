@@ -15,6 +15,8 @@ import {
   Text,
   TouchableOpacity,
   View,
+  ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 import TrackPlayer from "react-native-track-player";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -23,7 +25,16 @@ import { getItemHeight, getScreenDimensions } from "@/utils/screenUtils";
 const { width } = Dimensions.get("window");
 
 export default function FeedScreen() {
-  const { podcasts, switchToPodcast } = usePodcastStore();
+  const { 
+    podcasts, 
+    switchToPodcast, 
+    isLoading, 
+    error, 
+    hasNextPage,
+    loadMorePodcasts,
+    refreshPodcasts,
+    useSupabaseData
+  } = usePodcastStore();
   const [activePodcastIndex, setActivePodcastIndex] = useState<number>(0);
   const [showComments, setShowComments] = useState<boolean>(false);
   const [selectedPodcastId, setSelectedPodcastId] = useState<string>("");
@@ -59,8 +70,29 @@ export default function FeedScreen() {
   }, [safeAreaInsets.top, safeAreaInsets.bottom]);
 
   useEffect(() => {
-    switchToPodcast(0);
-  }, [switchToPodcast]);
+    console.log('📱 App initialization:', {
+      useSupabaseData,
+      podcastsLength: podcasts.length,
+      isLoading,
+      error
+    });
+    
+    // Supabaseデータを取得（デフォルトで有効） - 一度だけ実行
+    if (useSupabaseData && podcasts.length === 0 && !isLoading && !error) {
+      console.log('🔄 Triggering refresh podcasts...');
+      refreshPodcasts().catch(err => {
+        console.error('❌ Refresh podcasts failed:', err);
+      });
+    }
+  }, [useSupabaseData, refreshPodcasts]); // 依存配列を簡素化
+  
+  // ポッドキャストが読み込まれた後の処理
+  useEffect(() => {
+    if (podcasts.length > 0) {
+      console.log('🎵 Podcasts loaded, switching to first podcast');
+      switchToPodcast(0);
+    }
+  }, [podcasts.length, switchToPodcast]);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -89,10 +121,25 @@ export default function FeedScreen() {
     setShowComments(true);
   }, []);
 
+  const handleRefresh = useCallback(async () => {
+    await refreshPodcasts();
+  }, [refreshPodcasts]);
+
+  const handleEndReached = useCallback(() => {
+    if (hasNextPage && !isLoading && useSupabaseData) {
+      loadMorePodcasts();
+    }
+  }, [hasNextPage, isLoading, useSupabaseData, loadMorePodcasts]);
+
   const renderItem = useCallback(
     ({ item, index }: any) => {
-      console.log("item", item);
-      console.log("index", index);
+      console.log("🎵 Rendering podcast item:", {
+        id: item.id,
+        title: item.title,
+        imageUrl: item.imageUrl,
+        index,
+        isActive: index === activePodcastIndex
+      });
       return (
         <View style={[styles.podcastContainer, { height: itemHeight }]}>
           <AudioPlayer
@@ -147,6 +194,37 @@ export default function FeedScreen() {
         </TouchableOpacity>
       </View>
 
+      {error && (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+          <Text style={styles.debugText}>
+            デバッグ情報: useSupabaseData={useSupabaseData ? 'true' : 'false'}, 
+            podcasts={podcasts.length}, isLoading={isLoading ? 'true' : 'false'}
+          </Text>
+          <TouchableOpacity style={styles.retryButton} onPress={handleRefresh}>
+            <Text style={styles.retryText}>再試行</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* ローディング表示（データが空で読み込み中の場合） */}
+      {isLoading && podcasts.length === 0 && (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={Colors.dark.primary} />
+          <Text style={styles.loadingText}>ポッドキャストを読み込み中...</Text>
+        </View>
+      )}
+
+      {/* データが空でローディングも完了している場合 */}
+      {!isLoading && podcasts.length === 0 && !error && (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>ポッドキャストが見つかりません</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={handleRefresh}>
+            <Text style={styles.retryText}>手動で再取得</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       <FlatList
         ref={flatListRef}
         data={podcasts}
@@ -164,11 +242,28 @@ export default function FeedScreen() {
         windowSize={3}
         initialNumToRender={1}
         initialScrollIndex={0}
+        onEndReached={handleEndReached}
+        onEndReachedThreshold={0.5}
+        refreshControl={
+          <RefreshControl
+            refreshing={isLoading && podcasts.length > 0}
+            onRefresh={handleRefresh}
+            tintColor={Colors.dark.primary}
+            colors={[Colors.dark.primary]}
+          />
+        }
         getItemLayout={(_, index) => ({
           length: itemHeight,
           offset: itemHeight * index,
           index,
         })}
+        ListFooterComponent={
+          isLoading && hasNextPage ? (
+            <View style={styles.loadingFooter}>
+              <ActivityIndicator size="small" color={Colors.dark.primary} />
+            </View>
+          ) : null
+        }
       />
 
       {showComments && (
@@ -217,5 +312,65 @@ const styles = StyleSheet.create({
     width: 20,
     backgroundColor: Colors.dark.primary,
     marginTop: 5,
+  },
+  errorContainer: {
+    position: 'absolute',
+    top: '50%',
+    left: 0,
+    right: 0,
+    zIndex: 20,
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    padding: 20,
+    marginHorizontal: 20,
+    borderRadius: 8,
+  },
+  errorText: {
+    color: Colors.dark.text,
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  debugText: {
+    color: Colors.dark.subtext,
+    fontSize: 12,
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  retryButton: {
+    backgroundColor: Colors.dark.primary,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  retryText: {
+    color: Colors.dark.text,
+    fontWeight: 'bold',
+  },
+  loadingFooter: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: Colors.dark.background,
+  },
+  loadingText: {
+    color: Colors.dark.text,
+    marginTop: 10,
+    fontSize: 16,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: Colors.dark.background,
+  },
+  emptyText: {
+    color: Colors.dark.subtext,
+    fontSize: 18,
+    textAlign: 'center',
   },
 });

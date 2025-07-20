@@ -4,6 +4,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Speak in Japanese.
 
+エラーなどが原因で、当初の方針で実装できない場合は、勝手に別の方針で実装するのではなく、ユーザーに別の方針で問題ないか確認するようにして。
+
 ## Project Overview
 
 **Podly** is a TikTok-style social media application for podcast content, built as an **ejected Expo React Native app**. The app combines video and podcast features in a modern, mobile-first interface with "Professional Minimalism" design theme.
