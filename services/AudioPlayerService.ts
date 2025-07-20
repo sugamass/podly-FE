@@ -1,4 +1,5 @@
 import TrackPlayer, { State, Track, RepeatMode, Capability } from 'react-native-track-player';
+import { TrackPlayerService } from './TrackPlayerService';
 
 export interface PodcastTrack {
   id: string;
@@ -45,6 +46,9 @@ class AudioPlayerService {
           ],
         });
       }
+      
+      // TrackPlayerServiceを初期化してイベントリスナーを設定
+      await TrackPlayerService();
       
       await TrackPlayer.setRepeatMode(RepeatMode.Off);
       this.isInitialized = true;

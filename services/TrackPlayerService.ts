@@ -9,6 +9,7 @@ export const TrackPlayerService = async () => {
   eventListeners.length = 0;
 
   eventListeners.push(
+    // Remote control events
     TrackPlayer.addEventListener(Event.RemotePlay, () => TrackPlayer.play()),
     TrackPlayer.addEventListener(Event.RemotePause, () => TrackPlayer.pause()),
     TrackPlayer.addEventListener(Event.RemoteStop, () => TrackPlayer.stop()),
@@ -20,7 +21,16 @@ export const TrackPlayerService = async () => {
     ),
     TrackPlayer.addEventListener(Event.RemotePrevious, () =>
       TrackPlayer.skipToPrevious()
-    )
+    ),
+    // Playback state events
+    TrackPlayer.addEventListener(Event.PlaybackState, (event) => {
+      // Handle playback state changes
+      console.log('Playback state changed:', event.state);
+    }),
+    TrackPlayer.addEventListener(Event.PlaybackActiveTrackChanged, (event) => {
+      // Handle active track changes
+      console.log('Active track changed:', event.index);
+    })
   );
 };
 
