@@ -18,6 +18,12 @@ interface PodcastState {
   // likedPodcasts: Set<string>;
   // savedPodcasts: Set<string>;
   
+  // タブ遷移関連の状態
+  wasPlayingBeforeTabSwitch: boolean;
+  shouldAutoResume: boolean;
+  isHomeTabFocused: boolean;
+  manuallyPaused: boolean;
+  
   // Supabase関連の状態
   isLoading: boolean;
   error: string | null;
@@ -34,6 +40,11 @@ interface PodcastState {
   // setCurrentTime: (time: number) => void;
   // setDuration: (duration: number) => void;
   setPlaybackRate: (rate: number) => void;
+  
+  // タブ遷移関連のアクション
+  setHomeTabFocused: (focused: boolean) => void;
+  savePlayingStateForTabSwitch: () => void;
+  tryAutoResumeOnTabFocus: () => void;
   
   // Supabase関連のアクション
   fetchPodcasts: (page?: number) => Promise<void>;
@@ -52,6 +63,12 @@ export const usePodcastStore = create<PodcastState>((set, get) => ({
   playbackRate: 1.0,
   likedPodcasts: new Set<string>(),
   savedPodcasts: new Set<string>(),
+  
+  // タブ遷移関連の初期状態
+  wasPlayingBeforeTabSwitch: false,
+  shouldAutoResume: false,
+  isHomeTabFocused: true,
+  manuallyPaused: false,
   
   // Supabase関連の初期状態
   isLoading: false, // 初期状態をfalseに戻す
@@ -85,6 +102,12 @@ export const usePodcastStore = create<PodcastState>((set, get) => ({
     
     if (!podcast) return;
 
+    // 同じポッドキャストの場合は処理をスキップ
+    if (state.currentPlayingPodcastId === podcast.id) {
+      set({ currentPodcastIndex: index });
+      return;
+    }
+
     const podcastTrack: PodcastTrack = {
       id: podcast.id,
       url: podcast.audioUrl || '',
@@ -94,13 +117,24 @@ export const usePodcastStore = create<PodcastState>((set, get) => ({
       duration: parseInt(podcast.duration.split(':')[0]) * 60 + parseInt(podcast.duration.split(':')[1]),
     };
 
+    // 先にcurrentPlayingPodcastIdを更新して、UIの切り替えを先行させる
+    set({
+      currentPodcastIndex: index,
+      currentPlayingPodcastId: podcast.id,
+    });
+
     const success = await audioPlayerService.switchTrack(podcastTrack);
     
     if (success) {
-      set({
-        currentPodcastIndex: index,
-        currentPlayingPodcastId: podcast.id,
+      set({ 
         isPlaying: true,
+        manuallyPaused: false // 新しいトラックの再生開始時は手動停止フラグをリセット
+      });
+    } else {
+      // 失敗した場合は前の状態に戻す
+      set({
+        currentPlayingPodcastId: state.currentPlayingPodcastId,
+        isPlaying: false,
       });
     }
   },
@@ -111,8 +145,14 @@ export const usePodcastStore = create<PodcastState>((set, get) => ({
     
     if (newIsPlaying) {
       audioPlayerService.play();
+      set({ manuallyPaused: false });
     } else {
       audioPlayerService.pause();
+      // 手動で停止した場合は自動再生フラグをリセット
+      set({ 
+        shouldAutoResume: false,
+        manuallyPaused: true 
+      });
     }
     
     set({ isPlaying: newIsPlaying });
@@ -133,6 +173,32 @@ export const usePodcastStore = create<PodcastState>((set, get) => ({
   setPlaybackRate: (rate: number) => {
     audioPlayerService.setPlaybackRate(rate);
     set({ playbackRate: rate });
+  },
+
+  // タブ遷移関連のメソッド
+  setHomeTabFocused: (focused: boolean) => {
+    set({ isHomeTabFocused: focused });
+  },
+
+  savePlayingStateForTabSwitch: () => {
+    const state = get();
+    if (state.currentPlayingPodcastId) {
+      set({
+        wasPlayingBeforeTabSwitch: state.isPlaying,
+        shouldAutoResume: state.isPlaying
+      });
+    }
+  },
+
+  tryAutoResumeOnTabFocus: () => {
+    const state = get();
+    if (state.shouldAutoResume && state.currentPlayingPodcastId && !state.isPlaying) {
+      audioPlayerService.play();
+      set({ 
+        isPlaying: true,
+        shouldAutoResume: false // 一度再生したらフラグをリセット
+      });
+    }
   },
 
   // Supabase関連のメソッド

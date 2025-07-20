@@ -1,4 +1,4 @@
-import TrackPlayer, { State, Track, RepeatMode, Capability } from 'react-native-track-player';
+import TrackPlayer, { State, Track, RepeatMode, Capability, Event } from 'react-native-track-player';
 import { TrackPlayerService } from './TrackPlayerService';
 
 export interface PodcastTrack {
@@ -14,6 +14,7 @@ class AudioPlayerService {
   private currentTrackId: string | null = null;
   private isInitialized: boolean = false;
   private isSwitching: boolean = false;
+  private stateUpdateCallback: ((isPlaying: boolean) => void) | null = null;
 
   async initialize(): Promise<void> {
     if (this.isInitialized) return;
@@ -50,6 +51,9 @@ class AudioPlayerService {
       // TrackPlayerServiceを初期化してイベントリスナーを設定
       await TrackPlayerService();
       
+      // 再生状態変更のイベントリスナーを追加
+      this.setupStateListeners();
+      
       await TrackPlayer.setRepeatMode(RepeatMode.Off);
       this.isInitialized = true;
     } catch (error) {
@@ -69,6 +73,9 @@ class AudioPlayerService {
         return true;
       }
 
+      // 現在の再生状態を確認
+      const wasPlaying = await this.getPlaybackState();
+
       await this.stopAndClear();
 
       const track: Track = {
@@ -81,6 +88,9 @@ class AudioPlayerService {
       };
 
       await TrackPlayer.add(track);
+      
+      // スムーズな切り替えのため、少し待機してから再生
+      await new Promise(resolve => setTimeout(resolve, 50));
       await TrackPlayer.play();
       
       this.currentTrackId = podcastTrack.id;
@@ -146,9 +156,34 @@ class AudioPlayerService {
     return this.currentTrackId === trackId;
   }
 
+  setupStateListeners(): void {
+    // 再生状態の変更を監視
+    TrackPlayer.addEventListener(Event.PlaybackState, (data) => {
+      const isPlaying = data.state === State.Playing;
+      if (this.stateUpdateCallback) {
+        this.stateUpdateCallback(isPlaying);
+      }
+    });
+  }
+
+  setStateUpdateCallback(callback: (isPlaying: boolean) => void): void {
+    this.stateUpdateCallback = callback;
+  }
+
+  async getPlaybackState(): Promise<boolean> {
+    try {
+      const state = await TrackPlayer.getPlaybackState();
+      return state.state === State.Playing;
+    } catch (error) {
+      console.log('Get playback state error:', error);
+      return false;
+    }
+  }
+
   async cleanup(): Promise<void> {
     try {
       await this.stopAndClear();
+      this.stateUpdateCallback = null;
       this.isInitialized = false;
     } catch (error) {
       console.log('Cleanup error:', error);

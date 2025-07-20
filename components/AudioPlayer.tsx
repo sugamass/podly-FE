@@ -31,9 +31,10 @@ export default function AudioPlayer({
   isActive,
   style,
 }: AudioPlayerProps) {
-  const { isPlaying, togglePlayPause, currentPlayingPodcastId } = usePodcastStore();
+  const { isPlaying, togglePlayPause, currentPlayingPodcastId, manuallyPaused } = usePodcastStore();
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [showPauseIcon, setShowPauseIcon] = useState(false);
 
   const handlePlayPause = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -41,10 +42,31 @@ export default function AudioPlayer({
   };
 
   const isCurrentPodcast = currentPlayingPodcastId === podcastId;
-  const showPauseIcon = isCurrentPodcast && !isPlaying;
   
   // 画像URLが存在しない場合はデフォルト画像を使用
   const displayImageUrl = imageUrl || DEFAULT_IMAGE_URL;
+
+  // 一時停止アイコンの表示制御（安定化）
+  React.useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout>;
+    
+    // 現在のポッドキャストで、アクティブで、再生中でない場合のみ表示
+    if (isCurrentPodcast && isActive && !isPlaying) {
+      // 手動で一時停止した場合は即座に表示、それ以外は少し遅延
+      const delay = manuallyPaused ? 0 : 150;
+      timeoutId = setTimeout(() => {
+        setShowPauseIcon(true);
+      }, delay);
+    } else {
+      setShowPauseIcon(false);
+    }
+
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [isCurrentPodcast, isActive, isPlaying, manuallyPaused]);
 
   // デバッグ情報をログ出力
   React.useEffect(() => {
@@ -54,9 +76,13 @@ export default function AudioPlayer({
       displayImageUrl,
       isActive,
       imageError,
-      imageLoaded
+      imageLoaded,
+      isCurrentPodcast,
+      isPlaying,
+      manuallyPaused,
+      showPauseIcon
     });
-  }, [podcastId, imageUrl, displayImageUrl, isActive, imageError, imageLoaded]);
+  }, [podcastId, imageUrl, displayImageUrl, isActive, imageError, imageLoaded, isCurrentPodcast, isPlaying, manuallyPaused, showPauseIcon]);
 
   return (
     <TouchableOpacity

@@ -21,6 +21,7 @@ import {
 import TrackPlayer from "react-native-track-player";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getItemHeight, getScreenDimensions } from "@/utils/screenUtils";
+import { audioPlayerService } from "@/services/AudioPlayerService";
 
 const { width } = Dimensions.get("window");
 
@@ -33,7 +34,9 @@ export default function FeedScreen() {
     hasNextPage,
     loadMorePodcasts,
     refreshPodcasts,
-    useSupabaseData
+    useSupabaseData,
+    tryAutoResumeOnTabFocus,
+    setIsPlaying
   } = usePodcastStore();
   const [activePodcastIndex, setActivePodcastIndex] = useState<number>(0);
   const [showComments, setShowComments] = useState<boolean>(false);
@@ -94,14 +97,29 @@ export default function FeedScreen() {
     }
   }, [podcasts.length, switchToPodcast]);
 
+  // AudioPlayerServiceの状態同期を設定
+  useEffect(() => {
+    audioPlayerService.setStateUpdateCallback(setIsPlaying);
+    
+    return () => {
+      audioPlayerService.setStateUpdateCallback(() => {});
+    };
+  }, [setIsPlaying]);
+
   useFocusEffect(
     React.useCallback(() => {
+      // ホームタブにフォーカスした時の処理
+      console.log('🏠 Home tab focused - attempting auto resume');
+      tryAutoResumeOnTabFocus();
+      
       return () => {
+        // ホームタブからフォーカスが外れた時の処理
+        console.log('🏠 Home tab unfocused - pausing audio');
         TrackPlayer.pause().catch((error) => {
           console.error("音声停止エラー:", error);
         });
       };
-    }, [])
+    }, [tryAutoResumeOnTabFocus])
   );
 
   const viewabilityConfig = {
