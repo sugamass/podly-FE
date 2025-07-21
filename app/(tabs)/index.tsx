@@ -36,7 +36,9 @@ export default function FeedScreen() {
     refreshPodcasts,
     useSupabaseData,
     tryAutoResumeOnTabFocus,
-    setIsPlaying
+    setIsPlaying,
+    loadUserLikedPodcasts,
+    loadUserSavedPodcasts
   } = usePodcastStore();
   const [activePodcastIndex, setActivePodcastIndex] = useState<number>(0);
   const [showComments, setShowComments] = useState<boolean>(false);
@@ -94,8 +96,17 @@ export default function FeedScreen() {
     if (podcasts.length > 0) {
       console.log('🎵 Podcasts loaded, switching to first podcast');
       switchToPodcast(0);
+      
+      // ユーザーのいいね・保存情報を読み込む
+      console.log('📊 Loading user liked and saved podcasts...');
+      loadUserLikedPodcasts().catch(err => {
+        console.error('❌ Failed to load user liked podcasts:', err);
+      });
+      loadUserSavedPodcasts().catch(err => {
+        console.error('❌ Failed to load user saved podcasts:', err);
+      });
     }
-  }, [podcasts.length, switchToPodcast]);
+  }, [podcasts.length, switchToPodcast, loadUserLikedPodcasts, loadUserSavedPodcasts]);
 
   // AudioPlayerServiceの状態同期を設定
   useEffect(() => {

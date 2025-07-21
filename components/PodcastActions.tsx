@@ -5,7 +5,7 @@ import { useAuthStore } from "@/store/authStore";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   Platform,
   StyleSheet,
@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   View,
   Alert,
+  Animated,
 } from "react-native";
 
 interface PodcastActionsProps {
@@ -36,18 +37,82 @@ export default function PodcastActions({
   shares,
   onCommentPress,
   isLiked: initialIsLiked,
+  isSaved: initialIsSaved,
 }: PodcastActionsProps) {
-  const [isSaved, setIsSaved] = useState(false);
-  
-  const { togglePodcastLike, podcasts } = usePodcastStore();
+  const { 
+    togglePodcastLike, 
+    togglePodcastSave, 
+    podcasts,
+    pendingLikeRequests,
+    pendingSaveRequests
+  } = usePodcastStore();
   const { user } = useAuthStore();
   
-  // 現在のポッドキャストの状態を取得（シンプルな実装）
+  // アニメーション用のref
+  const likeScaleAnim = useRef(new Animated.Value(1)).current;
+  const saveScaleAnim = useRef(new Animated.Value(1)).current;
+  
+  // アニメーション中状態管理
+  const [isLikeAnimating, setIsLikeAnimating] = useState(false);
+  const [isSaveAnimating, setIsSaveAnimating] = useState(false);
+  
+  // 現在のポッドキャストの状態を取得
   const currentPodcast = podcasts.find(p => p.id === podcastId);
   const isLiked = currentPodcast?.isLiked ?? initialIsLiked;
   const currentLikes = currentPodcast?.likes ?? likes;
+  const isSaved = currentPodcast?.isSaved ?? initialIsSaved;
+  const currentSaves = currentPodcast?.save_count ?? 0;
+  
+  // リクエスト進行中状態を取得
+  const isLikeRequestPending = pendingLikeRequests.has(podcastId);
+  const isSaveRequestPending = pendingSaveRequests.has(podcastId);
+
+  // アニメーション関数
+  const animateLike = () => {
+    setIsLikeAnimating(true);
+    
+    Animated.sequence([
+      Animated.timing(likeScaleAnim, {
+        toValue: 1.3,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+      Animated.timing(likeScaleAnim, {
+        toValue: 1,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setIsLikeAnimating(false); // 完了時にフラグリセット
+    });
+  };
+
+  const animateSave = () => {
+    setIsSaveAnimating(true);
+    
+    Animated.sequence([
+      Animated.timing(saveScaleAnim, {
+        toValue: 1.3,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+      Animated.timing(saveScaleAnim, {
+        toValue: 1,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setIsSaveAnimating(false); // 完了時にフラグリセット
+    });
+  };
 
   const handleLike = async () => {
+    // アニメーション中またはリクエスト進行中は早期リターン
+    if (isLikeAnimating || isLikeRequestPending) {
+      console.log('🚫 Like action blocked:', { isLikeAnimating, isLikeRequestPending });
+      return;
+    }
+    
     // ログイン状態チェック
     if (!user) {
       Alert.alert(
@@ -63,19 +128,59 @@ export default function PodcastActions({
       return;
     }
     
+    // OFF→ONの場合のみアニメーション実行
+    if (!isLiked) {
+      animateLike();
+    }
+    
     // ハプティクスフィードバック
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
     
-    // ストアの楽観的更新のみを使用（シンプル・高速）
-    togglePodcastLike(podcastId);
+    // ストアの重複排除機能付きトグル処理
+    const success = await togglePodcastLike(podcastId);
+    if (!success) {
+      console.log('🚫 Like toggle was blocked due to pending request');
+    }
   };
 
-  const handleSave = () => {
-    setIsSaved(!isSaved);
+  const handleSave = async () => {
+    // アニメーション中またはリクエスト進行中は早期リターン
+    if (isSaveAnimating || isSaveRequestPending) {
+      console.log('🚫 Save action blocked:', { isSaveAnimating, isSaveRequestPending });
+      return;
+    }
+    
+    // ログイン状態チェック
+    if (!user) {
+      Alert.alert(
+        'ログインが必要です',
+        '保存するにはログインしてください。',
+        [
+          { text: 'キャンセル', style: 'cancel' },
+          { text: 'ログイン', onPress: () => {
+            console.log('ログインモーダルを開く');
+          }}
+        ]
+      );
+      return;
+    }
+    
+    // OFF→ONの場合のみアニメーション実行
+    if (!isSaved) {
+      animateSave();
+    }
+    
+    // ハプティクスフィードバック
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+    
+    // ストアの重複排除機能付きトグル処理
+    const success = await togglePodcastSave(podcastId);
+    if (!success) {
+      console.log('🚫 Save toggle was blocked due to pending request');
     }
   };
 
@@ -98,13 +203,16 @@ export default function PodcastActions({
       <TouchableOpacity 
         style={styles.actionButton} 
         onPress={handleLike}
-        activeOpacity={0.7}
+        activeOpacity={isLikeAnimating || isLikeRequestPending ? 1 : 0.7}
+        disabled={isLikeAnimating || isLikeRequestPending}
       >
-        <Ionicons
-          name={isLiked ? "heart" : "heart-outline"}
-          size={28}
-          color={isLiked ? "#FF4444" : Colors.dark.text}
-        />
+        <Animated.View style={{ transform: [{ scale: likeScaleAnim }] }}>
+          <Ionicons
+            name={isLiked ? "heart" : "heart-outline"}
+            size={28}
+            color={isLiked ? "#FF4444" : Colors.dark.text}
+          />
+        </Animated.View>
         <Text style={styles.actionText}>
           {formatNumber(currentLikes)}
         </Text>
@@ -124,13 +232,22 @@ export default function PodcastActions({
         <Text style={styles.actionText}>{formatNumber(shares)}</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.actionButton} onPress={handleSave}>
-        <Ionicons
-          name={isSaved ? "bookmark" : "bookmark-outline"}
-          size={28}
-          color={isSaved ? Colors.dark.highlight : Colors.dark.text}
-        />
-        <Text style={styles.actionText}>Save</Text>
+      <TouchableOpacity 
+        style={styles.actionButton} 
+        onPress={handleSave}
+        activeOpacity={isSaveAnimating || isSaveRequestPending ? 1 : 0.7}
+        disabled={isSaveAnimating || isSaveRequestPending}
+      >
+        <Animated.View style={{ transform: [{ scale: saveScaleAnim }] }}>
+          <Ionicons
+            name={isSaved ? "bookmark" : "bookmark-outline"}
+            size={28}
+            color={isSaved ? Colors.dark.highlight : Colors.dark.text}
+          />
+        </Animated.View>
+        <Text style={styles.actionText}>
+          {formatNumber(currentSaves)}
+        </Text>
       </TouchableOpacity>
     </View>
   );

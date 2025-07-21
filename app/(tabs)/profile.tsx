@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { podcasts } from "@/mocks/podcasts";
 import { currentUser } from "@/mocks/users";
 import { useAuthStore } from "@/store/authStore";
+import { usePodcastStore } from "@/store/podcastStore";
 import { formatNumber } from "@/utils/formatNumber";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
@@ -36,6 +37,23 @@ export default function ProfileScreen() {
   const [showMenuModal, setShowMenuModal] = useState(false);
   const { user, profile, isAuthenticated, signOut } = useAuth();
   const { initialize, loadProfile } = useAuthStore();
+  const { podcasts: allPodcasts, savedPodcasts, likedPodcasts } = usePodcastStore();
+
+  // タブに応じたポッドキャストデータを取得
+  const getDisplayPodcasts = () => {
+    switch (activeTab) {
+      case "podcasts":
+        return podcasts.slice(0, 4); // モックデータを使用（マイポッドキャスト）
+      case "saved":
+        return allPodcasts.filter(podcast => savedPodcasts.has(podcast.id)).slice(0, 4);
+      case "liked":
+        return allPodcasts.filter(podcast => likedPodcasts.has(podcast.id)).slice(0, 4);
+      default:
+        return [];
+    }
+  };
+
+  const displayPodcasts = getDisplayPodcasts();
 
   // 画面フォーカス時にプロフィールを再読み込み
   useFocusEffect(
@@ -177,23 +195,44 @@ export default function ProfileScreen() {
       </View>
 
       <View style={styles.contentContainer}>
-        {activeTab === "podcasts" ? (
-          <FlatList
-            data={podcasts.slice(0, 4)}
-            renderItem={renderPodcastItem}
-            keyExtractor={(item) => item.id}
-            numColumns={2}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.podcastGrid}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={refreshProfile}
-                tintColor={Colors.dark.primary}
-                colors={[Colors.dark.primary]}
+        {activeTab === "podcasts" || activeTab === "saved" || activeTab === "liked" ? (
+          displayPodcasts.length > 0 ? (
+            <FlatList
+              data={displayPodcasts}
+              renderItem={renderPodcastItem}
+              keyExtractor={(item) => item.id}
+              numColumns={2}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.podcastGrid}
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={refreshProfile}
+                  tintColor={Colors.dark.primary}
+                  colors={[Colors.dark.primary]}
+                />
+              }
+            />
+          ) : (
+            <View style={styles.emptyContainer}>
+              <Ionicons 
+                name={
+                  activeTab === "podcasts" ? "headset" :
+                  activeTab === "saved" ? "bookmark" : "heart"
+                } 
+                size={50} 
+                color={Colors.dark.inactive} 
               />
-            }
-          />
+              <Text style={styles.emptyText}>
+                {activeTab === "podcasts" ? "You haven't created any podcasts yet" :
+                 activeTab === "saved" ? "No saved podcasts yet" :
+                 "No liked podcasts yet"}
+              </Text>
+              <TouchableOpacity style={styles.browseButton}>
+                <Text style={styles.browseButtonText}>Browse Podcasts</Text>
+              </TouchableOpacity>
+            </View>
+          )
         ) : activeTab === "history" ? (
           <View style={styles.emptyContainer}>
             <Ionicons name="time" size={50} color={Colors.dark.inactive} />
@@ -203,7 +242,7 @@ export default function ProfileScreen() {
           </View>
         ) : (
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No {activeTab} podcasts yet</Text>
+            <Text style={styles.emptyText}>No {activeTab} content yet</Text>
             <TouchableOpacity style={styles.browseButton}>
               <Text style={styles.browseButtonText}>Browse Podcasts</Text>
             </TouchableOpacity>

@@ -488,27 +488,19 @@ export async function toggleLike(podcastId: string): Promise<{ success: boolean;
 
     console.log('👤 User ID:', user.id);
 
-    // 現在のいいね状態を確認
-    const { data: existingLike, error: checkError } = await supabase
+    // 現在のいいね状態を確認（軽量チェック）
+    const { data: existingLike } = await supabase
       .from('likes')
       .select('id')
       .eq('user_id', user.id)
       .eq('podcast_id', podcastId)
       .single();
 
-    console.log('🔍 Existing like check:', { existingLike, checkError });
-
-    if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = no rows found
-      console.error('❌ Check error:', checkError);
-      throw checkError;
-    }
-
     let isLiked: boolean;
-
+    
     if (existingLike) {
-      console.log('➖ Deleting existing like:', existingLike.id);
-      
-      // いいねが存在する場合は削除 - より確実にuser_idとpodcast_idで削除
+      // いいねが存在する場合は削除
+      console.log('➖ Deleting existing like');
       const { error: deleteError } = await supabase
         .from('likes')
         .delete()
@@ -520,26 +512,26 @@ export async function toggleLike(podcastId: string): Promise<{ success: boolean;
         throw deleteError;
       }
       
-      console.log('✅ Like deleted successfully');
       isLiked = false;
     } else {
-      console.log('➕ Adding new like');
-      
-      // いいねが存在しない場合は追加
-      const { error: insertError } = await supabase
+      // いいねが存在しない場合は追加（upsert使用）
+      console.log('➕ Adding new like with upsert');
+      const { error: upsertError } = await supabase
         .from('likes')
-        .insert({
+        .upsert({
           id: generateUUIDLikeId(),
           user_id: user.id,
           podcast_id: podcastId,
+        }, {
+          onConflict: 'user_id,podcast_id',
+          ignoreDuplicates: false
         });
 
-      if (insertError) {
-        console.error('❌ Insert error:', insertError);
-        throw insertError;
+      if (upsertError) {
+        console.error('❌ Upsert error:', upsertError);
+        throw upsertError;
       }
       
-      console.log('✅ Like added successfully');
       isLiked = true;
     }
 
@@ -657,6 +649,186 @@ export async function getUserLikedPodcasts(userId?: string): Promise<string[]> {
     return (data || []).map(like => like.podcast_id).filter(Boolean);
   } catch (error) {
     console.error('❌ Failed to get user liked podcasts:', error);
+    return [];
+  }
+}
+
+// 保存機能関連の関数
+export async function toggleSave(podcastId: string): Promise<{ success: boolean; isSaved: boolean; saveCount: number }> {
+  try {
+    console.log('🔄 toggleSave called for podcast:', podcastId);
+    
+    // 現在のユーザーを取得
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      console.error('❌ Auth error:', authError);
+      throw new Error('ログインが必要です');
+    }
+
+    console.log('👤 User ID:', user.id);
+
+    // 現在の保存状態を確認（軽量チェック）
+    const { data: existingSave } = await supabase
+      .from('saves')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('podcast_id', podcastId)
+      .single();
+
+    let isSaved: boolean;
+
+    if (existingSave) {
+      // 保存が存在する場合は削除
+      console.log('➖ Deleting existing save');
+      const { error: deleteError } = await supabase
+        .from('saves')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('podcast_id', podcastId);
+
+      if (deleteError) {
+        console.error('❌ Delete error:', deleteError);
+        throw deleteError;
+      }
+      
+      isSaved = false;
+    } else {
+      // 保存が存在しない場合は追加（upsert使用）
+      console.log('➕ Adding new save with upsert');
+      const { error: upsertError } = await supabase
+        .from('saves')
+        .upsert({
+          id: generateUUIDLikeId(),
+          user_id: user.id,
+          podcast_id: podcastId,
+        }, {
+          onConflict: 'user_id,podcast_id',
+          ignoreDuplicates: false
+        });
+
+      if (upsertError) {
+        console.error('❌ Upsert error:', upsertError);
+        throw upsertError;
+      }
+      
+      isSaved = true;
+    }
+
+    // 更新後の保存数を取得
+    console.log('📊 Getting updated save count...');
+    const { count: saveCount, error: countError } = await supabase
+      .from('saves')
+      .select('*', { count: 'exact', head: true })
+      .eq('podcast_id', podcastId);
+
+    if (countError) {
+      console.error('❌ Count error:', countError);
+      throw countError;
+    }
+
+    console.log('📊 New save count:', saveCount);
+
+    // ポッドキャストのsave_countを更新
+    console.log('📝 Updating podcast save_count...');
+    const { error: updateError } = await supabase
+      .from('podcasts')
+      .update({ save_count: saveCount || 0 })
+      .eq('id', podcastId);
+
+    if (updateError) {
+      console.error('❌ Update error:', updateError);
+      throw updateError;
+    }
+
+    console.log('✅ toggleSave completed successfully:', { isSaved, saveCount: saveCount || 0 });
+
+    return {
+      success: true,
+      isSaved,
+      saveCount: saveCount || 0
+    };
+  } catch (error) {
+    console.error('❌ Failed to toggle save:', error);
+    return {
+      success: false,
+      isSaved: false,
+      saveCount: 0
+    };
+  }
+}
+
+export async function getSaveStatus(podcastId: string): Promise<boolean> {
+  try {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      return false;
+    }
+
+    const { data, error } = await supabase
+      .from('saves')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('podcast_id', podcastId)
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      console.error('❌ Failed to get save status:', error);
+      return false;
+    }
+
+    return !!data;
+  } catch (error) {
+    console.error('❌ Failed to get save status:', error);
+    return false;
+  }
+}
+
+export async function getSaveCount(podcastId: string): Promise<number> {
+  try {
+    const { count, error } = await supabase
+      .from('saves')
+      .select('*', { count: 'exact', head: true })
+      .eq('podcast_id', podcastId);
+
+    if (error) {
+      console.error('❌ Failed to get save count:', error);
+      return 0;
+    }
+
+    return count || 0;
+  } catch (error) {
+    console.error('❌ Failed to get save count:', error);
+    return 0;
+  }
+}
+
+export async function getUserSavedPodcasts(userId?: string): Promise<string[]> {
+  try {
+    let targetUserId = userId;
+    
+    if (!targetUserId) {
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        return [];
+      }
+      targetUserId = user.id;
+    }
+
+    const { data, error } = await supabase
+      .from('saves')
+      .select('podcast_id')
+      .eq('user_id', targetUserId);
+
+    if (error) {
+      console.error('❌ Failed to get user saved podcasts:', error);
+      return [];
+    }
+
+    return (data || []).map(save => save.podcast_id).filter(Boolean);
+  } catch (error) {
+    console.error('❌ Failed to get user saved podcasts:', error);
     return [];
   }
 }
