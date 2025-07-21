@@ -3,7 +3,10 @@ import { create } from "zustand";
 import { audioPlayerService, PodcastTrack } from "@/services/AudioPlayerService";
 import { 
   fetchPublishedPodcasts, 
-  fetchAllPodcasts
+  fetchAllPodcasts,
+  toggleLike,
+  getLikeStatus,
+  getUserLikedPodcasts
 } from "@/services/supabase";
 import { UIPodcast, convertSupabaseToUIPodcast } from "@/types/podcast";
 
@@ -15,8 +18,10 @@ interface PodcastState {
   // currentTime: number;
   // duration: number;
   playbackRate: number;
-  // likedPodcasts: Set<string>;
-  // savedPodcasts: Set<string>;
+  likedPodcasts: Set<string>;
+  savedPodcasts: Set<string>;
+  processingLikes: Set<string>;
+  likeActionQueue: Map<string, number>;
   
   // タブ遷移関連の状態
   wasPlayingBeforeTabSwitch: boolean;
@@ -41,6 +46,12 @@ interface PodcastState {
   // setDuration: (duration: number) => void;
   setPlaybackRate: (rate: number) => void;
   
+  // いいね機能関連のアクション
+  togglePodcastLike: (podcastId: string) => Promise<boolean>;
+  processLikeQueue: (podcastId: string) => Promise<boolean>;
+  loadUserLikedPodcasts: () => Promise<void>;
+  updatePodcastLikeState: (podcastId: string, isLiked: boolean, likeCount: number) => void;
+  
   // タブ遷移関連のアクション
   setHomeTabFocused: (focused: boolean) => void;
   savePlayingStateForTabSwitch: () => void;
@@ -58,11 +69,11 @@ export const usePodcastStore = create<PodcastState>((set, get) => ({
   currentPodcastIndex: 0,
   currentPlayingPodcastId: null,
   isPlaying: false,
-  currentTime: 0,
-  duration: 0,
   playbackRate: 1.0,
   likedPodcasts: new Set<string>(),
   savedPodcasts: new Set<string>(),
+  processingLikes: new Set<string>(),
+  likeActionQueue: new Map<string, number>(),
   
   // タブ遷移関連の初期状態
   wasPlayingBeforeTabSwitch: false,
@@ -175,6 +186,272 @@ export const usePodcastStore = create<PodcastState>((set, get) => ({
     set({ playbackRate: rate });
   },
 
+  // いいね機能関連のメソッド
+  togglePodcastLike: async (podcastId: string) => {
+    const state = get();
+    const currentLikeState = state.likedPodcasts.has(podcastId);
+    const currentPodcast = state.podcasts.find(p => p.id === podcastId);
+    const originalLikes = currentPodcast?.likes || 0;
+    
+    // 操作キューに追加（高速連続タップ対応）
+    const currentQueue = state.likeActionQueue.get(podcastId) || 0;
+    const actionDelta = currentLikeState ? -1 : +1;
+    const newQueueValue = currentQueue + actionDelta;
+    
+    console.log('🎯 togglePodcastLike called:', {
+      podcastId,
+      currentLikeState,
+      originalLikes,
+      currentQueue,
+      actionDelta,
+      newQueueValue
+    });
+    
+    // キューが0なら操作をキャンセル（いいね→取り消し→いいね のような場合）
+    if (newQueueValue === 0) {
+      state.likeActionQueue.delete(podcastId);
+      console.log('🔄 Queue canceled out, removing from queue');
+      
+      // 元の状態に戻す
+      const revertedLikedPodcasts = new Set(state.likedPodcasts);
+      const originalState = !state.likedPodcasts.has(podcastId);
+      
+      if (originalState) {
+        revertedLikedPodcasts.add(podcastId);
+      } else {
+        revertedLikedPodcasts.delete(podcastId);
+      }
+      
+      const revertedPodcasts = state.podcasts.map(podcast => {
+        if (podcast.id === podcastId) {
+          return {
+            ...podcast,
+            isLiked: originalState,
+            likes: originalLikes
+          };
+        }
+        return podcast;
+      });
+      
+      set({ 
+        likedPodcasts: revertedLikedPodcasts,
+        podcasts: revertedPodcasts,
+        likeActionQueue: new Map(state.likeActionQueue)
+      });
+      
+      return true; // UIは更新されたので成功として扱う
+    }
+    
+    // キューを更新
+    const newQueue = new Map(state.likeActionQueue);
+    newQueue.set(podcastId, newQueueValue);
+    
+    // 既に処理中の場合はキューのみ更新
+    if (state.processingLikes.has(podcastId)) {
+      console.log('⚠️ Already processing, updating queue only:', newQueueValue);
+      set({ likeActionQueue: newQueue });
+      return true;
+    }
+    
+    // 処理中リストに追加
+    const newProcessingLikes = new Set(state.processingLikes);
+    newProcessingLikes.add(podcastId);
+    
+    // UIを先に更新（楽観的更新）
+    const newLikedPodcasts = new Set(state.likedPodcasts);
+    if (currentLikeState) {
+      newLikedPodcasts.delete(podcastId);
+      console.log('📤 Removing from liked set');
+    } else {
+      newLikedPodcasts.add(podcastId);
+      console.log('📥 Adding to liked set');
+    }
+    
+    // ポッドキャストのlikes数を楽観的に更新
+    const updatedPodcasts = state.podcasts.map(podcast => {
+      if (podcast.id === podcastId) {
+        const newLikes = currentLikeState ? podcast.likes - 1 : podcast.likes + 1;
+        console.log('📊 Updating likes count:', podcast.likes, '→', newLikes);
+        return {
+          ...podcast,
+          isLiked: !currentLikeState,
+          likes: newLikes
+        };
+      }
+      return podcast;
+    });
+    
+    // UIを即座に更新
+    set({ 
+      likedPodcasts: newLikedPodcasts,
+      podcasts: updatedPodcasts,
+      processingLikes: newProcessingLikes,
+      likeActionQueue: newQueue
+    });
+
+    // バックエンドを更新（キューの累積値を処理）
+    const result = await get().processLikeQueue(podcastId);
+    return result;
+  },
+
+  processLikeQueue: async (podcastId: string) => {
+    const state = get();
+    const queuedActions = state.likeActionQueue.get(podcastId) || 0;
+    
+    console.log('🔄 Processing like queue for podcast:', podcastId, 'queued actions:', queuedActions);
+    
+    if (queuedActions === 0) {
+      // キューが空の場合は処理完了
+      const finalProcessingLikes = new Set(state.processingLikes);
+      finalProcessingLikes.delete(podcastId);
+      
+      set({ processingLikes: finalProcessingLikes });
+      return true;
+    }
+    
+    try {
+      // キューに基づいてバックエンド操作を実行
+      let success = true;
+      let currentResult = { success: true, isLiked: false, likeCount: 0 };
+      
+      for (let i = 0; i < Math.abs(queuedActions); i++) {
+        currentResult = await toggleLike(podcastId);
+        if (!currentResult.success) {
+          success = false;
+          break;
+        }
+      }
+      
+      // 処理中リストから削除
+      const finalProcessingLikes = new Set(get().processingLikes);
+      finalProcessingLikes.delete(podcastId);
+      
+      // キューをクリア
+      const newQueue = new Map(state.likeActionQueue);
+      newQueue.delete(podcastId);
+      
+      if (!success) {
+        console.error('❌ processLikeQueue failed, reverting state');
+        
+        // 失敗した場合は元の状態に戻す
+        const originalPodcast = state.podcasts.find(p => p.id === podcastId);
+        const originalLikes = originalPodcast?.likes || 0;
+        const originalLikedState = state.likedPodcasts.has(podcastId);
+        
+        // 楽観的更新を元に戻す
+        const revertedLikedPodcasts = new Set(state.likedPodcasts);
+        if (originalLikedState) {
+          revertedLikedPodcasts.add(podcastId);
+        } else {
+          revertedLikedPodcasts.delete(podcastId);
+        }
+        
+        const revertedPodcasts = state.podcasts.map(podcast => {
+          if (podcast.id === podcastId) {
+            return {
+              ...podcast,
+              isLiked: originalLikedState,
+              likes: originalLikes
+            };
+          }
+          return podcast;
+        });
+        
+        set({ 
+          likedPodcasts: revertedLikedPodcasts,
+          podcasts: revertedPodcasts,
+          processingLikes: finalProcessingLikes,
+          likeActionQueue: newQueue
+        });
+        
+        return false;
+      } else {
+        // 成功した場合は正確な値で更新
+        get().updatePodcastLikeState(podcastId, currentResult.isLiked, currentResult.likeCount);
+        
+        set(state => ({
+          ...state,
+          processingLikes: finalProcessingLikes,
+          likeActionQueue: newQueue
+        }));
+        
+        console.log('✅ processLikeQueue completed successfully');
+        
+        // 追加のキューがあるかチェック
+        const updatedState = get();
+        const remainingQueue = updatedState.likeActionQueue.get(podcastId) || 0;
+        if (remainingQueue !== 0) {
+          console.log('🔄 Additional queue detected, processing again:', remainingQueue);
+          // 再帰的に処理
+          return await get().processLikeQueue(podcastId);
+        }
+        
+        return true;
+      }
+    } catch (error) {
+      console.error('❌ processLikeQueue error:', error);
+      
+      // エラー時の処理中リストから削除とキュークリア
+      const finalProcessingLikes = new Set(get().processingLikes);
+      finalProcessingLikes.delete(podcastId);
+      
+      const newQueue = new Map(state.likeActionQueue);
+      newQueue.delete(podcastId);
+      
+      set({ 
+        processingLikes: finalProcessingLikes,
+        likeActionQueue: newQueue
+      });
+      
+      return false;
+    }
+  },
+
+  loadUserLikedPodcasts: async () => {
+    try {
+      const likedPodcastIds = await getUserLikedPodcasts();
+      set({ likedPodcasts: new Set(likedPodcastIds) });
+      
+      // 現在のポッドキャストリストのisLiked状態を更新
+      const state = get();
+      const updatedPodcasts = state.podcasts.map(podcast => ({
+        ...podcast,
+        isLiked: likedPodcastIds.includes(podcast.id)
+      }));
+      
+      set({ podcasts: updatedPodcasts });
+    } catch (error) {
+      console.error('❌ Failed to load user liked podcasts:', error);
+    }
+  },
+
+  updatePodcastLikeState: (podcastId: string, isLiked: boolean, likeCount: number) => {
+    const state = get();
+    const newLikedPodcasts = new Set(state.likedPodcasts);
+    
+    if (isLiked) {
+      newLikedPodcasts.add(podcastId);
+    } else {
+      newLikedPodcasts.delete(podcastId);
+    }
+    
+    const updatedPodcasts = state.podcasts.map(podcast => {
+      if (podcast.id === podcastId) {
+        return {
+          ...podcast,
+          isLiked,
+          likes: likeCount
+        };
+      }
+      return podcast;
+    });
+    
+    set({ 
+      likedPodcasts: newLikedPodcasts,
+      podcasts: updatedPodcasts
+    });
+  },
+
   // タブ遷移関連のメソッド
   setHomeTabFocused: (focused: boolean) => {
     set({ isHomeTabFocused: focused });
@@ -219,9 +496,14 @@ export const usePodcastStore = create<PodcastState>((set, get) => ({
         supabasePodcasts = await fetchAllPodcasts(page, limit);
       }
       
-      const uiPodcasts = supabasePodcasts.map(podcast => 
-        convertSupabaseToUIPodcast(podcast, false, false)
-      );
+      // ユーザーのいいね状態を取得
+      const likedPodcastIds = await getUserLikedPodcasts();
+      const likedPodcastsSet = new Set(likedPodcastIds);
+      
+      const uiPodcasts = supabasePodcasts.map(podcast => {
+        const isLiked = likedPodcastsSet.has(podcast.id);
+        return convertSupabaseToUIPodcast(podcast, isLiked, false);
+      });
 
       if (page === 0) {
         // 最初のページの場合は置き換え
@@ -230,6 +512,7 @@ export const usePodcastStore = create<PodcastState>((set, get) => ({
           currentPage: page,
           hasNextPage: uiPodcasts.length === limit,
           isLoading: false,
+          likedPodcasts: likedPodcastsSet,
         });
       } else {
         // 追加ページの場合は既存のデータに追加
@@ -238,6 +521,7 @@ export const usePodcastStore = create<PodcastState>((set, get) => ({
           currentPage: page,
           hasNextPage: uiPodcasts.length === limit,
           isLoading: false,
+          likedPodcasts: likedPodcastsSet,
         }));
       }
     } catch (error) {

@@ -460,9 +460,206 @@ export async function fetchSimplePodcasts(): Promise<any[]> {
   return data || [];
 }
 
+// ID生成ヘルパー関数
+export function generateId(): string {
+  return Math.random().toString(36).substring(2, 11) + Date.now().toString(36);
+}
 
+export function generateUUIDLikeId(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
 
+// いいね機能関連の関数
+export async function toggleLike(podcastId: string): Promise<{ success: boolean; isLiked: boolean; likeCount: number }> {
+  try {
+    console.log('🔄 toggleLike called for podcast:', podcastId);
+    
+    // 現在のユーザーを取得
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      console.error('❌ Auth error:', authError);
+      throw new Error('ログインが必要です');
+    }
 
+    console.log('👤 User ID:', user.id);
+
+    // 現在のいいね状態を確認
+    const { data: existingLike, error: checkError } = await supabase
+      .from('likes')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('podcast_id', podcastId)
+      .single();
+
+    console.log('🔍 Existing like check:', { existingLike, checkError });
+
+    if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = no rows found
+      console.error('❌ Check error:', checkError);
+      throw checkError;
+    }
+
+    let isLiked: boolean;
+
+    if (existingLike) {
+      console.log('➖ Deleting existing like:', existingLike.id);
+      
+      // いいねが存在する場合は削除 - より確実にuser_idとpodcast_idで削除
+      const { error: deleteError } = await supabase
+        .from('likes')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('podcast_id', podcastId);
+
+      if (deleteError) {
+        console.error('❌ Delete error:', deleteError);
+        throw deleteError;
+      }
+      
+      console.log('✅ Like deleted successfully');
+      isLiked = false;
+    } else {
+      console.log('➕ Adding new like');
+      
+      // いいねが存在しない場合は追加
+      const { error: insertError } = await supabase
+        .from('likes')
+        .insert({
+          id: generateUUIDLikeId(),
+          user_id: user.id,
+          podcast_id: podcastId,
+        });
+
+      if (insertError) {
+        console.error('❌ Insert error:', insertError);
+        throw insertError;
+      }
+      
+      console.log('✅ Like added successfully');
+      isLiked = true;
+    }
+
+    // 更新後のいいね数を取得
+    console.log('📊 Getting updated like count...');
+    const { count: likeCount, error: countError } = await supabase
+      .from('likes')
+      .select('*', { count: 'exact', head: true })
+      .eq('podcast_id', podcastId);
+
+    if (countError) {
+      console.error('❌ Count error:', countError);
+      throw countError;
+    }
+
+    console.log('📊 New like count:', likeCount);
+
+    // ポッドキャストのlike_countを更新
+    console.log('📝 Updating podcast like_count...');
+    const { error: updateError } = await supabase
+      .from('podcasts')
+      .update({ like_count: likeCount || 0 })
+      .eq('id', podcastId);
+
+    if (updateError) {
+      console.error('❌ Update error:', updateError);
+      throw updateError;
+    }
+
+    console.log('✅ toggleLike completed successfully:', { isLiked, likeCount: likeCount || 0 });
+
+    return {
+      success: true,
+      isLiked,
+      likeCount: likeCount || 0
+    };
+  } catch (error) {
+    console.error('❌ Failed to toggle like:', error);
+    return {
+      success: false,
+      isLiked: false,
+      likeCount: 0
+    };
+  }
+}
+
+export async function getLikeStatus(podcastId: string): Promise<boolean> {
+  try {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      return false;
+    }
+
+    const { data, error } = await supabase
+      .from('likes')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('podcast_id', podcastId)
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      console.error('❌ Failed to get like status:', error);
+      return false;
+    }
+
+    return !!data;
+  } catch (error) {
+    console.error('❌ Failed to get like status:', error);
+    return false;
+  }
+}
+
+export async function getLikeCount(podcastId: string): Promise<number> {
+  try {
+    const { count, error } = await supabase
+      .from('likes')
+      .select('*', { count: 'exact', head: true })
+      .eq('podcast_id', podcastId);
+
+    if (error) {
+      console.error('❌ Failed to get like count:', error);
+      return 0;
+    }
+
+    return count || 0;
+  } catch (error) {
+    console.error('❌ Failed to get like count:', error);
+    return 0;
+  }
+}
+
+export async function getUserLikedPodcasts(userId?: string): Promise<string[]> {
+  try {
+    let targetUserId = userId;
+    
+    if (!targetUserId) {
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        return [];
+      }
+      targetUserId = user.id;
+    }
+
+    const { data, error } = await supabase
+      .from('likes')
+      .select('podcast_id')
+      .eq('user_id', targetUserId);
+
+    if (error) {
+      console.error('❌ Failed to get user liked podcasts:', error);
+      return [];
+    }
+
+    return (data || []).map(like => like.podcast_id).filter(Boolean);
+  } catch (error) {
+    console.error('❌ Failed to get user liked podcasts:', error);
+    return [];
+  }
+}
 
 
 

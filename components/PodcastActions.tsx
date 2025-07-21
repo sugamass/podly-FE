@@ -1,5 +1,7 @@
 import Colors from "@/constants/Colors";
 import { formatNumber } from "@/utils/formatNumber";
+import { usePodcastStore } from "@/store/podcastStore";
+import { useAuthStore } from "@/store/authStore";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
@@ -10,6 +12,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Alert,
 } from "react-native";
 
 interface PodcastActionsProps {
@@ -32,15 +35,41 @@ export default function PodcastActions({
   comments,
   shares,
   onCommentPress,
+  isLiked: initialIsLiked,
 }: PodcastActionsProps) {
-  const [isLiked, setIsLiked] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  
+  const { togglePodcastLike, podcasts } = usePodcastStore();
+  const { user } = useAuthStore();
+  
+  // 現在のポッドキャストの状態を取得（シンプルな実装）
+  const currentPodcast = podcasts.find(p => p.id === podcastId);
+  const isLiked = currentPodcast?.isLiked ?? initialIsLiked;
+  const currentLikes = currentPodcast?.likes ?? likes;
 
-  const handleLike = () => {
-    setIsLiked(!isLiked);
+  const handleLike = async () => {
+    // ログイン状態チェック
+    if (!user) {
+      Alert.alert(
+        'ログインが必要です',
+        'いいねをするにはログインしてください。',
+        [
+          { text: 'キャンセル', style: 'cancel' },
+          { text: 'ログイン', onPress: () => {
+            console.log('ログインモーダルを開く');
+          }}
+        ]
+      );
+      return;
+    }
+    
+    // ハプティクスフィードバック
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
+    
+    // ストアの楽観的更新のみを使用（シンプル・高速）
+    togglePodcastLike(podcastId);
   };
 
   const handleSave = () => {
@@ -66,13 +95,19 @@ export default function PodcastActions({
         </View>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.actionButton} onPress={handleLike}>
+      <TouchableOpacity 
+        style={styles.actionButton} 
+        onPress={handleLike}
+        activeOpacity={0.7}
+      >
         <Ionicons
           name={isLiked ? "heart" : "heart-outline"}
           size={28}
-          color={isLiked ? Colors.dark.primary : Colors.dark.text}
+          color={isLiked ? "#FF4444" : Colors.dark.text}
         />
-        <Text style={styles.actionText}>{formatNumber(likes)}</Text>
+        <Text style={styles.actionText}>
+          {formatNumber(currentLikes)}
+        </Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.actionButton} onPress={handleComment}>
