@@ -40,12 +40,6 @@ export const ScriptSectionCard: React.FC<ScriptSectionCardProps> = ({
   const speakerName = scriptData.speaker || `話者${index + 1}`;
   const speakerColor = getSpeakerColor(speakerName);
 
-  const handleSpeakerNameChange = (newSpeakerName: string) => {
-    onUpdate(index, {
-      ...scriptData,
-      speaker: newSpeakerName,
-    });
-  };
 
   const handleTextChange = (newText: string) => {
     onUpdate(index, {
@@ -84,7 +78,7 @@ export const ScriptSectionCard: React.FC<ScriptSectionCardProps> = ({
               marginRight: 8,
             }}
           />
-          <TextInput
+          <Text
             style={{
               fontSize: 16,
               fontWeight: "bold",
@@ -92,37 +86,12 @@ export const ScriptSectionCard: React.FC<ScriptSectionCardProps> = ({
               flex: 1,
               paddingVertical: 4,
               paddingHorizontal: 8,
-              borderRadius: 4,
-              backgroundColor: "transparent",
-            }}
-            value={speakerName}
-            onChangeText={handleSpeakerNameChange}
-            placeholder="話者名"
-            placeholderTextColor={Colors.dark.subtext}
-            maxLength={20}
-          />
-        </View>
-
-        {showDeleteButton && onDelete && (
-          <TouchableOpacity
-            onPress={() => onDelete(index)}
-            style={{
-              backgroundColor: Colors.dark.background,
-              borderRadius: 16,
-              width: 32,
-              height: 32,
-              alignItems: "center",
-              justifyContent: "center",
-              marginLeft: 8,
             }}
           >
-            <Ionicons
-              name="close"
-              size={16}
-              color={Colors.dark.subtext}
-            />
-          </TouchableOpacity>
-        )}
+            {speakerName}
+          </Text>
+        </View>
+
       </View>
 
       {/* 原稿テキスト */}
