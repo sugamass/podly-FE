@@ -46,7 +46,7 @@ export default function TabLayout() {
           tabPress: () => handleTabPress("index"),
         }}
       />
-      <Tabs.Screen
+      {/* <Tabs.Screen
         name="discover"
         options={{
           title: "Discover",
@@ -57,7 +57,7 @@ export default function TabLayout() {
         listeners={{
           tabPress: () => handleTabPress("discover"),
         }}
-      />
+      /> */}
       <Tabs.Screen
         name="create"
         options={{

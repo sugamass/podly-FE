@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -62,7 +62,7 @@ export default function CreateScreen() {
       // UI状態からAPIリクエスト形式への変換
       const requestData: PostCreateScriptRequest = {
         prompt: theme.trim() || "指定されたURLの内容について説明してください",
-        reference: validUrls.length > 0 ? validUrls : undefined,
+        reference: validUrls.length > 0 ? validUrls : [],
         isSearch: webSearch,
       };
 
@@ -71,14 +71,7 @@ export default function CreateScreen() {
       // API呼び出し
       const response = await createScript(requestData);
 
-      console.log("Received API response in handleGenerateScript:", {
-        hasNewScript: !!response.newScript,
-        newScriptPrompt: response.newScript?.prompt,
-        hasScript: !!response.newScript?.script,
-        scriptType: typeof response.newScript?.script,
-        scriptIsArray: Array.isArray(response.newScript?.script),
-        scriptContent: response.newScript?.script,
-      });
+      console.log("Received API response in handleGenerateScript:", response);
 
       // APIレスポンスの検証と処理
       if (!response.newScript) {
@@ -122,6 +115,17 @@ export default function CreateScreen() {
       // 正常に原稿が生成された場合のみ状態を更新
       setGeneratedScript(scriptArray);
       setIsScriptGenerated(true);
+
+      // APIから返された参考URLでreferenceUrlsを上書き
+      if (
+        response.newScript.reference &&
+        response.newScript.reference.length > 0
+      ) {
+        const urls = response.newScript.reference.map((ref) => ref.url);
+        setReferenceUrls(urls);
+      } else {
+        setReferenceUrls([""]);
+      }
     } catch (error) {
       console.error("Script generation error:", error);
 
@@ -512,42 +516,6 @@ export default function CreateScreen() {
                 >
                   生成された原稿
                 </Text>
-
-                {/* セクション追加ボタン */}
-                <TouchableOpacity
-                  onPress={() => {
-                    const newSection: ScriptData = {
-                      speaker: `話者${generatedScript.length + 1}`,
-                      text: "",
-                      caption: "",
-                    };
-                    setGeneratedScript([...generatedScript, newSection]);
-                  }}
-                  style={{
-                    backgroundColor: Colors.dark.primary,
-                    borderRadius: 16,
-                    paddingHorizontal: 12,
-                    paddingVertical: 6,
-                    flexDirection: "row",
-                    alignItems: "center",
-                  }}
-                >
-                  <Ionicons
-                    name="add"
-                    size={16}
-                    color={Colors.dark.text}
-                    style={{ marginRight: 4 }}
-                  />
-                  <Text
-                    style={{
-                      fontSize: 12,
-                      fontWeight: "600",
-                      color: Colors.dark.text,
-                    }}
-                  >
-                    追加
-                  </Text>
-                </TouchableOpacity>
               </View>
 
               {/* 話者別原稿セクション */}
@@ -574,17 +542,6 @@ export default function CreateScreen() {
                   showDeleteButton={generatedScript.length > 1}
                 />
               ))}
-
-              <Text
-                style={{
-                  fontSize: 12,
-                  color: Colors.dark.subtext,
-                  marginTop: 8,
-                  textAlign: "center",
-                }}
-              >
-                話者名と原稿は直接編集できます
-              </Text>
             </View>
           )}
 
