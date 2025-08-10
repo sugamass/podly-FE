@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -13,6 +13,13 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Colors from "../constants/Colors";
+import {
+  AudioPreviewRequest,
+  AudioPreviewResponse,
+  ScriptData as AudioScriptData,
+  generateAudioPreview,
+} from "../services/audioGenerator";
+import { ScriptData as GeneratedScriptData } from "../services/scriptGenerator";
 
 type VoiceOption = {
   id: string;
@@ -40,20 +47,20 @@ export default function CreateAudioScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
 
-  // 原稿作成画面から渡される原稿データ
-  const [script, setScript] = useState<string>(
-    (params.script as string) ||
-      `こんにちは、今日は量子コンピュータについて話していきます。
-
-最近の研究によると、この分野では多くの興味深い発見がありました。まず第一に、基本的な概念について説明します。
-
-詳細については、以下の点が重要です：
-1. 基本的な理解
-2. 実際の応用例
-3. 今後の展望
-
-これらの情報を踏まえて、今後の発展が期待されています。ご清聴ありがとうございました。`
-  );
+  // 原稿作成画面から渡される原稿データ（JSON形式）
+  const [scriptData, setScriptData] = useState<GeneratedScriptData[]>(() => {
+    try {
+      const scriptParam = params.script as string;
+      if (scriptParam) {
+        const parsed = JSON.parse(scriptParam);
+        return Array.isArray(parsed) ? parsed : [];
+      }
+    } catch (error) {
+      console.error("Failed to parse script parameter:", error);
+      Alert.alert("エラー", "原稿データの解析に失敗しました");
+    }
+    return [];
+  });
 
   // 音声設定
   const [selectedVoice, setSelectedVoice] = useState<VoiceOption>({
@@ -227,31 +234,65 @@ export default function CreateAudioScreen() {
 
   // 音声生成
   const handleGenerateAudio = async () => {
-    if (!script.trim()) {
-      Alert.alert("エラー", "原稿が入力されていません");
+    if (!scriptData || scriptData.length === 0) {
+      Alert.alert("エラー", "原稿データが入力されていません");
       return;
     }
 
     setIsGenerating(true);
 
-    // TODO: 実際のAPI呼び出しを実装
-    setTimeout(() => {
-      // 原稿を段落ごとに分割
-      const sections = script
-        .split("\n\n")
-        .filter((s) => s.trim())
-        .map((text, index) => ({
-          id: `section-${index}`,
-          text: text.trim(),
-          audioUrl: `mock-audio-${index}.mp3`, // モックURL
-        }));
+    try {
+      // GeneratedScriptDataからAudioScriptDataに変換（必須フィールドを保証）
+      const audioScript: AudioScriptData[] = scriptData.map((item) => ({
+        speaker: item.speaker || "ナレーター",
+        text: item.text || "",
+        caption: item.caption || "",
+      }));
+
+      // スピーカー配列を抽出（重複除去）
+      const uniqueSpeakers = Array.from(
+        new Set(audioScript.map((item) => item.speaker))
+      );
+
+      // APIリクエストパラメータを構築
+      const requestData: AudioPreviewRequest = {
+        script: audioScript,
+        tts: selectedVoice.id,
+        voices: [selectedVoice.id],
+        speakers: uniqueSpeakers,
+      };
+
+      console.log("Generating audio with request:", requestData);
+
+      // 実際のAPI呼び出し
+      const response: AudioPreviewResponse = await generateAudioPreview(
+        requestData
+      );
+
+      console.log("Audio generated successfully:", response);
+
+      // レスポンスから音声セクションを構築
+      const sections = audioScript.map((item, index) => ({
+        id: `section-${index}`,
+        text: item.text,
+        audioUrl: response.audioUrl || response.separatedAudioUrls?.[index],
+      }));
 
       setAudioSections(sections);
       setIsAudioGenerated(true);
-      setIsGenerating(false);
 
       Alert.alert("完了", "音声の生成が完了しました！");
-    }, 3000);
+    } catch (error) {
+      console.error("Audio generation error:", error);
+      Alert.alert(
+        "エラー",
+        error instanceof Error
+          ? `音声の生成に失敗しました: ${error.message}`
+          : "音声の生成に失敗しました。しばらく時間をおいて再度お試しください。"
+      );
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   // セクション音声再生
@@ -340,7 +381,7 @@ export default function CreateAudioScreen() {
     router.push({
       pathname: "/create-publish",
       params: {
-        script,
+        script: JSON.stringify(scriptData),
         voice: selectedVoice.id,
         audioSections: JSON.stringify(audioSections),
       },

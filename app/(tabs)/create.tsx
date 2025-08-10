@@ -157,17 +157,11 @@ export default function CreateScreen() {
       return;
     }
 
-    // ScriptData配列を文字列に変換して音声生成画面に渡す
-    const scriptText = generatedScript
-      .map((item) => item.text || "")
-      .filter((text) => text.trim() !== "")
-      .join("\n\n");
-
     // 音声生成画面への遷移
     router.push({
       pathname: "/create-audio",
       params: {
-        script: scriptText,
+        script: JSON.stringify(generatedScript),
       },
     });
   };
