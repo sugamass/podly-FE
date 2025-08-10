@@ -1,5 +1,5 @@
-import Colors from "@/constants/Colors";
 import { ProfileMenuModal } from "@/components/ProfileMenuModal";
+import Colors from "@/constants/Colors";
 import { useAuth } from "@/hooks/useAuth";
 import { podcasts } from "@/mocks/podcasts";
 import { currentUser } from "@/mocks/users";
@@ -9,7 +9,7 @@ import { formatNumber } from "@/utils/formatNumber";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { router, useFocusEffect } from "expo-router";
-import React, { useCallback, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   Dimensions,
   FlatList,
@@ -37,7 +37,11 @@ export default function ProfileScreen() {
   const [showMenuModal, setShowMenuModal] = useState(false);
   const { user, profile, isAuthenticated, signOut } = useAuth();
   const { initialize, loadProfile } = useAuthStore();
-  const { podcasts: allPodcasts, savedPodcasts, likedPodcasts } = usePodcastStore();
+  const {
+    podcasts: allPodcasts,
+    savedPodcasts,
+    likedPodcasts,
+  } = usePodcastStore();
 
   // タブに応じたポッドキャストデータを取得
   const getDisplayPodcasts = () => {
@@ -45,9 +49,13 @@ export default function ProfileScreen() {
       case "podcasts":
         return podcasts.slice(0, 4); // モックデータを使用（マイポッドキャスト）
       case "saved":
-        return allPodcasts.filter(podcast => savedPodcasts.has(podcast.id)).slice(0, 4);
+        return allPodcasts
+          .filter((podcast) => savedPodcasts.has(podcast.id))
+          .slice(0, 4);
       case "liked":
-        return allPodcasts.filter(podcast => likedPodcasts.has(podcast.id)).slice(0, 4);
+        return allPodcasts
+          .filter((podcast) => likedPodcasts.has(podcast.id))
+          .slice(0, 4);
       default:
         return [];
     }
@@ -195,10 +203,12 @@ export default function ProfileScreen() {
       </View>
 
       <View style={styles.contentContainer}>
-        {activeTab === "podcasts" || activeTab === "saved" || activeTab === "liked" ? (
+        {activeTab === "podcasts" ||
+        activeTab === "saved" ||
+        activeTab === "liked" ? (
           displayPodcasts.length > 0 ? (
             <FlatList
-              data={displayPodcasts}
+              data={displayPodcasts as any} // TODO anyを削除
               renderItem={renderPodcastItem}
               keyExtractor={(item) => item.id}
               numColumns={2}
@@ -215,18 +225,23 @@ export default function ProfileScreen() {
             />
           ) : (
             <View style={styles.emptyContainer}>
-              <Ionicons 
+              <Ionicons
                 name={
-                  activeTab === "podcasts" ? "headset" :
-                  activeTab === "saved" ? "bookmark" : "heart"
-                } 
-                size={50} 
-                color={Colors.dark.inactive} 
+                  activeTab === "podcasts"
+                    ? "headset"
+                    : activeTab === "saved"
+                    ? "bookmark"
+                    : "heart"
+                }
+                size={50}
+                color={Colors.dark.inactive}
               />
               <Text style={styles.emptyText}>
-                {activeTab === "podcasts" ? "You haven't created any podcasts yet" :
-                 activeTab === "saved" ? "No saved podcasts yet" :
-                 "No liked podcasts yet"}
+                {activeTab === "podcasts"
+                  ? "You haven't created any podcasts yet"
+                  : activeTab === "saved"
+                  ? "No saved podcasts yet"
+                  : "No liked podcasts yet"}
               </Text>
               <TouchableOpacity style={styles.browseButton}>
                 <Text style={styles.browseButtonText}>Browse Podcasts</Text>

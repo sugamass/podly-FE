@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -19,6 +19,7 @@ import {
   ScriptData as AudioScriptData,
   generateAudioPreview,
 } from "../services/audioGenerator";
+import { audioPlayerService } from "../services/AudioPlayerService";
 import { ScriptData as GeneratedScriptData } from "../services/scriptGenerator";
 
 type VoiceOption = {
@@ -76,6 +77,61 @@ export default function CreateAudioScreen() {
   const [audioSections, setAudioSections] = useState<AudioSection[]>([]);
   const [isAudioGenerated, setIsAudioGenerated] = useState(false);
   const [currentPlayingId, setCurrentPlayingId] = useState<string | null>(null);
+  const [fullAudioUrl, setFullAudioUrl] = useState<string | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  // 話者ごとのボイス選択
+  const [speakerVoiceMap, setSpeakerVoiceMap] = useState<
+    Record<string, VoiceOption>
+  >({});
+  const [openSpeaker, setOpenSpeaker] = useState<string | null>(null);
+
+  // スクリプト内のユニーク話者一覧
+  const uniqueSpeakersList = useMemo(() => {
+    return Array.from(
+      new Set((scriptData || []).map((item) => item.speaker || "ナレーター"))
+    );
+  }, [scriptData]);
+
+  // 未設定スピーカーにデフォルトのselectedVoiceを適用
+  useEffect(() => {
+    setSpeakerVoiceMap((prev) => {
+      const next = { ...prev } as Record<string, VoiceOption>;
+      uniqueSpeakersList.forEach((speaker) => {
+        if (!next[speaker]) {
+          next[speaker] = selectedVoice;
+        }
+      });
+      return next;
+    });
+  }, [uniqueSpeakersList, selectedVoice]);
+
+  // AudioPlayerServiceの状態変更を監視
+  useEffect(() => {
+    const handleStateChange = (playing: boolean) => {
+      setIsPlaying(playing);
+      if (!playing) {
+        setCurrentPlayingId(null);
+      }
+    };
+
+    audioPlayerService.setStateUpdateCallback(handleStateChange);
+
+    // クリーンアップ関数
+    return () => {
+      audioPlayerService.setStateUpdateCallback(() => {});
+    };
+  }, []);
+
+  // コンポーネントアンマウント時のクリーンアップ
+  useEffect(() => {
+    return () => {
+      // 再生中の音声を停止
+      if (currentPlayingId && isPlaying) {
+        audioPlayerService.stopAndClear().catch(console.error);
+      }
+    };
+  }, [currentPlayingId, isPlaying]);
 
   // セクション再生成関連
   const [regeneratingSectionId, setRegeneratingSectionId] = useState<
@@ -83,11 +139,15 @@ export default function CreateAudioScreen() {
   >(null);
 
   // BGM選択関連
-  const [selectedBGM, setSelectedBGM] = useState<BGMOption>({
-    id: "none",
-    name: "BGMなし",
-    description: "音声のみで生成",
+  const [selectedBGM, setSelectedBGM] = useState<BGMOption>(() => {
+    const initial = {
+      id: "starsBeyondEx",
+      name: "stars Beyond Ex",
+      description: "",
+    } as BGMOption;
+    return initial;
   });
+  const [isBgmOpen, setIsBgmOpen] = useState(false);
 
   // 利用可能なボイス一覧
   const voiceOptions: VoiceOption[] = [
@@ -213,13 +273,13 @@ export default function CreateAudioScreen() {
     );
   };
 
+  // 話者ごとのボイス選択
+  const handleSelectSpeakerVoice = (speaker: string, voice: VoiceOption) => {
+    setSpeakerVoiceMap((prev) => ({ ...prev, [speaker]: voice }));
+  };
+
   // BGMプレビュー再生
   const handleBGMPreview = (bgm: BGMOption) => {
-    if (bgm.id === "none") {
-      Alert.alert("プレビュー", "BGMなしが選択されています。");
-      return;
-    }
-
     Alert.alert("BGMプレビュー", `${bgm.name}を30秒間プレビュー再生します。`, [
       { text: "キャンセル", style: "cancel" },
       {
@@ -254,11 +314,16 @@ export default function CreateAudioScreen() {
         new Set(audioScript.map((item) => item.speaker))
       );
 
+      // 各スピーカーに対応するボイスIDを並べる
+      const voicesForSpeakers = uniqueSpeakers.map(
+        (s) => speakerVoiceMap[s]?.id ?? selectedVoice.id
+      );
+
       // APIリクエストパラメータを構築
       const requestData: AudioPreviewRequest = {
         script: audioScript,
-        tts: selectedVoice.id,
-        voices: [selectedVoice.id],
+        tts: "openai",
+        voices: voicesForSpeakers,
         speakers: uniqueSpeakers,
       };
 
@@ -271,11 +336,14 @@ export default function CreateAudioScreen() {
 
       console.log("Audio generated successfully:", response);
 
+      // 全体音声URLを保存
+      setFullAudioUrl(response.audioUrl || null);
+
       // レスポンスから音声セクションを構築
       const sections = audioScript.map((item, index) => ({
         id: `section-${index}`,
         text: item.text,
-        audioUrl: response.audioUrl || response.separatedAudioUrls?.[index],
+        audioUrl: response.separatedAudioUrls?.[index],
       }));
 
       setAudioSections(sections);
@@ -296,14 +364,76 @@ export default function CreateAudioScreen() {
   };
 
   // セクション音声再生
-  const handlePlaySection = (sectionId: string) => {
-    if (currentPlayingId === sectionId) {
+  const handlePlaySection = async (sectionId: string) => {
+    try {
+      if (sectionId === "full-podcast") {
+        // 全体音声の再生
+        if (isPlaying && currentPlayingId === sectionId) {
+          // 停止
+          await audioPlayerService.pause();
+        } else {
+          // 再生
+          if (fullAudioUrl) {
+            const isCurrentTrack =
+              audioPlayerService.isCurrentTrack("full-podcast");
+
+            if (!isCurrentTrack) {
+              // 新しいトラックに切り替え
+              const success = await audioPlayerService.switchTrack({
+                id: "full-podcast",
+                url: fullAudioUrl,
+                title: "ポッドキャスト全体",
+                artist: "Generated Audio",
+              });
+
+              if (success) {
+                setCurrentPlayingId(sectionId);
+              } else {
+                Alert.alert("エラー", "音声の再生に失敗しました");
+              }
+            } else {
+              // 既に同じトラック、再生開始
+              await audioPlayerService.play();
+              setCurrentPlayingId(sectionId);
+            }
+          } else {
+            Alert.alert("エラー", "再生可能な音声がありません");
+          }
+        }
+      } else {
+        // セクション別音声再生（既存のロジック）
+        if (currentPlayingId === sectionId) {
+          setCurrentPlayingId(null);
+          // TODO: 再生停止
+        } else {
+          setCurrentPlayingId(sectionId);
+          // TODO: 該当セクションの音声再生
+          console.log(`Playing section: ${sectionId}`);
+        }
+      }
+    } catch (error) {
+      console.error("Audio playback error:", error);
       setCurrentPlayingId(null);
-      // TODO: 再生停止
-    } else {
-      setCurrentPlayingId(sectionId);
-      // TODO: 該当セクションの音声再生
-      console.log(`Playing section: ${sectionId}`);
+      setIsPlaying(false);
+
+      // エラーの詳細な処理
+      let errorMessage = "音声の再生中にエラーが発生しました";
+      if (error instanceof Error) {
+        if (
+          error.message.includes("network") ||
+          error.message.includes("fetch")
+        ) {
+          errorMessage =
+            "ネットワークエラーが発生しました。インターネット接続を確認してください";
+        } else if (
+          error.message.includes("codec") ||
+          error.message.includes("format")
+        ) {
+          errorMessage = "音声ファイルの形式が対応していません";
+        }
+      }
+
+      Alert.alert("再生エラー", errorMessage);
     }
   };
 
@@ -359,10 +489,15 @@ export default function CreateAudioScreen() {
         { text: "キャンセル", style: "cancel" },
         {
           text: "再生成",
-          onPress: () => {
+          onPress: async () => {
+            // 現在の再生を停止
+            if (currentPlayingId) {
+              await audioPlayerService.stopAndClear();
+            }
             setIsAudioGenerated(false);
             setAudioSections([]);
             setCurrentPlayingId(null);
+            setFullAudioUrl(null);
             handleGenerateAudio();
           },
         },
@@ -377,6 +512,15 @@ export default function CreateAudioScreen() {
       return;
     }
 
+    // 話者→ボイスIDのマッピングを作成
+    const speakerVoiceIds = uniqueSpeakersList.reduce<Record<string, string>>(
+      (acc, s) => {
+        acc[s] = speakerVoiceMap[s]?.id ?? selectedVoice.id;
+        return acc;
+      },
+      {}
+    );
+
     // 配信設定画面への遷移
     router.push({
       pathname: "/create-publish",
@@ -384,6 +528,7 @@ export default function CreateAudioScreen() {
         script: JSON.stringify(scriptData),
         voice: selectedVoice.id,
         audioSections: JSON.stringify(audioSections),
+        speakerVoices: JSON.stringify(speakerVoiceIds),
       },
     });
   };
@@ -430,7 +575,7 @@ export default function CreateAudioScreen() {
             </Text>
           </TouchableOpacity>
 
-          {/* ボイス選択セクション */}
+          {/* 話者ごとのボイス設定セクション */}
           <View
             style={{
               backgroundColor: Colors.dark.card,
@@ -447,117 +592,197 @@ export default function CreateAudioScreen() {
                 marginBottom: 16,
               }}
             >
-              🎤 ボイス選択
+              👥 話者ごとのボイス設定
             </Text>
 
-            <View
-              style={{
-                flexDirection: "row",
-                flexWrap: "wrap",
-                justifyContent: "space-between",
-                gap: 12,
-              }}
-            >
-              {voiceOptions.map((voice) => (
-                <TouchableOpacity
-                  key={voice.id}
-                  style={{
-                    width: "48%",
-                    backgroundColor:
-                      selectedVoice.id === voice.id
-                        ? Colors.dark.primary + "20"
-                        : Colors.dark.background,
-                    borderRadius: 12,
-                    padding: 12,
-                    borderWidth: selectedVoice.id === voice.id ? 2 : 1,
-                    borderColor:
-                      selectedVoice.id === voice.id
-                        ? Colors.dark.primary
-                        : Colors.dark.border,
-                    minHeight: 100,
-                  }}
-                  onPress={() => setSelectedVoice(voice)}
-                >
-                  <View style={{ flex: 1 }}>
+            {uniqueSpeakersList.length === 0 ? (
+              <Text style={{ color: Colors.dark.subtext, fontSize: 12 }}>
+                原稿に話者が含まれていません。上の原稿作成で話者を指定してください。
+              </Text>
+            ) : (
+              uniqueSpeakersList.map((speaker) => {
+                const current =
+                  speakerVoiceMap[speaker]?.name ?? selectedVoice.name;
+                return (
+                  <View key={speaker} style={{ marginBottom: 16 }}>
                     <View
                       style={{
                         flexDirection: "row",
                         alignItems: "center",
-                        justifyContent: "space-between",
-                        marginBottom: 6,
+                        marginBottom: 8,
                       }}
+                    >
+                      <View
+                        style={{
+                          backgroundColor: Colors.dark.primary + "30",
+                          paddingHorizontal: 8,
+                          paddingVertical: 4,
+                          borderRadius: 8,
+                        }}
+                      >
+                        <Text
+                          style={{
+                            color: Colors.dark.primary,
+                            fontSize: 12,
+                            fontWeight: "600",
+                          }}
+                        >
+                          {speaker}
+                        </Text>
+                      </View>
+                    </View>
+
+                    <TouchableOpacity
+                      style={{
+                        backgroundColor: Colors.dark.background,
+                        borderWidth: 1,
+                        borderColor: Colors.dark.border,
+                        borderRadius: 12,
+                        paddingVertical: 12,
+                        paddingHorizontal: 12,
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                      }}
+                      onPress={() =>
+                        setOpenSpeaker(openSpeaker === speaker ? null : speaker)
+                      }
                     >
                       <Text
                         style={{
-                          fontSize: 14,
-                          fontWeight: "bold",
                           color: Colors.dark.text,
+                          fontSize: 14,
                           textTransform: "capitalize",
                         }}
+                        numberOfLines={1}
                       >
-                        {voice.name}
+                        {current}
                       </Text>
-                      <TouchableOpacity
+                      <Ionicons
+                        name="chevron-down"
+                        size={16}
+                        color={Colors.dark.subtext}
+                      />
+                    </TouchableOpacity>
+
+                    {openSpeaker === speaker && (
+                      <View
                         style={{
-                          backgroundColor: Colors.dark.primary + "80",
-                          width: 24,
-                          height: 24,
+                          marginTop: 8,
+                          borderWidth: 1,
+                          borderColor: Colors.dark.border,
                           borderRadius: 12,
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                        onPress={() => handleVoicePreview(voice)}
-                      >
-                        <Ionicons
-                          name="play"
-                          size={12}
-                          color={Colors.dark.text}
-                        />
-                      </TouchableOpacity>
-                    </View>
-
-                    <View
-                      style={{
-                        backgroundColor:
-                          voice.gender === "female"
-                            ? Colors.dark.secondary + "30"
-                            : Colors.dark.primary + "30",
-                        paddingHorizontal: 6,
-                        paddingVertical: 2,
-                        borderRadius: 6,
-                        alignSelf: "flex-start",
-                        marginBottom: 6,
-                      }}
-                    >
-                      <Text
-                        style={{
-                          fontSize: 10,
-                          color:
-                            voice.gender === "female"
-                              ? Colors.dark.secondary
-                              : Colors.dark.primary,
-                          fontWeight: "600",
+                          backgroundColor: Colors.dark.background,
+                          maxHeight: 200,
+                          overflow: "hidden",
                         }}
                       >
-                        {voice.gender === "female" ? "Female" : "Male"}
-                      </Text>
-                    </View>
+                        <ScrollView
+                          showsVerticalScrollIndicator={false}
+                          contentContainerStyle={{ paddingVertical: 4 }}
+                        >
+                          {voiceOptions.map((voice) => {
+                            const selected =
+                              (speakerVoiceMap[speaker]?.id ??
+                                selectedVoice.id) === voice.id;
+                            return (
+                              <TouchableOpacity
+                                key={`${speaker}-${voice.id}`}
+                                style={{
+                                  flexDirection: "row",
+                                  alignItems: "center",
+                                  justifyContent: "space-between",
+                                  paddingVertical: 12,
+                                  paddingHorizontal: 12,
+                                  borderBottomWidth: 1,
+                                  borderBottomColor: Colors.dark.border,
+                                  backgroundColor: selected
+                                    ? Colors.dark.primary + "20"
+                                    : Colors.dark.background,
+                                }}
+                                onPress={() => {
+                                  handleSelectSpeakerVoice(speaker, voice);
+                                  setOpenSpeaker(null);
+                                }}
+                              >
+                                <View style={{ flex: 1, paddingRight: 12 }}>
+                                  <Text
+                                    style={{
+                                      color: Colors.dark.text,
+                                      fontSize: 14,
+                                      fontWeight: "bold",
+                                      textTransform: "capitalize",
+                                      marginBottom: 4,
+                                    }}
+                                    numberOfLines={1}
+                                  >
+                                    {voice.name}
+                                  </Text>
+                                  <Text
+                                    style={{
+                                      color: Colors.dark.subtext,
+                                      fontSize: 11,
+                                      lineHeight: 14,
+                                    }}
+                                    numberOfLines={2}
+                                  >
+                                    {voice.description}
+                                  </Text>
+                                </View>
 
-                    <Text
-                      style={{
-                        fontSize: 11,
-                        color: Colors.dark.subtext,
-                        lineHeight: 14,
-                        flex: 1,
-                      }}
-                      numberOfLines={2}
-                    >
-                      {voice.description}
-                    </Text>
+                                <TouchableOpacity
+                                  style={{
+                                    backgroundColor: Colors.dark.primary + "80",
+                                    width: 28,
+                                    height: 28,
+                                    borderRadius: 14,
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    marginRight: 12,
+                                  }}
+                                  onPress={() => handleVoicePreview(voice)}
+                                >
+                                  <Ionicons
+                                    name="play"
+                                    size={14}
+                                    color={Colors.dark.text}
+                                  />
+                                </TouchableOpacity>
+
+                                <View
+                                  style={{
+                                    width: 20,
+                                    height: 20,
+                                    borderRadius: 10,
+                                    borderWidth: 2,
+                                    borderColor: selected
+                                      ? Colors.dark.primary
+                                      : Colors.dark.border,
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                  }}
+                                >
+                                  {selected && (
+                                    <View
+                                      style={{
+                                        width: 10,
+                                        height: 10,
+                                        borderRadius: 5,
+                                        backgroundColor: Colors.dark.primary,
+                                      }}
+                                    />
+                                  )}
+                                </View>
+                              </TouchableOpacity>
+                            );
+                          })}
+                        </ScrollView>
+                      </View>
+                    )}
                   </View>
-                </TouchableOpacity>
-              ))}
-            </View>
+                );
+              })
+            )}
           </View>
 
           {/* BGM選択セクション */}
@@ -579,98 +804,144 @@ export default function CreateAudioScreen() {
             >
               🎵 BGM選択
             </Text>
-
-            <View
+            <TouchableOpacity
               style={{
+                backgroundColor: Colors.dark.background,
+                borderWidth: 1,
+                borderColor: Colors.dark.border,
+                borderRadius: 12,
+                paddingVertical: 12,
+                paddingHorizontal: 12,
                 flexDirection: "row",
-                flexWrap: "wrap",
+                alignItems: "center",
                 justifyContent: "space-between",
-                gap: 12,
               }}
+              onPress={() => setIsBgmOpen((prev) => !prev)}
             >
-              {bgmOptions.map((bgm) => (
-                <TouchableOpacity
-                  key={bgm.id}
-                  style={{
-                    width: "48%",
-                    backgroundColor:
-                      selectedBGM.id === bgm.id
-                        ? Colors.dark.primary + "20"
-                        : Colors.dark.background,
-                    borderRadius: 12,
-                    padding: 12,
-                    borderWidth: selectedBGM.id === bgm.id ? 2 : 1,
-                    borderColor:
-                      selectedBGM.id === bgm.id
-                        ? Colors.dark.primary
-                        : Colors.dark.border,
-                    minHeight: 100,
-                  }}
-                  onPress={() => setSelectedBGM(bgm)}
+              <Text
+                style={{ color: Colors.dark.text, fontSize: 14 }}
+                numberOfLines={1}
+              >
+                {selectedBGM.name}
+              </Text>
+              <Ionicons
+                name="chevron-down"
+                size={16}
+                color={Colors.dark.subtext}
+              />
+            </TouchableOpacity>
+
+            {isBgmOpen && (
+              <View
+                style={{
+                  marginTop: 8,
+                  borderWidth: 1,
+                  borderColor: Colors.dark.border,
+                  borderRadius: 12,
+                  backgroundColor: Colors.dark.background,
+                  maxHeight: 240,
+                  overflow: "hidden",
+                }}
+              >
+                <ScrollView
+                  showsVerticalScrollIndicator={false}
+                  contentContainerStyle={{ paddingVertical: 4 }}
                 >
-                  <View style={{ flex: 1 }}>
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        marginBottom: 6,
-                      }}
-                    >
-                      <Text
+                  {bgmOptions.map((bgm) => {
+                    const selected = selectedBGM.id === bgm.id;
+                    return (
+                      <TouchableOpacity
+                        key={bgm.id}
                         style={{
-                          fontSize: 14,
-                          fontWeight: "bold",
-                          color: Colors.dark.text,
+                          flexDirection: "row",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          paddingVertical: 12,
+                          paddingHorizontal: 12,
+                          borderBottomWidth: 1,
+                          borderBottomColor: Colors.dark.border,
+                          backgroundColor: selected
+                            ? Colors.dark.primary + "20"
+                            : Colors.dark.background,
                         }}
-                        numberOfLines={1}
+                        onPress={() => {
+                          setSelectedBGM(bgm);
+                          setIsBgmOpen(false);
+                        }}
                       >
-                        {bgm.name}
-                      </Text>
-                      {bgm.id !== "none" && (
+                        <View style={{ flex: 1, paddingRight: 12 }}>
+                          <Text
+                            style={{
+                              color: Colors.dark.text,
+                              fontSize: 14,
+                              fontWeight: "bold",
+                              marginBottom: 4,
+                            }}
+                            numberOfLines={1}
+                          >
+                            {bgm.name}
+                          </Text>
+                          <Text
+                            style={{
+                              color: Colors.dark.subtext,
+                              fontSize: 11,
+                              lineHeight: 14,
+                            }}
+                            numberOfLines={2}
+                          >
+                            {bgm.description}
+                          </Text>
+                        </View>
+
                         <TouchableOpacity
                           style={{
                             backgroundColor: Colors.dark.secondary + "80",
-                            width: 24,
-                            height: 24,
-                            borderRadius: 12,
+                            width: 28,
+                            height: 28,
+                            borderRadius: 14,
                             alignItems: "center",
                             justifyContent: "center",
+                            marginRight: 12,
                           }}
                           onPress={() => handleBGMPreview(bgm)}
                         >
                           <Ionicons
                             name="play"
-                            size={12}
+                            size={14}
                             color={Colors.dark.text}
                           />
                         </TouchableOpacity>
-                      )}
-                    </View>
 
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        marginBottom: 6,
-                      }}
-                    ></View>
-
-                    <Text
-                      style={{
-                        fontSize: 11,
-                        color: Colors.dark.subtext,
-                        lineHeight: 14,
-                        flex: 1,
-                      }}
-                      numberOfLines={2}
-                    >
-                      {bgm.description}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </View>
+                        <View
+                          style={{
+                            width: 20,
+                            height: 20,
+                            borderRadius: 10,
+                            borderWidth: 2,
+                            borderColor: selected
+                              ? Colors.dark.primary
+                              : Colors.dark.border,
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          {selected && (
+                            <View
+                              style={{
+                                width: 10,
+                                height: 10,
+                                borderRadius: 5,
+                                backgroundColor: Colors.dark.primary,
+                              }}
+                            />
+                          )}
+                        </View>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+            )}
           </View>
 
           {/* 音声生成ボタン */}
@@ -897,7 +1168,7 @@ export default function CreateAudioScreen() {
               <TouchableOpacity
                 style={{
                   backgroundColor:
-                    currentPlayingId === "full-podcast"
+                    isPlaying && currentPlayingId === "full-podcast"
                       ? Colors.dark.success
                       : Colors.dark.primary,
                   borderRadius: 16,
@@ -907,11 +1178,17 @@ export default function CreateAudioScreen() {
                   alignItems: "center",
                   justifyContent: "center",
                   marginBottom: 12,
+                  opacity: !fullAudioUrl ? 0.5 : 1,
                 }}
                 onPress={() => handlePlaySection("full-podcast")}
+                disabled={!fullAudioUrl}
               >
                 <Ionicons
-                  name={currentPlayingId === "full-podcast" ? "pause" : "play"}
+                  name={
+                    isPlaying && currentPlayingId === "full-podcast"
+                      ? "pause"
+                      : "play"
+                  }
                   size={24}
                   color={Colors.dark.text}
                   style={{ marginRight: 12 }}
@@ -923,7 +1200,9 @@ export default function CreateAudioScreen() {
                     fontWeight: "bold",
                   }}
                 >
-                  {currentPlayingId === "full-podcast" ? "停止" : "全体を再生"}
+                  {isPlaying && currentPlayingId === "full-podcast"
+                    ? "停止"
+                    : "全体を再生"}
                 </Text>
               </TouchableOpacity>
             </View>
