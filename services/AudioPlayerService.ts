@@ -1,5 +1,11 @@
-import TrackPlayer, { State, Track, RepeatMode, Capability, Event } from 'react-native-track-player';
-import { TrackPlayerService } from './TrackPlayerService';
+import TrackPlayer, {
+  Capability,
+  Event,
+  RepeatMode,
+  State,
+  Track,
+} from "react-native-track-player";
+import { TrackPlayerService } from "./TrackPlayerService";
 
 export interface PodcastTrack {
   id: string;
@@ -18,11 +24,13 @@ class AudioPlayerService {
 
   async initialize(): Promise<void> {
     if (this.isInitialized) return;
-    
+
     try {
       // 既に初期化されているかチェック
-      const activeTrackIndex = await TrackPlayer.getActiveTrackIndex().catch(() => null);
-      
+      const activeTrackIndex = await TrackPlayer.getActiveTrackIndex().catch(
+        () => null
+      );
+
       if (activeTrackIndex === null) {
         // まだ初期化されていない場合のみセットアップ
         await TrackPlayer.setupPlayer({
@@ -30,7 +38,7 @@ class AudioPlayerService {
           autoUpdateMetadata: true,
           waitForBuffer: true,
         });
-        
+
         // updateOptionsを設定（progressUpdateEventIntervalは不要）
         await TrackPlayer.updateOptions({
           capabilities: [
@@ -47,17 +55,17 @@ class AudioPlayerService {
           ],
         });
       }
-      
+
       // TrackPlayerServiceを初期化してイベントリスナーを設定
       await TrackPlayerService();
-      
+
       // 再生状態変更のイベントリスナーを追加
       this.setupStateListeners();
-      
+
       await TrackPlayer.setRepeatMode(RepeatMode.Off);
       this.isInitialized = true;
     } catch (error) {
-      console.log('TrackPlayer setup error:', error);
+      console.log("TrackPlayer setup error:", error);
     }
   }
 
@@ -73,9 +81,6 @@ class AudioPlayerService {
         return true;
       }
 
-      // 現在の再生状態を確認
-      const wasPlaying = await this.getPlaybackState();
-
       await this.stopAndClear();
 
       const track: Track = {
@@ -88,16 +93,16 @@ class AudioPlayerService {
       };
 
       await TrackPlayer.add(track);
-      
+
       // スムーズな切り替えのため、少し待機してから再生
-      await new Promise(resolve => setTimeout(resolve, 50));
+      await new Promise((resolve) => setTimeout(resolve, 50));
       await TrackPlayer.play();
-      
+
       this.currentTrackId = podcastTrack.id;
       this.isSwitching = false;
       return true;
     } catch (error) {
-      console.log('Track switch error:', error);
+      console.log("Track switch error:", error);
       this.isSwitching = false;
       return false;
     }
@@ -112,7 +117,7 @@ class AudioPlayerService {
       await TrackPlayer.reset();
       this.currentTrackId = null;
     } catch (error) {
-      console.log('Stop and clear error:', error);
+      console.log("Stop and clear error:", error);
     }
   }
 
@@ -120,7 +125,7 @@ class AudioPlayerService {
     try {
       await TrackPlayer.play();
     } catch (error) {
-      console.log('Play error:', error);
+      console.log("Play error:", error);
     }
   }
 
@@ -128,7 +133,7 @@ class AudioPlayerService {
     try {
       await TrackPlayer.pause();
     } catch (error) {
-      console.log('Pause error:', error);
+      console.log("Pause error:", error);
     }
   }
 
@@ -136,7 +141,7 @@ class AudioPlayerService {
     try {
       await TrackPlayer.seekTo(position);
     } catch (error) {
-      console.log('Seek error:', error);
+      console.log("Seek error:", error);
     }
   }
 
@@ -144,7 +149,7 @@ class AudioPlayerService {
     try {
       await TrackPlayer.setRate(rate);
     } catch (error) {
-      console.log('Set playback rate error:', error);
+      console.log("Set playback rate error:", error);
     }
   }
 
@@ -175,7 +180,7 @@ class AudioPlayerService {
       const state = await TrackPlayer.getPlaybackState();
       return state.state === State.Playing;
     } catch (error) {
-      console.log('Get playback state error:', error);
+      console.log("Get playback state error:", error);
       return false;
     }
   }
@@ -186,7 +191,7 @@ class AudioPlayerService {
       this.stateUpdateCallback = null;
       this.isInitialized = false;
     } catch (error) {
-      console.log('Cleanup error:', error);
+      console.log("Cleanup error:", error);
     }
   }
 }

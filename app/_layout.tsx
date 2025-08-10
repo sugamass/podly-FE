@@ -1,15 +1,16 @@
 import { AuthModal } from "@/components/AuthModal";
 import Colors from "@/constants/Colors";
 import { useAuth } from "@/hooks/useAuth";
-import { cleanupTrackPlayerService } from "@/services/TrackPlayerService";
-import { audioPlayerService } from "@/services/AudioPlayerService";
+import { useAuthModal } from "@/hooks/useAuthModal";
+import { useAppInitialization } from "@/hooks/useAppInitialization";
+import { useAppStateHandler } from "@/hooks/useAppStateHandler";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
-import React, { useEffect, useState } from "react";
-import { ActivityIndicator, AppState, Text, View } from "react-native";
+import React, { useEffect } from "react";
+import { ActivityIndicator, Text, View } from "react-native";
 
 export const unstable_settings = {
   initialRouteName: "(tabs)",
@@ -23,8 +24,12 @@ export default function RootLayout() {
     ...FontAwesome.font,
   });
 
-  const { loading: authLoading, initialized, isAuthenticated } = useAuth();
-  const [showAuthModal, setShowAuthModal] = useState(false);
+  const { initialized, isAuthenticated } = useAuth();
+  const { showAuthModal, setShowAuthModal } = useAuthModal();
+  const { isReady } = useAppInitialization();
+  
+  // アプリ状態変更のハンドリング
+  useAppStateHandler();
 
   useEffect(() => {
     if (error) {
@@ -39,49 +44,7 @@ export default function RootLayout() {
     }
   }, [loaded, initialized]);
 
-  // Initialize AudioPlayerService on app start
-  useEffect(() => {
-    audioPlayerService.initialize();
-  }, []);
-
-  // 🔧 FIX: アプリケーションの状態変化を監視してクリーンアップ
-  useEffect(() => {
-    const handleAppStateChange = (nextAppState: string) => {
-      if (nextAppState === "background" || nextAppState === "inactive") {
-        cleanupTrackPlayerService();
-        audioPlayerService.cleanup();
-      }
-    };
-
-    const subscription = AppState.addEventListener(
-      "change",
-      handleAppStateChange
-    );
-
-    return () => {
-      subscription?.remove();
-      cleanupTrackPlayerService();
-      audioPlayerService.cleanup();
-    };
-  }, []);
-
-  // Show auth modal when app is loaded and user is not authenticated
-  useEffect(() => {
-    if (loaded && initialized && !isAuthenticated) {
-      setShowAuthModal(true);
-    }
-  }, [loaded, initialized, isAuthenticated]);
-
-  // ログアウト時にもAuthModalを確実に表示する
-  useEffect(() => {
-    if (initialized && !isAuthenticated && !authLoading) {
-      setShowAuthModal(true);
-    }
-  }, [initialized, isAuthenticated, authLoading]);
-
-  // TrackPlayer service is now registered in index.js
-
-  if (!loaded || !initialized) {
+  if (!loaded || !initialized || !isReady) {
     return (
       <View
         style={{
