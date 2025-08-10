@@ -22,11 +22,18 @@ type VoiceOption = {
   language: "ja" | "en";
 };
 
+type BGMOption = {
+  id: string;
+  name: string;
+  description: string;
+};
+
 type AudioSection = {
   id: string;
   text: string;
   audioUrl?: string;
   isPlaying?: boolean;
+  isRegenerating?: boolean;
 };
 
 export default function CreateAudioScreen() {
@@ -50,11 +57,11 @@ export default function CreateAudioScreen() {
 
   // 音声設定
   const [selectedVoice, setSelectedVoice] = useState<VoiceOption>({
-    id: "voice-1",
-    name: "さくら",
-    description: "明るく親しみやすい女性の声",
+    id: "alloy",
+    name: "alloy",
+    description: "Neutral, balanced voice",
     gender: "female",
-    language: "ja",
+    language: "en",
   });
 
   // 音声生成関連
@@ -63,35 +70,121 @@ export default function CreateAudioScreen() {
   const [isAudioGenerated, setIsAudioGenerated] = useState(false);
   const [currentPlayingId, setCurrentPlayingId] = useState<string | null>(null);
 
+  // セクション再生成関連
+  const [regeneratingSectionId, setRegeneratingSectionId] = useState<
+    string | null
+  >(null);
+
+  // BGM選択関連
+  const [selectedBGM, setSelectedBGM] = useState<BGMOption>({
+    id: "none",
+    name: "BGMなし",
+    description: "音声のみで生成",
+  });
+
   // 利用可能なボイス一覧
   const voiceOptions: VoiceOption[] = [
     {
-      id: "voice-1",
-      name: "さくら",
-      description: "明るく親しみやすい女性の声",
+      id: "alloy",
+      name: "alloy",
+      description: "Neutral, balanced voice",
       gender: "female",
-      language: "ja",
+      language: "en",
     },
     {
-      id: "voice-2",
-      name: "たけし",
-      description: "落ち着いた男性の声",
+      id: "ash",
+      name: "ash",
+      description: "Deep, resonant male voice",
       gender: "male",
-      language: "ja",
+      language: "en",
     },
     {
-      id: "voice-3",
-      name: "みお",
-      description: "やわらかで上品な女性の声",
+      id: "ballad",
+      name: "ballad",
+      description: "Warm, storytelling voice",
       gender: "female",
-      language: "ja",
+      language: "en",
     },
     {
-      id: "voice-4",
-      name: "けんじ",
-      description: "深みのある男性の声",
+      id: "coral",
+      name: "coral",
+      description: "Bright, energetic voice",
+      gender: "female",
+      language: "en",
+    },
+    {
+      id: "echo",
+      name: "echo",
+      description: "Clear, articulate voice",
       gender: "male",
-      language: "ja",
+      language: "en",
+    },
+    {
+      id: "fable",
+      name: "fable",
+      description: "Smooth, confident voice",
+      gender: "male",
+      language: "en",
+    },
+    {
+      id: "onyx",
+      name: "onyx",
+      description: "Strong, authoritative voice",
+      gender: "male",
+      language: "en",
+    },
+    {
+      id: "nova",
+      name: "nova",
+      description: "Young, vibrant voice",
+      gender: "female",
+      language: "en",
+    },
+    {
+      id: "sage",
+      name: "sage",
+      description: "Wise, mature voice",
+      gender: "male",
+      language: "en",
+    },
+    {
+      id: "shimmer",
+      name: "shimmer",
+      description: "Gentle, soothing voice",
+      gender: "female",
+      language: "en",
+    },
+    {
+      id: "verse",
+      name: "verse",
+      description: "Expressive, dynamic voice",
+      gender: "female",
+      language: "en",
+    },
+  ];
+
+  // 利用可能なBGM一覧
+  const bgmOptions: BGMOption[] = [
+    // {
+    //   id: "none",
+    //   name: "BGMなし",
+    //   description: "音声のみで生成",
+    //   category: "ambient",
+    // },
+    {
+      id: "starsBeyondEx",
+      name: "stars Beyond Ex",
+      description: "",
+    },
+    {
+      id: "calmForest",
+      name: "Calm Forest",
+      description: "",
+    },
+    {
+      id: "calmMind",
+      name: "Calm Mind",
+      description: "",
     },
   ];
 
@@ -111,6 +204,25 @@ export default function CreateAudioScreen() {
         },
       ]
     );
+  };
+
+  // BGMプレビュー再生
+  const handleBGMPreview = (bgm: BGMOption) => {
+    if (bgm.id === "none") {
+      Alert.alert("プレビュー", "BGMなしが選択されています。");
+      return;
+    }
+
+    Alert.alert("BGMプレビュー", `${bgm.name}を30秒間プレビュー再生します。`, [
+      { text: "キャンセル", style: "cancel" },
+      {
+        text: "再生",
+        onPress: () => {
+          // TODO: 実際のBGM再生実装
+          console.log(`Playing BGM preview for ${bgm.name}`);
+        },
+      },
+    ]);
   };
 
   // 音声生成
@@ -152,6 +264,49 @@ export default function CreateAudioScreen() {
       // TODO: 該当セクションの音声再生
       console.log(`Playing section: ${sectionId}`);
     }
+  };
+
+  // セクションテキスト更新
+  const handleUpdateSectionText = (sectionId: string, newText: string) => {
+    setAudioSections((prevSections) =>
+      prevSections.map((section) =>
+        section.id === sectionId ? { ...section, text: newText } : section
+      )
+    );
+  };
+
+  // 個別セクション再生成
+  const handleRegenerateSection = async (sectionId: string) => {
+    Alert.alert(
+      "セクション再生成の確認",
+      "このセクションの音声を再生成しますか？",
+      [
+        { text: "キャンセル", style: "cancel" },
+        {
+          text: "再生成",
+          onPress: async () => {
+            setRegeneratingSectionId(sectionId);
+
+            // TODO: 実際のAPI呼び出しを実装
+            setTimeout(() => {
+              setAudioSections((prevSections) =>
+                prevSections.map((section) =>
+                  section.id === sectionId
+                    ? {
+                        ...section,
+                        audioUrl: `regenerated-audio-${Date.now()}.mp3`,
+                        isRegenerating: false,
+                      }
+                    : section
+                )
+              );
+              setRegeneratingSectionId(null);
+              Alert.alert("完了", "セクションの音声を再生成しました！");
+            }, 2000);
+          },
+        },
+      ]
+    );
   };
 
   // 音声再生成
@@ -254,60 +409,88 @@ export default function CreateAudioScreen() {
               🎤 ボイス選択
             </Text>
 
-            {voiceOptions.map((voice) => (
-              <TouchableOpacity
-                key={voice.id}
-                style={{
-                  backgroundColor:
-                    selectedVoice.id === voice.id
-                      ? Colors.dark.primary + "20"
-                      : Colors.dark.background,
-                  borderRadius: 12,
-                  padding: 16,
-                  marginBottom: 12,
-                  borderWidth: selectedVoice.id === voice.id ? 2 : 1,
-                  borderColor:
-                    selectedVoice.id === voice.id
-                      ? Colors.dark.primary
-                      : Colors.dark.border,
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
-                onPress={() => setSelectedVoice(voice)}
-              >
-                <View style={{ flex: 1 }}>
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      marginBottom: 4,
-                    }}
-                  >
-                    <Text
+            <View
+              style={{
+                flexDirection: "row",
+                flexWrap: "wrap",
+                justifyContent: "space-between",
+                gap: 12,
+              }}
+            >
+              {voiceOptions.map((voice) => (
+                <TouchableOpacity
+                  key={voice.id}
+                  style={{
+                    width: "48%",
+                    backgroundColor:
+                      selectedVoice.id === voice.id
+                        ? Colors.dark.primary + "20"
+                        : Colors.dark.background,
+                    borderRadius: 12,
+                    padding: 12,
+                    borderWidth: selectedVoice.id === voice.id ? 2 : 1,
+                    borderColor:
+                      selectedVoice.id === voice.id
+                        ? Colors.dark.primary
+                        : Colors.dark.border,
+                    minHeight: 100,
+                  }}
+                  onPress={() => setSelectedVoice(voice)}
+                >
+                  <View style={{ flex: 1 }}>
+                    <View
                       style={{
-                        fontSize: 16,
-                        fontWeight: "bold",
-                        color: Colors.dark.text,
-                        marginRight: 8,
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        marginBottom: 6,
                       }}
                     >
-                      {voice.name}
-                    </Text>
+                      <Text
+                        style={{
+                          fontSize: 14,
+                          fontWeight: "bold",
+                          color: Colors.dark.text,
+                          textTransform: "capitalize",
+                        }}
+                      >
+                        {voice.name}
+                      </Text>
+                      <TouchableOpacity
+                        style={{
+                          backgroundColor: Colors.dark.primary + "80",
+                          width: 24,
+                          height: 24,
+                          borderRadius: 12,
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                        onPress={() => handleVoicePreview(voice)}
+                      >
+                        <Ionicons
+                          name="play"
+                          size={12}
+                          color={Colors.dark.text}
+                        />
+                      </TouchableOpacity>
+                    </View>
+
                     <View
                       style={{
                         backgroundColor:
                           voice.gender === "female"
                             ? Colors.dark.secondary + "30"
                             : Colors.dark.primary + "30",
-                        paddingHorizontal: 8,
+                        paddingHorizontal: 6,
                         paddingVertical: 2,
-                        borderRadius: 8,
+                        borderRadius: 6,
+                        alignSelf: "flex-start",
+                        marginBottom: 6,
                       }}
                     >
                       <Text
                         style={{
-                          fontSize: 12,
+                          fontSize: 10,
                           color:
                             voice.gender === "female"
                               ? Colors.dark.secondary
@@ -315,35 +498,138 @@ export default function CreateAudioScreen() {
                           fontWeight: "600",
                         }}
                       >
-                        {voice.gender === "female" ? "女性" : "男性"}
+                        {voice.gender === "female" ? "Female" : "Male"}
                       </Text>
                     </View>
-                  </View>
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      color: Colors.dark.subtext,
-                      lineHeight: 18,
-                    }}
-                  >
-                    {voice.description}
-                  </Text>
-                </View>
 
-                <TouchableOpacity
-                  style={{
-                    backgroundColor: Colors.dark.primary,
-                    paddingHorizontal: 12,
-                    paddingVertical: 8,
-                    borderRadius: 8,
-                    marginLeft: 12,
-                  }}
-                  onPress={() => handleVoicePreview(voice)}
-                >
-                  <Ionicons name="play" size={16} color={Colors.dark.text} />
+                    <Text
+                      style={{
+                        fontSize: 11,
+                        color: Colors.dark.subtext,
+                        lineHeight: 14,
+                        flex: 1,
+                      }}
+                      numberOfLines={2}
+                    >
+                      {voice.description}
+                    </Text>
+                  </View>
                 </TouchableOpacity>
-              </TouchableOpacity>
-            ))}
+              ))}
+            </View>
+          </View>
+
+          {/* BGM選択セクション */}
+          <View
+            style={{
+              backgroundColor: Colors.dark.card,
+              borderRadius: 16,
+              padding: 20,
+              marginBottom: 24,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 18,
+                fontWeight: "bold",
+                color: Colors.dark.text,
+                marginBottom: 16,
+              }}
+            >
+              🎵 BGM選択
+            </Text>
+
+            <View
+              style={{
+                flexDirection: "row",
+                flexWrap: "wrap",
+                justifyContent: "space-between",
+                gap: 12,
+              }}
+            >
+              {bgmOptions.map((bgm) => (
+                <TouchableOpacity
+                  key={bgm.id}
+                  style={{
+                    width: "48%",
+                    backgroundColor:
+                      selectedBGM.id === bgm.id
+                        ? Colors.dark.primary + "20"
+                        : Colors.dark.background,
+                    borderRadius: 12,
+                    padding: 12,
+                    borderWidth: selectedBGM.id === bgm.id ? 2 : 1,
+                    borderColor:
+                      selectedBGM.id === bgm.id
+                        ? Colors.dark.primary
+                        : Colors.dark.border,
+                    minHeight: 100,
+                  }}
+                  onPress={() => setSelectedBGM(bgm)}
+                >
+                  <View style={{ flex: 1 }}>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        marginBottom: 6,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: 14,
+                          fontWeight: "bold",
+                          color: Colors.dark.text,
+                        }}
+                        numberOfLines={1}
+                      >
+                        {bgm.name}
+                      </Text>
+                      {bgm.id !== "none" && (
+                        <TouchableOpacity
+                          style={{
+                            backgroundColor: Colors.dark.secondary + "80",
+                            width: 24,
+                            height: 24,
+                            borderRadius: 12,
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                          onPress={() => handleBGMPreview(bgm)}
+                        >
+                          <Ionicons
+                            name="play"
+                            size={12}
+                            color={Colors.dark.text}
+                          />
+                        </TouchableOpacity>
+                      )}
+                    </View>
+
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        marginBottom: 6,
+                      }}
+                    ></View>
+
+                    <Text
+                      style={{
+                        fontSize: 11,
+                        color: Colors.dark.subtext,
+                        lineHeight: 14,
+                        flex: 1,
+                      }}
+                      numberOfLines={2}
+                    >
+                      {bgm.description}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
 
           {/* 音声生成ボタン */}
@@ -410,7 +696,7 @@ export default function CreateAudioScreen() {
           )}
 
           {/* 音声生成後のプレビューセクション */}
-          {isAudioGenerated && (
+          {/* {isAudioGenerated && (
             <View
               style={{
                 backgroundColor: Colors.dark.card,
@@ -446,7 +732,6 @@ export default function CreateAudioScreen() {
                     style={{
                       flexDirection: "row",
                       alignItems: "flex-start",
-                      marginBottom: 12,
                     }}
                   >
                     <View
@@ -458,6 +743,7 @@ export default function CreateAudioScreen() {
                         alignItems: "center",
                         justifyContent: "center",
                         marginRight: 12,
+                        marginTop: 4,
                       }}
                     >
                       <Text
@@ -470,92 +756,140 @@ export default function CreateAudioScreen() {
                         {index + 1}
                       </Text>
                     </View>
-                    <Text
+                    
+                    <TextInput
                       style={{
                         flex: 1,
-                        fontSize: 14,
+                        backgroundColor: Colors.dark.card,
+                        borderRadius: 8,
+                        padding: 12,
                         color: Colors.dark.text,
-                        lineHeight: 20,
+                        fontSize: 14,
+                        borderWidth: 1,
+                        borderColor: Colors.dark.border,
+                        minHeight: 60,
+                        textAlignVertical: "top",
+                        marginRight: 8,
                       }}
-                    >
-                      {section.text}
-                    </Text>
-                  </View>
-
-                  <TouchableOpacity
-                    style={{
-                      backgroundColor:
-                        currentPlayingId === section.id
-                          ? Colors.dark.success
-                          : Colors.dark.primary,
-                      paddingVertical: 10,
-                      paddingHorizontal: 16,
-                      borderRadius: 8,
-                      flexDirection: "row",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      alignSelf: "flex-start",
-                    }}
-                    onPress={() => handlePlaySection(section.id)}
-                  >
-                    <Ionicons
-                      name={currentPlayingId === section.id ? "pause" : "play"}
-                      size={16}
-                      color={Colors.dark.text}
-                      style={{ marginRight: 8 }}
+                      value={section.text}
+                      onChangeText={(text) => handleUpdateSectionText(section.id, text)}
+                      multiline
+                      placeholder="文章を入力..."
+                      placeholderTextColor={Colors.dark.subtext}
                     />
-                    <Text
+                    
+                    <View
                       style={{
-                        color: Colors.dark.text,
-                        fontSize: 14,
-                        fontWeight: "600",
+                        flexDirection: "column",
+                        gap: 8,
                       }}
                     >
-                      {currentPlayingId === section.id ? "停止" : "再生"}
-                    </Text>
-                  </TouchableOpacity>
+                      <TouchableOpacity
+                        style={{
+                          backgroundColor:
+                            currentPlayingId === section.id
+                              ? Colors.dark.success
+                              : Colors.dark.primary,
+                          width: 32,
+                          height: 32,
+                          borderRadius: 16,
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                        onPress={() => handlePlaySection(section.id)}
+                      >
+                        <Ionicons
+                          name={currentPlayingId === section.id ? "pause" : "play"}
+                          size={16}
+                          color={Colors.dark.text}
+                        />
+                      </TouchableOpacity>
+                      
+                      <TouchableOpacity
+                        style={{
+                          backgroundColor: regeneratingSectionId === section.id ? Colors.dark.border : Colors.dark.highlight,
+                          width: 32,
+                          height: 32,
+                          borderRadius: 16,
+                          alignItems: "center",
+                          justifyContent: "center",
+                          opacity: regeneratingSectionId === section.id ? 0.7 : 1,
+                        }}
+                        onPress={() => handleRegenerateSection(section.id)}
+                        disabled={regeneratingSectionId === section.id}
+                      >
+                        <Ionicons
+                          name={regeneratingSectionId === section.id ? "sync" : "refresh"}
+                          size={16}
+                          color={Colors.dark.text}
+                        />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
                 </View>
               ))}
+            </View>
+          )} */}
+
+          {/* ポッドキャスト全体プレビュー */}
+          {isAudioGenerated && (
+            <View
+              style={{
+                backgroundColor: Colors.dark.card,
+                borderRadius: 16,
+                padding: 20,
+                marginBottom: 24,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 18,
+                  fontWeight: "bold",
+                  color: Colors.dark.text,
+                  marginBottom: 16,
+                  textAlign: "center",
+                }}
+              >
+                🎧 ポッドキャスト プレビュー
+              </Text>
+
+              <TouchableOpacity
+                style={{
+                  backgroundColor:
+                    currentPlayingId === "full-podcast"
+                      ? Colors.dark.success
+                      : Colors.dark.primary,
+                  borderRadius: 16,
+                  paddingVertical: 20,
+                  paddingHorizontal: 24,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginBottom: 12,
+                }}
+                onPress={() => handlePlaySection("full-podcast")}
+              >
+                <Ionicons
+                  name={currentPlayingId === "full-podcast" ? "pause" : "play"}
+                  size={24}
+                  color={Colors.dark.text}
+                  style={{ marginRight: 12 }}
+                />
+                <Text
+                  style={{
+                    color: Colors.dark.text,
+                    fontSize: 18,
+                    fontWeight: "bold",
+                  }}
+                >
+                  {currentPlayingId === "full-podcast" ? "停止" : "全体を再生"}
+                </Text>
+              </TouchableOpacity>
             </View>
           )}
 
           {/* アクションボタン */}
           <View style={{ flexDirection: "row", gap: 12, marginBottom: 32 }}>
-            {/* 再生成ボタン */}
-            {isAudioGenerated && (
-              <TouchableOpacity
-                style={{
-                  flex: 1,
-                  backgroundColor: Colors.dark.card,
-                  borderRadius: 12,
-                  paddingVertical: 16,
-                  paddingHorizontal: 20,
-                  borderWidth: 1,
-                  borderColor: Colors.dark.border,
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-                onPress={handleRegenerateAudio}
-              >
-                <Ionicons
-                  name="refresh"
-                  size={18}
-                  color={Colors.dark.text}
-                  style={{ marginRight: 8 }}
-                />
-                <Text
-                  style={{
-                    color: Colors.dark.text,
-                    fontSize: 16,
-                    fontWeight: "600",
-                  }}
-                >
-                  再生成
-                </Text>
-              </TouchableOpacity>
-            )}
-
             {/* 配信設定ボタン */}
             <TouchableOpacity
               style={{

@@ -14,29 +14,22 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { ScriptSectionCard } from "../../components/ScriptSectionCard";
 import Colors from "../../constants/Colors";
-
-type DurationOption = "1分" | "2分" | "3分";
-type ToneOption = "カジュアル" | "フォーマル" | "論理的" | "ユーモア";
+import {
+  createScript,
+  PostCreateScriptRequest,
+  ScriptData,
+} from "../../services/scriptGenerator";
 
 export default function CreateScreen() {
   const router = useRouter();
   const [theme, setTheme] = useState("");
   const [referenceUrls, setReferenceUrls] = useState<string[]>([""]);
   const [webSearch, setWebSearch] = useState(true);
-  const [duration, setDuration] = useState<DurationOption>("2分");
-  const [tone, setTone] = useState<ToneOption>("カジュアル");
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedScript, setGeneratedScript] = useState("");
+  const [generatedScript, setGeneratedScript] = useState<ScriptData[]>([]);
   const [isScriptGenerated, setIsScriptGenerated] = useState(false);
-
-  const durationOptions: DurationOption[] = ["1分", "2分", "3分"];
-  const toneOptions: ToneOption[] = [
-    "カジュアル",
-    "フォーマル",
-    "論理的",
-    "ユーモア",
-  ];
 
   const addUrlField = () => {
     setReferenceUrls([...referenceUrls, ""]);
@@ -64,24 +57,83 @@ export default function CreateScreen() {
     }
 
     setIsGenerating(true);
-    // TODO: 実際のAPI呼び出しを実装
-    setTimeout(() => {
-      setIsGenerating(false);
-      setIsScriptGenerated(true);
-      setGeneratedScript(
-        `こんにちは、今日は${
-          theme || "指定されたURL"
-        }について話していきます。\n\n` +
-          `最近の研究によると、この分野では多くの興味深い発見がありました。` +
-          `まず第一に、基本的な概念について説明します。\n\n` +
-          `詳細については、以下の点が重要です：\n` +
-          `1. 基本的な理解\n` +
-          `2. 実際の応用例\n` +
-          `3. 今後の展望\n\n` +
-          `これらの情報を踏まえて、今後の発展が期待されています。\n` +
-          `ご清聴ありがとうございました。`
+
+    try {
+      // UI状態からAPIリクエスト形式への変換
+      const requestData: PostCreateScriptRequest = {
+        prompt: theme.trim() || "指定されたURLの内容について説明してください",
+        reference: validUrls.length > 0 ? validUrls : undefined,
+        isSearch: webSearch,
+      };
+
+      console.log("Requesting script generation with:", requestData);
+
+      // API呼び出し
+      const response = await createScript(requestData);
+
+      console.log("Received API response in handleGenerateScript:", {
+        hasNewScript: !!response.newScript,
+        newScriptPrompt: response.newScript?.prompt,
+        hasScript: !!response.newScript?.script,
+        scriptType: typeof response.newScript?.script,
+        scriptIsArray: Array.isArray(response.newScript?.script),
+        scriptContent: response.newScript?.script,
+      });
+
+      // APIレスポンスの検証と処理
+      if (!response.newScript) {
+        // 開発者向けの詳細ログ
+        console.error(
+          "API Response structure error: missing newScript property",
+          response
+        );
+        throw new Error(
+          "原稿の生成に失敗しました。しばらく時間をおいて再度お試しください。"
+        );
+      }
+
+      if (
+        !response.newScript.script ||
+        !Array.isArray(response.newScript.script)
+      ) {
+        // 開発者向けの詳細ログ
+        console.error("API Response script property error:", {
+          hasNewScript: !!response.newScript,
+          scriptType: typeof response.newScript?.script,
+          scriptValue: response.newScript?.script,
+        });
+
+        throw new Error(
+          "原稿の生成に失敗しました。しばらく時間をおいて再度お試しください。"
+        );
+      }
+
+      // scriptが配列の場合の正常処理 - 配列をそのまま保持
+      const scriptArray = response.newScript.script.filter(
+        (item) => item.text && item.text.trim() !== ""
       );
-    }, 2000);
+
+      if (scriptArray.length === 0) {
+        throw new Error(
+          "原稿が生成されませんでした。別のテーマで再度お試しください。"
+        );
+      }
+
+      // 正常に原稿が生成された場合のみ状態を更新
+      setGeneratedScript(scriptArray);
+      setIsScriptGenerated(true);
+    } catch (error) {
+      console.error("Script generation error:", error);
+
+      Alert.alert(
+        "エラー",
+        error instanceof Error
+          ? `原稿の生成に失敗しました: ${error.message}`
+          : "原稿の生成に失敗しました。しばらく時間をおいて再度お試しください。"
+      );
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const handleRegenerateScript = () => {
@@ -96,16 +148,22 @@ export default function CreateScreen() {
   };
 
   const handleGenerateAudio = () => {
-    if (!generatedScript.trim()) {
+    if (generatedScript.length === 0) {
       Alert.alert("エラー", "原稿が空です");
       return;
     }
+
+    // ScriptData配列を文字列に変換して音声生成画面に渡す
+    const scriptText = generatedScript
+      .map((item) => item.text || "")
+      .filter((text) => text.trim() !== "")
+      .join("\n\n");
 
     // 音声生成画面への遷移
     router.push({
       pathname: "/create-audio",
       params: {
-        script: generatedScript,
+        script: scriptText,
       },
     });
   };
@@ -241,30 +299,33 @@ export default function CreateScreen() {
                       fontSize: 16,
                       borderWidth: 1,
                       borderColor: Colors.dark.border,
+                      marginRight: referenceUrls.length > 1 ? 12 : 0,
                     }}
-                    placeholder="https://example.com"
+                    placeholder="https://example.com/article"
                     placeholderTextColor={Colors.dark.subtext}
                     value={url}
                     onChangeText={(value) => updateUrl(index, value)}
+                    keyboardType="url"
                     autoCapitalize="none"
                     autoCorrect={false}
                   />
+
                   {referenceUrls.length > 1 && (
                     <TouchableOpacity
-                      style={{
-                        marginLeft: 12,
-                        padding: 8,
-                        backgroundColor: Colors.dark.background,
-                        borderRadius: 8,
-                        borderWidth: 1,
-                        borderColor: Colors.dark.border,
-                      }}
                       onPress={() => removeUrlField(index)}
+                      style={{
+                        backgroundColor: Colors.dark.border,
+                        borderRadius: 20,
+                        width: 32,
+                        height: 32,
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
                     >
                       <Ionicons
-                        name="trash"
-                        size={20}
-                        color={Colors.dark.subtext}
+                        name="close"
+                        size={16}
+                        color={Colors.dark.text}
                       />
                     </TouchableOpacity>
                   )}
@@ -272,32 +333,62 @@ export default function CreateScreen() {
               </View>
             ))}
 
+            {/* +アイコンボタン */}
             <TouchableOpacity
+              onPress={addUrlField}
               style={{
                 flexDirection: "row",
                 alignItems: "center",
-                paddingVertical: 12,
-                paddingHorizontal: 16,
+                justifyContent: "center",
                 backgroundColor: Colors.dark.background,
                 borderRadius: 12,
+                paddingVertical: 16,
                 borderWidth: 1,
                 borderColor: Colors.dark.border,
                 borderStyle: "dashed",
+                marginBottom: 12,
               }}
-              onPress={addUrlField}
             >
-              <Ionicons name="add" size={20} color={Colors.dark.primary} />
+              <Ionicons
+                name="add"
+                size={20}
+                color={Colors.dark.primary}
+                style={{ marginRight: 8 }}
+              />
               <Text
                 style={{
-                  marginLeft: 8,
                   color: Colors.dark.primary,
                   fontSize: 16,
-                  fontWeight: "500",
+                  fontWeight: "600",
                 }}
               >
                 URLを追加
               </Text>
             </TouchableOpacity>
+
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+              }}
+            >
+              <Ionicons
+                name="information-circle"
+                size={16}
+                color={Colors.dark.subtext}
+                style={{ marginRight: 8 }}
+              />
+              <Text
+                style={{
+                  fontSize: 12,
+                  color: Colors.dark.subtext,
+                  flex: 1,
+                  lineHeight: 16,
+                }}
+              >
+                記事、ブログ、ニュースサイトなどのURLを入力してください
+              </Text>
+            </View>
           </View>
 
           {/* Web検索設定セクション */}
@@ -312,8 +403,8 @@ export default function CreateScreen() {
             <View
               style={{
                 flexDirection: "row",
-                justifyContent: "space-between",
                 alignItems: "center",
+                justifyContent: "space-between",
               }}
             >
               <View style={{ flex: 1 }}>
@@ -325,18 +416,10 @@ export default function CreateScreen() {
                     marginBottom: 4,
                   }}
                 >
-                  Web検索を使用
-                </Text>
-                <Text
-                  style={{
-                    fontSize: 14,
-                    color: Colors.dark.subtext,
-                    lineHeight: 20,
-                  }}
-                >
-                  最新情報を取得してより豊富な内容にします
+                  Web検索
                 </Text>
               </View>
+
               <Switch
                 value={webSearch}
                 onValueChange={setWebSearch}
@@ -344,292 +427,244 @@ export default function CreateScreen() {
                   false: Colors.dark.border,
                   true: Colors.dark.primary,
                 }}
-                thumbColor={Colors.dark.text}
+                thumbColor={webSearch ? Colors.dark.text : Colors.dark.subtext}
               />
-            </View>
-          </View>
-
-          {/* 設定オプション */}
-          <View
-            style={{
-              backgroundColor: Colors.dark.card,
-              borderRadius: 16,
-              padding: 20,
-              marginBottom: 24,
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 18,
-                fontWeight: "bold",
-                color: Colors.dark.text,
-                marginBottom: 16,
-              }}
-            >
-              設定オプション
-            </Text>
-
-            {/* 長さ選択 */}
-            <View style={{ marginBottom: 20 }}>
-              <Text
-                style={{
-                  fontSize: 16,
-                  color: Colors.dark.text,
-                  marginBottom: 12,
-                  fontWeight: "500",
-                }}
-              >
-                長さ
-              </Text>
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                }}
-              >
-                {durationOptions.map((option) => (
-                  <TouchableOpacity
-                    key={option}
-                    style={{
-                      flex: 1,
-                      paddingVertical: 12,
-                      paddingHorizontal: 16,
-                      backgroundColor:
-                        duration === option
-                          ? Colors.dark.primary
-                          : Colors.dark.background,
-                      borderRadius: 12,
-                      marginHorizontal: 4,
-                      borderWidth: 1,
-                      borderColor: Colors.dark.border,
-                    }}
-                    onPress={() => setDuration(option)}
-                  >
-                    <Text
-                      style={{
-                        textAlign: "center",
-                        color: Colors.dark.text,
-                        fontSize: 14,
-                        fontWeight: duration === option ? "bold" : "normal",
-                      }}
-                    >
-                      {option}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-
-            {/* トーン選択 */}
-            <View>
-              <Text
-                style={{
-                  fontSize: 16,
-                  color: Colors.dark.text,
-                  marginBottom: 12,
-                  fontWeight: "500",
-                }}
-              >
-                トーン
-              </Text>
-              <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
-                {toneOptions.map((option) => (
-                  <TouchableOpacity
-                    key={option}
-                    style={{
-                      paddingVertical: 8,
-                      paddingHorizontal: 16,
-                      backgroundColor:
-                        tone === option
-                          ? Colors.dark.primary
-                          : Colors.dark.background,
-                      borderRadius: 12,
-                      marginRight: 8,
-                      marginBottom: 8,
-                      borderWidth: 1,
-                      borderColor: Colors.dark.border,
-                    }}
-                    onPress={() => setTone(option)}
-                  >
-                    <Text
-                      style={{
-                        color: Colors.dark.text,
-                        fontSize: 14,
-                        fontWeight: tone === option ? "bold" : "normal",
-                      }}
-                    >
-                      {option}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
             </View>
           </View>
 
           {/* 生成ボタン */}
           {!isScriptGenerated && (
             <TouchableOpacity
-              style={{
-                borderRadius: 16,
-                overflow: "hidden",
-                marginBottom: 24,
-              }}
+              style={{ marginBottom: 32 }}
               onPress={handleGenerateScript}
               disabled={isGenerating}
             >
               <LinearGradient
                 colors={[Colors.dark.primary, Colors.dark.secondary]}
                 style={{
-                  paddingVertical: 16,
-                  paddingHorizontal: 24,
+                  paddingVertical: 18,
+                  borderRadius: 16,
                   alignItems: "center",
-                  flexDirection: "row",
-                  justifyContent: "center",
+                  opacity: isGenerating ? 0.7 : 1,
                 }}
               >
-                {isGenerating ? (
-                  <>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                  }}
+                >
+                  {isGenerating ? (
                     <Ionicons
-                      name="refresh"
-                      size={20}
+                      name="hourglass"
+                      size={24}
                       color={Colors.dark.text}
+                      style={{ marginRight: 8 }}
                     />
-                    <Text
-                      style={{
-                        marginLeft: 8,
-                        color: Colors.dark.text,
-                        fontSize: 18,
-                        fontWeight: "bold",
-                      }}
-                    >
-                      生成中...
-                    </Text>
-                  </>
-                ) : (
-                  <>
+                  ) : (
                     <Ionicons
                       name="create"
-                      size={20}
+                      size={24}
                       color={Colors.dark.text}
+                      style={{ marginRight: 8 }}
                     />
-                    <Text
-                      style={{
-                        marginLeft: 8,
-                        color: Colors.dark.text,
-                        fontSize: 18,
-                        fontWeight: "bold",
-                      }}
-                    >
-                      原稿を生成
-                    </Text>
-                  </>
-                )}
+                  )}
+                  <Text
+                    style={{
+                      fontSize: 18,
+                      fontWeight: "bold",
+                      color: Colors.dark.text,
+                    }}
+                  >
+                    {isGenerating ? "原稿を生成中..." : "原稿を生成"}
+                  </Text>
+                </View>
               </LinearGradient>
             </TouchableOpacity>
           )}
 
-          {/* 生成された原稿 */}
+          {/* 生成された原稿セクション */}
           {isScriptGenerated && (
             <View
               style={{
                 backgroundColor: Colors.dark.card,
                 borderRadius: 16,
                 padding: 20,
-                marginBottom: 24,
+                marginBottom: 32,
+                borderLeftWidth: 4,
+                borderLeftColor: Colors.dark.secondary,
               }}
             >
-              <Text
-                style={{
-                  fontSize: 18,
-                  fontWeight: "bold",
-                  color: Colors.dark.text,
-                  marginBottom: 16,
-                }}
-              >
-                生成された原稿
-              </Text>
-
               <View
                 style={{
-                  backgroundColor: Colors.dark.background,
-                  borderRadius: 12,
-                  padding: 16,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
                   marginBottom: 16,
-                  borderWidth: 1,
-                  borderColor: Colors.dark.border,
                 }}
               >
                 <Text
                   style={{
+                    fontSize: 18,
+                    fontWeight: "bold",
                     color: Colors.dark.text,
-                    fontSize: 16,
-                    lineHeight: 24,
                   }}
                 >
-                  {generatedScript}
+                  生成された原稿
                 </Text>
+
+                {/* セクション追加ボタン */}
+                <TouchableOpacity
+                  onPress={() => {
+                    const newSection: ScriptData = {
+                      speaker: `話者${generatedScript.length + 1}`,
+                      text: "",
+                      caption: "",
+                    };
+                    setGeneratedScript([...generatedScript, newSection]);
+                  }}
+                  style={{
+                    backgroundColor: Colors.dark.primary,
+                    borderRadius: 16,
+                    paddingHorizontal: 12,
+                    paddingVertical: 6,
+                    flexDirection: "row",
+                    alignItems: "center",
+                  }}
+                >
+                  <Ionicons
+                    name="add"
+                    size={16}
+                    color={Colors.dark.text}
+                    style={{ marginRight: 4 }}
+                  />
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      fontWeight: "600",
+                      color: Colors.dark.text,
+                    }}
+                  >
+                    追加
+                  </Text>
+                </TouchableOpacity>
               </View>
 
-              <View
+              {/* 話者別原稿セクション */}
+              {generatedScript.map((scriptData, index) => (
+                <ScriptSectionCard
+                  key={index}
+                  scriptData={scriptData}
+                  index={index}
+                  onUpdate={(updatedIndex, updatedData) => {
+                    const newScript = [...generatedScript];
+                    newScript[updatedIndex] = updatedData;
+                    setGeneratedScript(newScript);
+                  }}
+                  onDelete={
+                    generatedScript.length > 1
+                      ? (deleteIndex) => {
+                          const newScript = generatedScript.filter(
+                            (_, i) => i !== deleteIndex
+                          );
+                          setGeneratedScript(newScript);
+                        }
+                      : undefined
+                  }
+                  showDeleteButton={generatedScript.length > 1}
+                />
+              ))}
+
+              <Text
                 style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
+                  fontSize: 12,
+                  color: Colors.dark.subtext,
+                  marginTop: 8,
+                  textAlign: "center",
                 }}
               >
-                <TouchableOpacity
+                話者名と原稿は直接編集できます
+              </Text>
+            </View>
+          )}
+
+          {/* 原稿生成後のアクションボタン */}
+          {isScriptGenerated && (
+            <View style={{ marginBottom: 40 }}>
+              {/* 再生成ボタン */}
+              <TouchableOpacity
+                style={{ marginBottom: 16 }}
+                onPress={handleRegenerateScript}
+              >
+                <View
                   style={{
-                    flex: 1,
-                    paddingVertical: 12,
-                    paddingHorizontal: 16,
-                    backgroundColor: Colors.dark.background,
-                    borderRadius: 12,
-                    marginRight: 8,
+                    backgroundColor: Colors.dark.card,
+                    paddingVertical: 16,
+                    borderRadius: 16,
+                    alignItems: "center",
                     borderWidth: 1,
                     borderColor: Colors.dark.border,
                   }}
-                  onPress={handleRegenerateScript}
                 >
-                  <Text
+                  <View
                     style={{
-                      textAlign: "center",
-                      color: Colors.dark.text,
-                      fontSize: 16,
-                      fontWeight: "500",
-                    }}
-                  >
-                    再生成
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={{
-                    flex: 1,
-                    borderRadius: 12,
-                    marginLeft: 8,
-                    overflow: "hidden",
-                  }}
-                  onPress={handleGenerateAudio}
-                >
-                  <LinearGradient
-                    colors={[Colors.dark.primary, Colors.dark.secondary]}
-                    style={{
-                      paddingVertical: 12,
-                      paddingHorizontal: 16,
+                      flexDirection: "row",
                       alignItems: "center",
                     }}
                   >
+                    <Ionicons
+                      name="refresh"
+                      size={24}
+                      color={Colors.dark.text}
+                      style={{ marginRight: 8 }}
+                    />
                     <Text
                       style={{
-                        color: Colors.dark.text,
                         fontSize: 16,
                         fontWeight: "bold",
+                        color: Colors.dark.text,
                       }}
                     >
-                      音声生成へ
+                      再生成
                     </Text>
-                  </LinearGradient>
-                </TouchableOpacity>
-              </View>
+                  </View>
+                </View>
+              </TouchableOpacity>
+
+              {/* 音声生成ボタン */}
+              <TouchableOpacity onPress={handleGenerateAudio}>
+                <LinearGradient
+                  colors={[Colors.dark.secondary, Colors.dark.primary]}
+                  style={{
+                    paddingVertical: 18,
+                    borderRadius: 16,
+                    alignItems: "center",
+                  }}
+                >
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Ionicons
+                      name="mic"
+                      size={24}
+                      color={Colors.dark.text}
+                      style={{ marginRight: 8 }}
+                    />
+                    <Text
+                      style={{
+                        fontSize: 18,
+                        fontWeight: "bold",
+                        color: Colors.dark.text,
+                      }}
+                    >
+                      音声を生成する
+                    </Text>
+                  </View>
+                </LinearGradient>
+              </TouchableOpacity>
             </View>
           )}
         </ScrollView>

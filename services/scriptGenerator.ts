@@ -97,6 +97,13 @@ export const createScript = async (
     const responseData: PostCreateScriptResponse = await response.json();
 
     console.log("Script created successfully:", responseData);
+    console.log("Response newScript structure:", {
+      prompt: responseData.newScript?.prompt,
+      scriptExists: !!responseData.newScript?.script,
+      scriptType: typeof responseData.newScript?.script,
+      scriptLength: Array.isArray(responseData.newScript?.script) ? responseData.newScript.script.length : 'Not an array',
+      fullNewScript: responseData.newScript
+    });
 
     return responseData;
   } catch (error) {

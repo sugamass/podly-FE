@@ -1,14 +1,13 @@
 import Colors from "@/constants/Colors";
+import { usePodcastStore } from "@/store/podcastStore";
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
-import React from "react";
-import { usePodcastStore } from "@/store/podcastStore";
 
 export default function TabLayout() {
   const { setHomeTabFocused, savePlayingStateForTabSwitch } = usePodcastStore();
 
   const handleTabPress = (routeName: string) => {
-    if (routeName === 'index') {
+    if (routeName === "index") {
       // ホームタブに遷移する場合
       setHomeTabFocused(true);
     } else {
@@ -44,7 +43,7 @@ export default function TabLayout() {
           headerShown: false,
         }}
         listeners={{
-          tabPress: () => handleTabPress('index'),
+          tabPress: () => handleTabPress("index"),
         }}
       />
       <Tabs.Screen
@@ -56,7 +55,7 @@ export default function TabLayout() {
           ),
         }}
         listeners={{
-          tabPress: () => handleTabPress('discover'),
+          tabPress: () => handleTabPress("discover"),
         }}
       />
       <Tabs.Screen
@@ -69,7 +68,7 @@ export default function TabLayout() {
           headerShown: false,
         }}
         listeners={{
-          tabPress: () => handleTabPress('create'),
+          tabPress: () => handleTabPress("create"),
         }}
       />
       <Tabs.Screen
@@ -82,7 +81,7 @@ export default function TabLayout() {
           headerShown: false,
         }}
         listeners={{
-          tabPress: () => handleTabPress('profile'),
+          tabPress: () => handleTabPress("profile"),
         }}
       />
     </Tabs>
