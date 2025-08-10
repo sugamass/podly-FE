@@ -14,13 +14,13 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ScriptSectionCard } from "../../components/ScriptSectionCard";
-import Colors from "../../constants/Colors";
+import { ScriptSectionCard } from "@/components/ScriptSectionCard";
+import Colors from "@/constants/Colors";
 import {
   createScript,
   PostCreateScriptRequest,
   ScriptData,
-} from "../../services/scriptGenerator";
+} from "@/services/scriptGenerator";
 
 export default function CreateScreen() {
   const router = useRouter();
@@ -159,7 +159,7 @@ export default function CreateScreen() {
 
     // 音声生成画面への遷移
     router.push({
-      pathname: "/create-audio",
+      pathname: "/create/audio",
       params: {
         script: JSON.stringify(generatedScript),
       },

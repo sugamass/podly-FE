@@ -12,15 +12,15 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Colors from "../constants/Colors";
+import Colors from "@/constants/Colors";
 import {
   AudioPreviewRequest,
   AudioPreviewResponse,
   ScriptData as AudioScriptData,
   generateAudioPreview,
-} from "../services/audioGenerator";
-import { audioPlayerService } from "../services/AudioPlayerService";
-import { ScriptData as GeneratedScriptData } from "../services/scriptGenerator";
+} from "@/services/audioGenerator";
+import { audioPlayerService } from "@/services/AudioPlayerService";
+import { ScriptData as GeneratedScriptData } from "@/services/scriptGenerator";
 
 type VoiceOption = {
   id: string;
@@ -523,7 +523,7 @@ export default function CreateAudioScreen() {
 
     // 配信設定画面への遷移
     router.push({
-      pathname: "/create-publish",
+      pathname: "/create/publish",
       params: {
         script: JSON.stringify(scriptData),
         voice: selectedVoice.id,

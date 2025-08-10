@@ -10,7 +10,7 @@
 
 ## プロジェクト概要
 
-**Podly**は**eject 済み**の Expo React Native アプリケーションです。TikTok スタイルのソーシャルメディアアプリで、動画とポッドキャストの両方に対応しています。
+**Podly**は**eject 済み**の Expo React Native アプリケーションです。TikTok スタイルのソーシャルメディアアプリで、動画とポッドキャストの両方に対応しています。eject 済みなので npx expo start は行っていはいけません。
 
 ## 技術スタック
 

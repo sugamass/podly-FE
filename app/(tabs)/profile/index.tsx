@@ -87,7 +87,7 @@ export default function ProfileScreen() {
   };
 
   const handleEditProfile = () => {
-    router.push("/edit-profile");
+    router.push("/profile/edit");
   };
 
   const renderPodcastItem = ({ item }: any) => {

@@ -13,9 +13,9 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Colors from "../constants/Colors";
-import { AudioSection, createPodcast } from "../services/supabase";
-import { useAuthStore } from "../store/authStore";
+import Colors from "@/constants/Colors";
+import { AudioSection, createPodcast } from "@/services/supabase";
+import { useAuthStore } from "@/store/authStore";
 
 export default function CreatePublishScreen() {
   const router = useRouter();
