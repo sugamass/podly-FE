@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -14,16 +14,13 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Colors from "../constants/Colors";
-
-type AudioSection = {
-  id: string;
-  text: string;
-  audioUrl?: string;
-};
+import { AudioSection, createPodcast } from "../services/supabase";
+import { useAuthStore } from "../store/authStore";
 
 export default function CreatePublishScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
+  const { user } = useAuthStore();
 
   // 音声生成画面から渡されるデータ
   const script = (params.script as string) || "";
@@ -34,72 +31,56 @@ export default function CreatePublishScreen() {
 
   // 配信設定
   const [title, setTitle] = useState("");
-  const [tags, setTags] = useState<string[]>([""]);
   const [description, setDescription] = useState("");
   const [isPublishing, setIsPublishing] = useState(false);
 
-  // タグ管理
-  const addTag = () => {
-    if (tags.length < 5) {
-      setTags([...tags, ""]);
-    }
-  };
-
-  const removeTag = (index: number) => {
-    if (tags.length > 1) {
-      const newTags = tags.filter((_, i) => i !== index);
-      setTags(newTags);
-    }
-  };
-
-  const updateTag = (index: number, value: string) => {
-    const newTags = [...tags];
-    newTags[index] = value;
-    setTags(newTags);
-  };
-
   // 配信処理
   const handlePublish = async () => {
-    if (!title.trim()) {
-      Alert.alert("エラー", "タイトルを入力してください");
-      return;
-    }
+    try {
+      // バリデーション
+      if (!title.trim()) {
+        Alert.alert("エラー", "タイトルを入力してください");
+        return;
+      }
 
-    const validTags = tags.filter((tag) => tag.trim() !== "");
-    if (validTags.length === 0) {
-      Alert.alert("エラー", "少なくとも1つのタグを入力してください");
-      return;
-    }
+      // ログイン状態の確認
+      if (!user) {
+        Alert.alert("エラー", "ログインが必要です");
+        return;
+      }
 
-    setIsPublishing(true);
+      setIsPublishing(true);
 
-    // TODO: 実際の配信API呼び出しを実装
-    setTimeout(() => {
-      setIsPublishing(false);
+      // ポッドキャスト作成データを準備
+      const podcastData = {
+        title: title.trim(),
+        script: script,
+        description: description.trim(),
+        selectedVoice: selectedVoice,
+        audioSections: audioSections,
+        creatorId: user.id,
+      };
+
+      // ポッドキャスト作成関数を呼び出し
+      const result = await createPodcast(podcastData);
+
+      if (!result.success) {
+        throw new Error(result.error || "ポッドキャストの作成に失敗しました");
+      }
+
       Alert.alert("配信完了", "ポッドキャストが正常に配信されました！", [
         {
           text: "ホームに戻る",
           onPress: () => router.push("/(tabs)"),
         },
       ]);
-    }, 2000);
-  };
-
-  // 推奨タグの提案
-  const suggestedTags = [
-    "テクノロジー",
-    "ビジネス",
-    "エンタメ",
-    "教育",
-    "ライフスタイル",
-  ];
-
-  const addSuggestedTag = (suggestedTag: string) => {
-    const emptyTagIndex = tags.findIndex((tag) => tag.trim() === "");
-    if (emptyTagIndex !== -1) {
-      updateTag(emptyTagIndex, suggestedTag);
-    } else if (tags.length < 5) {
-      setTags([...tags, suggestedTag]);
+    } catch (error) {
+      console.error("Publish error:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "配信に失敗しました";
+      Alert.alert("エラー", errorMessage);
+    } finally {
+      setIsPublishing(false);
     }
   };
 
@@ -143,7 +124,7 @@ export default function CreatePublishScreen() {
                 lineHeight: 22,
               }}
             >
-              タイトルやタグを設定して
+              タイトルを設定して
               {"\n"}ポッドキャストを配信しましょう
             </Text>
           </View>
@@ -195,154 +176,6 @@ export default function CreatePublishScreen() {
             >
               {title.length}/100文字
             </Text>
-          </View>
-
-          {/* タグ入力セクション */}
-          <View
-            style={{
-              backgroundColor: Colors.dark.card,
-              borderRadius: 16,
-              padding: 20,
-              marginBottom: 24,
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 18,
-                fontWeight: "bold",
-                color: Colors.dark.text,
-                marginBottom: 12,
-              }}
-            >
-              🏷️ タグ設定 * （最大5個）
-            </Text>
-
-            {/* タグ入力フォーム */}
-            {tags.map((tag, index) => (
-              <View
-                key={index}
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  marginBottom: 12,
-                }}
-              >
-                <TextInput
-                  style={{
-                    backgroundColor: Colors.dark.background,
-                    borderRadius: 12,
-                    padding: 16,
-                    color: Colors.dark.text,
-                    fontSize: 16,
-                    borderWidth: 1,
-                    borderColor: Colors.dark.border,
-                    flex: 1,
-                  }}
-                  placeholder={`タグ ${index + 1}`}
-                  placeholderTextColor={Colors.dark.subtext}
-                  value={tag}
-                  onChangeText={(value) => updateTag(index, value)}
-                  maxLength={20}
-                />
-
-                {tags.length > 1 && (
-                  <TouchableOpacity
-                    style={{
-                      backgroundColor: Colors.dark.background,
-                      borderRadius: 8,
-                      padding: 8,
-                      marginLeft: 8,
-                      borderWidth: 1,
-                      borderColor: Colors.dark.border,
-                    }}
-                    onPress={() => removeTag(index)}
-                  >
-                    <Ionicons
-                      name="close"
-                      size={16}
-                      color={Colors.dark.subtext}
-                    />
-                  </TouchableOpacity>
-                )}
-              </View>
-            ))}
-
-            {/* タグ追加ボタン */}
-            {tags.length < 5 && (
-              <TouchableOpacity
-                style={{
-                  backgroundColor: "transparent",
-                  borderRadius: 12,
-                  padding: 16,
-                  borderWidth: 2,
-                  borderColor: Colors.dark.primary,
-                  borderStyle: "dashed",
-                  alignItems: "center",
-                  marginBottom: 16,
-                }}
-                onPress={addTag}
-              >
-                <View style={{ flexDirection: "row", alignItems: "center" }}>
-                  <Ionicons
-                    name="add"
-                    size={20}
-                    color={Colors.dark.primary}
-                    style={{ marginRight: 8 }}
-                  />
-                  <Text
-                    style={{
-                      color: Colors.dark.primary,
-                      fontSize: 16,
-                      fontWeight: "600",
-                    }}
-                  >
-                    タグを追加
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            )}
-
-            {/* 推奨タグ */}
-            <View>
-              <Text
-                style={{
-                  fontSize: 14,
-                  color: Colors.dark.subtext,
-                  marginBottom: 8,
-                }}
-              >
-                推奨タグ:
-              </Text>
-              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-                {suggestedTags.map((suggestedTag) => (
-                  <TouchableOpacity
-                    key={suggestedTag}
-                    style={{
-                      backgroundColor: Colors.dark.background,
-                      paddingHorizontal: 12,
-                      paddingVertical: 6,
-                      borderRadius: 16,
-                      borderWidth: 1,
-                      borderColor: Colors.dark.border,
-                    }}
-                    onPress={() => addSuggestedTag(suggestedTag)}
-                    disabled={tags.includes(suggestedTag) || tags.length >= 5}
-                  >
-                    <Text
-                      style={{
-                        color: tags.includes(suggestedTag)
-                          ? Colors.dark.subtext
-                          : Colors.dark.text,
-                        fontSize: 12,
-                        fontWeight: "500",
-                      }}
-                    >
-                      {suggestedTag}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
           </View>
 
           {/* 説明文入力セクション */}

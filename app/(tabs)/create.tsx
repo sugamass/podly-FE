@@ -26,7 +26,7 @@ export default function CreateScreen() {
   const router = useRouter();
   const [theme, setTheme] = useState("");
   const [referenceUrls, setReferenceUrls] = useState<string[]>([""]);
-  const [webSearch, setWebSearch] = useState(true);
+  const [webSearch, setWebSearch] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedScript, setGeneratedScript] = useState<ScriptData[]>([]);
   const [isScriptGenerated, setIsScriptGenerated] = useState(false);

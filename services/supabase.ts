@@ -10,8 +10,7 @@ if (!supabaseUrl || !supabaseKey) {
     "Supabase credentials are not properly configured. Please check your .env.local file."
   );
 }
-console.log("supabaseUrl", supabaseUrl);
-console.log("supabaseKey", supabaseKey);
+
 export const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
     storage: AsyncStorage,
@@ -861,5 +860,94 @@ export async function getUserSavedPodcasts(userId?: string): Promise<string[]> {
   } catch (error) {
     console.error("❌ Failed to get user saved podcasts:", error);
     return [];
+  }
+}
+
+// ポッドキャスト作成関数
+export type AudioSection = {
+  id: string;
+  text: string;
+  audioUrl?: string;
+};
+
+export type CreatePodcastData = {
+  title: string;
+  script: string;
+  description?: string;
+  selectedVoice?: string;
+  audioSections: AudioSection[];
+  creatorId: string;
+};
+
+export type CreatePodcastResult = {
+  success: boolean;
+  data?: any;
+  error?: string;
+};
+
+export async function createPodcast(
+  podcastData: CreatePodcastData
+): Promise<CreatePodcastResult> {
+  try {
+    console.log("Creating podcast with data:", podcastData);
+
+    // 音声URLを統合（最初の音声URLを使用）
+    const audioUrl =
+      podcastData.audioSections.find((section) => section.audioUrl)?.audioUrl ||
+      null;
+
+    // データベース用のポッドキャストデータを準備
+    const dbPodcastData = {
+      id: generateUUIDLikeId(),
+      title: podcastData.title.trim(),
+      script_content: podcastData.script,
+      summary: podcastData.description?.trim() || null,
+      tags: null,
+      voices: podcastData.selectedVoice ? [podcastData.selectedVoice] : null,
+      creator_id: podcastData.creatorId,
+      audio_url: audioUrl,
+      duration: null,
+      // 一時的にデフォルト画像を設定
+      image_url:
+        "https://images.unsplash.com/photo-1444653614773-995cb1ef9efa?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
+      published_at: new Date().toISOString(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      like_count: 0,
+      save_count: 0,
+      streams: 0,
+    };
+
+    // Supabaseにインサート
+    const { data, error } = await supabase
+      .from("podcasts")
+      .insert(dbPodcastData)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Database insert error:", error);
+      return {
+        success: false,
+        error: `データベースエラー: ${error.message}`,
+      };
+    }
+
+    console.log("Podcast inserted successfully:", data);
+
+    return {
+      success: true,
+      data: data,
+    };
+  } catch (error) {
+    console.error("Create podcast error:", error);
+    const errorMessage =
+      error instanceof Error
+        ? error.message
+        : "ポッドキャストの作成に失敗しました";
+    return {
+      success: false,
+      error: errorMessage,
+    };
   }
 }
