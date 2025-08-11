@@ -1,4 +1,5 @@
 import { supabase } from "@/services/supabase";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { Session, User } from "@supabase/supabase-js";
 import { create } from "zustand";
 
@@ -153,19 +154,43 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signOut: async () => {
     try {
       set({ loading: true });
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
 
+      // Supabase認証からサインアウト
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error("❌ Supabase sign out error:", error);
+        throw error;
+      }
+      console.log("✅ Supabase sign out successful");
+
+      // AsyncStorageから認証関連データを完全削除
+      try {
+        await AsyncStorage.multiRemove([
+          "supabase.auth.token",
+          "sb-auth-token",
+          "supabase.session",
+          "sb-session",
+        ]);
+        console.log("✅ AsyncStorage cleared");
+      } catch (storageError) {
+        console.warn("⚠️ AsyncStorage clear warning:", storageError);
+        // AsyncStorageのエラーは致命的ではないので続行
+      }
+
+      // Zustandストア状態を完全クリア
       set({
         user: null,
         session: null,
         profile: null,
+        loading: false,
       });
+
+      console.log("✅ Sign out process completed successfully");
     } catch (error) {
-      console.error("Sign out error:", error);
-      throw error;
-    } finally {
+      console.error("❌ Sign out error:", error);
+      // エラーが発生してもローディング状態は解除
       set({ loading: false });
+      throw error;
     }
   },
 
