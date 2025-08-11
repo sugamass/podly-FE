@@ -1,7 +1,6 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Colors from '@/constants/Colors';
 
 interface AuthHeaderProps {
   isSignUp: boolean;
@@ -10,46 +9,21 @@ interface AuthHeaderProps {
 }
 
 export const AuthHeader = ({ isSignUp, onClose, allowClose = true }: AuthHeaderProps) => (
-  <View style={styles.headerContainer}>
+  <View className="w-full mb-8">
     {allowClose && (
-      <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-        <Ionicons name="close" size={24} color={Colors.dark.text} />
+      <TouchableOpacity onPress={onClose} className="self-end p-2 mb-4">
+        <Ionicons name="close" size={24} color="#FFFFFF" />
       </TouchableOpacity>
     )}
     
-    <Text style={styles.title}>
+    <Text className="text-white text-3xl font-bold mb-2 text-center">
       {isSignUp ? 'Podlyへようこそ' : 'おかえりなさい'}
     </Text>
     
-    <Text style={styles.subtitle}>
+    <Text className="text-[#A0A7B5] text-base text-center leading-6">
       {isSignUp
         ? '新しいアカウントを作成してください'
         : 'アカウントにログインしてください'}
     </Text>
   </View>
 );
-
-const styles = StyleSheet.create({
-  headerContainer: {
-    width: '100%',
-    marginBottom: 32,
-  },
-  closeButton: {
-    alignSelf: 'flex-end',
-    padding: 8,
-    marginBottom: 16,
-  },
-  title: {
-    color: Colors.dark.text,
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  subtitle: {
-    color: Colors.dark.subtext,
-    fontSize: 16,
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-});

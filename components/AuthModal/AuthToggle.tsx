@@ -1,6 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet } from 'react-native';
-import Colors from '@/constants/Colors';
+import { TouchableOpacity, Text } from 'react-native';
 
 interface AuthToggleProps {
   isSignUp: boolean;
@@ -12,23 +11,12 @@ export const AuthToggle = ({ isSignUp, onToggle, disabled = false }: AuthToggleP
   <TouchableOpacity
     onPress={onToggle}
     disabled={disabled}
-    style={styles.toggleButton}
+    className="py-2"
   >
-    <Text style={styles.toggleText}>
+    <Text className="text-[#A0A7B5] text-center text-sm">
       {isSignUp
         ? 'すでにアカウントをお持ちですか？ ログイン'
         : 'アカウントをお持ちでない方は アカウント作成'}
     </Text>
   </TouchableOpacity>
 );
-
-const styles = StyleSheet.create({
-  toggleButton: {
-    paddingVertical: 8,
-  },
-  toggleText: {
-    color: Colors.dark.subtext,
-    textAlign: 'center',
-    fontSize: 14,
-  },
-});

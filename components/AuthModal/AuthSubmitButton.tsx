@@ -1,6 +1,4 @@
-import React from 'react';
-import { TouchableOpacity, Text, ActivityIndicator, StyleSheet } from 'react-native';
-import Colors from '@/constants/Colors';
+import { TouchableOpacity, Text, ActivityIndicator } from 'react-native';
 
 interface AuthSubmitButtonProps {
   isSignUp: boolean;
@@ -10,35 +8,18 @@ interface AuthSubmitButtonProps {
 
 export const AuthSubmitButton = ({ isSignUp, isLoading, onPress }: AuthSubmitButtonProps) => (
   <TouchableOpacity
-    style={[styles.submitButton, isLoading && styles.submitButtonDisabled]}
+    className={`p-4 rounded-xl mb-4 mt-2 ${
+      isLoading ? 'bg-[#6B7280]' : 'bg-[#4F7CFF]'
+    }`}
     onPress={onPress}
     disabled={isLoading}
   >
     {isLoading ? (
-      <ActivityIndicator color={Colors.dark.text} />
+      <ActivityIndicator color="#FFFFFF" />
     ) : (
-      <Text style={styles.submitButtonText}>
+      <Text className="text-white text-center font-bold text-lg">
         {isSignUp ? 'アカウント作成' : 'ログイン'}
       </Text>
     )}
   </TouchableOpacity>
 );
-
-const styles = StyleSheet.create({
-  submitButton: {
-    backgroundColor: Colors.dark.primary,
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 16,
-    marginTop: 8,
-  },
-  submitButtonDisabled: {
-    backgroundColor: Colors.dark.inactive,
-  },
-  submitButtonText: {
-    color: Colors.dark.text,
-    textAlign: 'center',
-    fontWeight: 'bold',
-    fontSize: 18,
-  },
-});

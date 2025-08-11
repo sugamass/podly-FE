@@ -3,12 +3,10 @@ import {
   View,
   Text,
   TextInput,
-  StyleSheet,
   KeyboardTypeOptions,
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Colors from '@/constants/Colors';
 
 interface AuthInputProps {
   label: string;
@@ -36,86 +34,47 @@ export const AuthInput = memo(({
   showUsernameStatus = false,
   usernameCheckLoading = false,
   usernameAvailable = null,
-}: AuthInputProps) => (
-  <View style={styles.inputContainer}>
-    <Text style={styles.inputLabel}>{label}</Text>
-    <View style={styles.inputWrapper}>
-      <TextInput
-        style={[
-          styles.textInput,
-          error && styles.textInputError,
-          showUsernameStatus && value.length >= 3 && usernameAvailable === true && styles.textInputSuccess,
-          showUsernameStatus && value.length >= 3 && usernameAvailable === false && styles.textInputError,
-        ]}
-        placeholder={placeholder}
-        placeholderTextColor={Colors.dark.inactive}
-        value={value}
-        onChangeText={onChangeText}
-        secureTextEntry={secureTextEntry}
-        keyboardType={keyboardType}
-        autoCapitalize={autoCapitalize}
-        autoCorrect={false}
-      />
-      {showUsernameStatus && value.length >= 3 && (
-        <View style={styles.usernameStatus}>
-          {usernameCheckLoading ? (
-            <ActivityIndicator size="small" color={Colors.dark.primary} />
-          ) : usernameAvailable === true ? (
-            <Ionicons name="checkmark-circle" size={20} color="#10B981" />
-          ) : usernameAvailable === false ? (
-            <Ionicons name="close-circle" size={20} color="#EF4444" />
-          ) : null}
-        </View>
+}: AuthInputProps) => {
+  const getInputBorderClass = () => {
+    if (error) return 'border-red-500';
+    if (showUsernameStatus && value.length >= 3) {
+      if (usernameAvailable === true) return 'border-green-500';
+      if (usernameAvailable === false) return 'border-red-500';
+    }
+    return 'border-[#374151]';
+  };
+
+  return (
+    <View className="mb-4">
+      <Text className="text-white text-base font-medium mb-2">{label}</Text>
+      <View className="relative">
+        <TextInput
+          className={`bg-[#1E2430] text-white p-4 rounded-xl border text-base ${getInputBorderClass()}`}
+          placeholder={placeholder}
+          placeholderTextColor="#6B7280"
+          value={value}
+          onChangeText={onChangeText}
+          secureTextEntry={secureTextEntry}
+          keyboardType={keyboardType}
+          autoCapitalize={autoCapitalize}
+          autoCorrect={false}
+        />
+        {showUsernameStatus && value.length >= 3 && (
+          <View className="absolute right-4 top-4">
+            {usernameCheckLoading ? (
+              <ActivityIndicator size="small" color="#4F7CFF" />
+            ) : usernameAvailable === true ? (
+              <Ionicons name="checkmark-circle" size={20} color="#10B981" />
+            ) : usernameAvailable === false ? (
+              <Ionicons name="close-circle" size={20} color="#EF4444" />
+            ) : null}
+          </View>
+        )}
+      </View>
+      {error && <Text className="text-red-500 text-sm mt-1">{error}</Text>}
+      {showUsernameStatus && value.length >= 3 && usernameAvailable === true && (
+        <Text className="text-green-500 text-sm mt-1">このユーザー名は利用可能です</Text>
       )}
     </View>
-    {error && <Text style={styles.errorText}>{error}</Text>}
-    {showUsernameStatus && value.length >= 3 && usernameAvailable === true && (
-      <Text style={styles.successText}>このユーザー名は利用可能です</Text>
-    )}
-  </View>
-));
-
-const styles = StyleSheet.create({
-  inputContainer: {
-    marginBottom: 16,
-  },
-  inputLabel: {
-    color: Colors.dark.text,
-    fontSize: 16,
-    fontWeight: '500',
-    marginBottom: 8,
-  },
-  inputWrapper: {
-    position: 'relative',
-  },
-  textInput: {
-    backgroundColor: Colors.dark.card,
-    color: Colors.dark.text,
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.dark.border,
-    fontSize: 16,
-  },
-  textInputError: {
-    borderColor: '#EF4444',
-  },
-  textInputSuccess: {
-    borderColor: '#10B981',
-  },
-  usernameStatus: {
-    position: 'absolute',
-    right: 16,
-    top: 16,
-  },
-  errorText: {
-    color: '#EF4444',
-    fontSize: 14,
-    marginTop: 4,
-  },
-  successText: {
-    color: '#10B981',
-    fontSize: 14,
-    marginTop: 4,
-  },
+  );
 });

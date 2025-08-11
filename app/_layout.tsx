@@ -1,3 +1,4 @@
+import "../global.css";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { WelcomeScreen } from "@/components/WelcomeScreen";
 import Colors from "@/constants/Colors";

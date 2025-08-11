@@ -1,4 +1,3 @@
-import Colors from "@/constants/Colors";
 import { useAuth } from "@/hooks/useAuth";
 import { useAuthForm } from "@/hooks/useAuthForm";
 import { getAuthErrorMessage } from "@/utils/authValidation";
@@ -9,7 +8,6 @@ import {
   Modal,
   SafeAreaView,
   ScrollView,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -103,14 +101,14 @@ export function AuthModal({
       presentationStyle="fullScreen"
       onRequestClose={allowClose ? handleClose : undefined}
     >
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView className="flex-1 bg-[#121620]">
         <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
+          className="flex-1"
+          contentContainerStyle={{ flexGrow: 1, paddingBottom: 32 }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.content}>
+          <View className="flex-1 px-6 py-4">
             <AuthHeader
               isSignUp={isSignUp}
               onClose={handleClose}
@@ -158,9 +156,9 @@ export function AuthGuard({ children, fallback }: AuthGuardProps) {
 
   if (!initialized || loading) {
     return (
-      <SafeAreaView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Colors.dark.primary} />
-        <Text style={styles.loadingText}>読み込み中...</Text>
+      <SafeAreaView className="flex-1 bg-[#121620] items-center justify-center">
+        <ActivityIndicator size="large" color="#4F7CFF" />
+        <Text className="text-white mt-4 text-base">読み込み中...</Text>
       </SafeAreaView>
     );
   }
@@ -169,13 +167,13 @@ export function AuthGuard({ children, fallback }: AuthGuardProps) {
     return (
       <>
         {fallback || (
-          <SafeAreaView style={styles.authRequiredContainer}>
-            <Text style={styles.authRequiredTitle}>ログインが必要です</Text>
+          <SafeAreaView className="flex-1 bg-[#121620] items-center justify-center">
+            <Text className="text-white text-xl mb-4">ログインが必要です</Text>
             <TouchableOpacity
-              style={styles.authRequiredButton}
+              className="bg-[#4F7CFF] px-8 py-3 rounded-xl"
               onPress={() => setShowAuthModal(true)}
             >
-              <Text style={styles.authRequiredButtonText}>ログイン</Text>
+              <Text className="text-white font-bold text-base">ログイン</Text>
             </TouchableOpacity>
           </SafeAreaView>
         )}
@@ -190,67 +188,3 @@ export function AuthGuard({ children, fallback }: AuthGuardProps) {
   return <>{children}</>;
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.dark.background,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingBottom: 32,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingTop: 48,
-    paddingBottom: 16,
-  },
-  headerTitle: {
-    color: Colors.dark.text,
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-  },
-  loadingContainer: {
-    flex: 1,
-    backgroundColor: Colors.dark.background,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  loadingText: {
-    color: Colors.dark.text,
-    marginTop: 16,
-    fontSize: 16,
-  },
-  authRequiredContainer: {
-    flex: 1,
-    backgroundColor: Colors.dark.background,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  authRequiredTitle: {
-    color: Colors.dark.text,
-    fontSize: 20,
-    marginBottom: 16,
-  },
-  authRequiredButton: {
-    backgroundColor: Colors.dark.primary,
-    paddingHorizontal: 32,
-    paddingVertical: 12,
-    borderRadius: 12,
-  },
-  authRequiredButtonText: {
-    color: Colors.dark.text,
-    fontWeight: "bold",
-    fontSize: 16,
-  },
-});

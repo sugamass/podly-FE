@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View } from 'react-native';
 import { AuthInput } from './AuthInput';
 import { UseAuthFormReturn } from '@/hooks/useAuthForm';
 
@@ -32,7 +32,7 @@ export const AuthForm = ({ isSignUp, formHook }: AuthFormProps) => {
   }, [formData.username, isSignUp, checkUsername]);
 
   return (
-    <View style={styles.formContainer}>
+    <View className="w-full">
       {isSignUp && (
         <AuthInput
           label="ユーザー名"
@@ -77,9 +77,3 @@ export const AuthForm = ({ isSignUp, formHook }: AuthFormProps) => {
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  formContainer: {
-    width: '100%',
-  },
-});
