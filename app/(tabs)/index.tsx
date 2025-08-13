@@ -1,45 +1,43 @@
-import AudioPlayer from "@/components/AudioPlayer";
 import CommentModal from "@/components/CommentModal";
-import PodcastActions from "@/components/PodcastActions";
-import PodcastInfo from "@/components/PodcastInfo";
+import { EmptyDisplay } from "@/components/HomeScreen/EmptyDisplay";
+import { ErrorDisplay } from "@/components/HomeScreen/ErrorDisplay";
+import { LoadingDisplay } from "@/components/HomeScreen/LoadingDisplay";
+import { PodcastListItem } from "@/components/HomeScreen/PodcastListItem";
 import Colors from "@/constants/Colors";
+import { useAudioPlayerSync } from "@/hooks/useAudioPlayerSync";
+import { useHomeScreenInitialization } from "@/hooks/useHomeScreenInitialization";
 import { usePodcastStore } from "@/store/podcastStore";
-import { useFocusEffect } from "expo-router";
+import { UIPodcast } from "@/types/podcast";
+import { logger } from "@/utils/logger";
+import { getItemHeight } from "@/utils/screenUtils";
 import { StatusBar } from "expo-status-bar";
-import React, { useCallback, useRef, useState, useEffect, useMemo } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Dimensions,
   FlatList,
-  Platform,
+  RefreshControl,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  ActivityIndicator,
-  RefreshControl,
 } from "react-native";
-import TrackPlayer from "react-native-track-player";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { getItemHeight, getScreenDimensions } from "@/utils/screenUtils";
-import { audioPlayerService } from "@/services/AudioPlayerService";
-
-const { width } = Dimensions.get("window");
 
 export default function FeedScreen() {
-  const { 
-    podcasts, 
-    switchToPodcast, 
-    isLoading, 
-    error, 
+  const {
+    podcasts,
+    switchToPodcast,
     hasNextPage,
     loadMorePodcasts,
     refreshPodcasts,
     useSupabaseData,
-    tryAutoResumeOnTabFocus,
-    setIsPlaying,
-    loadUserLikedPodcasts,
-    loadUserSavedPodcasts
   } = usePodcastStore();
+
+  // カスタムフックを使用
+  const { isLoading, error } = useHomeScreenInitialization();
+  useAudioPlayerSync();
+
   const [activePodcastIndex, setActivePodcastIndex] = useState<number>(0);
   const [showComments, setShowComments] = useState<boolean>(false);
   const [selectedPodcastId, setSelectedPodcastId] = useState<string>("");
@@ -49,89 +47,34 @@ export default function FeedScreen() {
 
   const itemHeight = useMemo(() => {
     const height = getItemHeight(safeAreaInsets, tabBarHeight);
-    console.log('📏 Item Height:', height, 'Tab Bar Height:', tabBarHeight);
     return height;
   }, [safeAreaInsets, tabBarHeight]);
 
   // コンテナの高さを測定してタブバーの高さを算出
-  const handleContainerLayout = useCallback((event: any) => {
-    const { height: containerHeight } = event.nativeEvent.layout;
-    const { height: windowHeight } = Dimensions.get('window');
-    
-    // コンテナの高さと画面の高さの差からタブバーの高さを算出
-    const calculatedTabBarHeight = windowHeight - containerHeight - safeAreaInsets.top;
-    const finalTabBarHeight = Math.max(0, calculatedTabBarHeight);
-    
-    console.log('🔍 Height Debug:', {
-      windowHeight,
-      containerHeight,
-      safeAreaTop: safeAreaInsets.top,
-      safeAreaBottom: safeAreaInsets.bottom,
-      calculatedTabBarHeight,
-      finalTabBarHeight
-    });
-    
-    setTabBarHeight(finalTabBarHeight);
-  }, [safeAreaInsets.top, safeAreaInsets.bottom]);
+  const handleContainerLayout = useCallback(
+    (event: any) => {
+      const { height: containerHeight } = event.nativeEvent.layout;
+      const { height: windowHeight } = Dimensions.get("window");
 
-  useEffect(() => {
-    console.log('📱 App initialization:', {
-      useSupabaseData,
-      podcastsLength: podcasts.length,
-      isLoading,
-      error
-    });
-    
-    // Supabaseデータを取得（デフォルトで有効） - 一度だけ実行
-    if (useSupabaseData && podcasts.length === 0 && !isLoading && !error) {
-      console.log('🔄 Triggering refresh podcasts...');
-      refreshPodcasts().catch(err => {
-        console.error('❌ Refresh podcasts failed:', err);
-      });
-    }
-  }, [useSupabaseData, refreshPodcasts]); // 依存配列を簡素化
-  
-  // ポッドキャストが読み込まれた後の処理
-  useEffect(() => {
-    if (podcasts.length > 0) {
-      console.log('🎵 Podcasts loaded, switching to first podcast');
-      switchToPodcast(0);
-      
-      // ユーザーのいいね・保存情報を読み込む
-      console.log('📊 Loading user liked and saved podcasts...');
-      loadUserLikedPodcasts().catch(err => {
-        console.error('❌ Failed to load user liked podcasts:', err);
-      });
-      loadUserSavedPodcasts().catch(err => {
-        console.error('❌ Failed to load user saved podcasts:', err);
-      });
-    }
-  }, [podcasts.length, switchToPodcast, loadUserLikedPodcasts, loadUserSavedPodcasts]);
+      const calculatedTabBarHeight =
+        windowHeight - containerHeight - safeAreaInsets.top;
+      const finalTabBarHeight = Math.max(0, calculatedTabBarHeight);
 
-  // AudioPlayerServiceの状態同期を設定
-  useEffect(() => {
-    audioPlayerService.setStateUpdateCallback(setIsPlaying);
-    
-    return () => {
-      audioPlayerService.setStateUpdateCallback(() => {});
-    };
-  }, [setIsPlaying]);
+      logger.debug("Container layout calculated", {
+        windowHeight,
+        containerHeight,
+        safeAreaTop: safeAreaInsets.top,
+        safeAreaBottom: safeAreaInsets.bottom,
+        calculatedTabBarHeight,
+        finalTabBarHeight,
+      });
 
-  useFocusEffect(
-    React.useCallback(() => {
-      // ホームタブにフォーカスした時の処理
-      console.log('🏠 Home tab focused - attempting auto resume');
-      tryAutoResumeOnTabFocus();
-      
-      return () => {
-        // ホームタブからフォーカスが外れた時の処理
-        console.log('🏠 Home tab unfocused - pausing audio');
-        TrackPlayer.pause().catch((error) => {
-          console.error("音声停止エラー:", error);
-        });
-      };
-    }, [tryAutoResumeOnTabFocus])
+      setTabBarHeight(finalTabBarHeight);
+    },
+    [safeAreaInsets.top, safeAreaInsets.bottom]
   );
+
+  // 初期化とプレイヤー同期はカスタムフックで処理される
 
   const viewabilityConfig = {
     itemVisiblePercentThreshold: 50,
@@ -161,52 +104,16 @@ export default function FeedScreen() {
   }, [hasNextPage, isLoading, useSupabaseData, loadMorePodcasts]);
 
   const renderItem = useCallback(
-    ({ item, index }: any) => {
-      console.log("🎵 Rendering podcast item:", {
-        id: item.id,
-        title: item.title,
-        imageUrl: item.imageUrl,
-        index,
-        isActive: index === activePodcastIndex
-      });
-      return (
-        <View style={[styles.podcastContainer, { height: itemHeight }]}>
-          <AudioPlayer
-            podcastId={item.id}
-            imageUrl={item.imageUrl}
-            isActive={index === activePodcastIndex}
-          />
-
-          <View pointerEvents="box-none">
-            <View pointerEvents="auto">
-              <PodcastInfo
-                title={item.title}
-                host={item.host}
-                duration={item.duration}
-                description={item.description}
-                category={item.category}
-                tags={item.tags}
-              />
-            </View>
-
-            <View pointerEvents="auto">
-              <PodcastActions
-                podcastId={item.id}
-                hostId={item.host.id}
-                hostAvatar={item.host.avatar}
-                likes={item.likes}
-                comments={item.comments}
-                shares={item.shares}
-                onCommentPress={() => handleCommentPress(item.id)}
-                isLiked={item.isLiked}
-                isSaved={item.isSaved}
-              />
-            </View>
-          </View>
-        </View>
-      );
-    },
-    [activePodcastIndex, handleCommentPress, itemHeight] // 依存配列に itemHeight を追加
+    ({ item, index }: { item: UIPodcast; index: number }) => (
+      <PodcastListItem
+        item={item}
+        index={index}
+        isActive={index === activePodcastIndex}
+        itemHeight={itemHeight}
+        onCommentPress={handleCommentPress}
+      />
+    ),
+    [activePodcastIndex, handleCommentPress, itemHeight]
   );
 
   return (
@@ -224,34 +131,21 @@ export default function FeedScreen() {
       </View>
 
       {error && (
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{error}</Text>
-          <Text style={styles.debugText}>
-            デバッグ情報: useSupabaseData={useSupabaseData ? 'true' : 'false'}, 
-            podcasts={podcasts.length}, isLoading={isLoading ? 'true' : 'false'}
-          </Text>
-          <TouchableOpacity style={styles.retryButton} onPress={handleRefresh}>
-            <Text style={styles.retryText}>再試行</Text>
-          </TouchableOpacity>
-        </View>
+        <ErrorDisplay
+          error={error}
+          useSupabaseData={useSupabaseData}
+          podcastsLength={podcasts.length}
+          isLoading={isLoading}
+          onRetry={handleRefresh}
+        />
       )}
 
       {/* ローディング表示（データが空で読み込み中の場合） */}
-      {isLoading && podcasts.length === 0 && (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={Colors.dark.primary} />
-          <Text style={styles.loadingText}>ポッドキャストを読み込み中...</Text>
-        </View>
-      )}
+      {isLoading && podcasts.length === 0 && <LoadingDisplay />}
 
       {/* データが空でローディングも完了している場合 */}
       {!isLoading && podcasts.length === 0 && !error && (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>ポッドキャストが見つかりません</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={handleRefresh}>
-            <Text style={styles.retryText}>手動で再取得</Text>
-          </TouchableOpacity>
-        </View>
+        <EmptyDisplay onRetry={handleRefresh} />
       )}
 
       <FlatList
@@ -311,9 +205,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.dark.background,
   },
-  podcastContainer: {
-    backgroundColor: Colors.dark.background,
-  },
   tabsContainer: {
     position: "absolute",
     top: 50,
@@ -342,64 +233,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.dark.primary,
     marginTop: 5,
   },
-  errorContainer: {
-    position: 'absolute',
-    top: '50%',
-    left: 0,
-    right: 0,
-    zIndex: 20,
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.8)',
-    padding: 20,
-    marginHorizontal: 20,
-    borderRadius: 8,
-  },
-  errorText: {
-    color: Colors.dark.text,
-    fontSize: 16,
-    textAlign: 'center',
-    marginBottom: 10,
-  },
-  debugText: {
-    color: Colors.dark.subtext,
-    fontSize: 12,
-    textAlign: 'center',
-    marginBottom: 10,
-  },
-  retryButton: {
-    backgroundColor: Colors.dark.primary,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  retryText: {
-    color: Colors.dark.text,
-    fontWeight: 'bold',
-  },
   loadingFooter: {
     padding: 20,
-    alignItems: 'center',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: Colors.dark.background,
-  },
-  loadingText: {
-    color: Colors.dark.text,
-    marginTop: 10,
-    fontSize: 16,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: Colors.dark.background,
-  },
-  emptyText: {
-    color: Colors.dark.subtext,
-    fontSize: 18,
-    textAlign: 'center',
+    alignItems: "center",
   },
 });
