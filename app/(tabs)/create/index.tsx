@@ -19,6 +19,7 @@ import Colors from "@/constants/Colors";
 import {
   createScript,
   PostCreateScriptRequest,
+  PromptScriptData,
   ScriptData,
 } from "@/services/scriptGenerator";
 
@@ -30,6 +31,7 @@ export default function CreateScreen() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedScript, setGeneratedScript] = useState<ScriptData[]>([]);
   const [isScriptGenerated, setIsScriptGenerated] = useState(false);
+  const [scriptHistory, setScriptHistory] = useState<PromptScriptData[]>([]);
 
   const addUrlField = () => {
     setReferenceUrls([...referenceUrls, ""]);
@@ -62,6 +64,7 @@ export default function CreateScreen() {
       // UI状態からAPIリクエスト形式への変換
       const requestData: PostCreateScriptRequest = {
         prompt: theme.trim() || "指定されたURLの内容について説明してください",
+        previousScript: scriptHistory,
         reference: validUrls.length > 0 ? validUrls : [],
         isSearch: webSearch,
       };
@@ -116,6 +119,15 @@ export default function CreateScreen() {
       setGeneratedScript(scriptArray);
       setIsScriptGenerated(true);
 
+      // 履歴に現在の原稿を追加
+      const currentScript: PromptScriptData = {
+        prompt: requestData.prompt,
+        script: scriptArray,
+        reference: response.newScript.reference || [],
+        situation: requestData.situation || undefined,
+      };
+      setScriptHistory(prev => [...prev, currentScript]);
+
       // APIから返された参考URLでreferenceUrlsを上書き
       if (
         response.newScript.reference &&
@@ -147,6 +159,29 @@ export default function CreateScreen() {
       [
         { text: "キャンセル", style: "cancel" },
         { text: "再生成", onPress: handleGenerateScript },
+      ]
+    );
+  };
+
+  const handleResetConversation = () => {
+    Alert.alert(
+      "リセットの確認",
+      "すべての入力内容と原稿履歴をリセットしますか？",
+      [
+        { text: "キャンセル", style: "cancel" },
+        { 
+          text: "リセット", 
+          style: "destructive",
+          onPress: () => {
+            // 全状態を初期状態にリセット
+            setTheme("");
+            setReferenceUrls([""]);
+            setWebSearch(false);
+            setGeneratedScript([]);
+            setIsScriptGenerated(false);
+            setScriptHistory([]);
+          }
+        },
       ]
     );
   };
@@ -542,6 +577,46 @@ export default function CreateScreen() {
           {/* 原稿生成後のアクションボタン */}
           {isScriptGenerated && (
             <View style={{ marginBottom: 40 }}>
+              {/* リセットボタン */}
+              <TouchableOpacity
+                style={{ marginBottom: 16 }}
+                onPress={handleResetConversation}
+              >
+                <View
+                  style={{
+                    backgroundColor: Colors.dark.card,
+                    paddingVertical: 16,
+                    borderRadius: 16,
+                    alignItems: "center",
+                    borderWidth: 1,
+                    borderColor: Colors.dark.border,
+                  }}
+                >
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Ionicons
+                      name="trash-outline"
+                      size={24}
+                      color={Colors.dark.text}
+                      style={{ marginRight: 8 }}
+                    />
+                    <Text
+                      style={{
+                        fontSize: 16,
+                        fontWeight: "bold",
+                        color: Colors.dark.text,
+                      }}
+                    >
+                      リセット
+                    </Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+
               {/* 再生成ボタン */}
               <TouchableOpacity
                 style={{ marginBottom: 16 }}
