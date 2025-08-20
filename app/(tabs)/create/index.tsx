@@ -1,8 +1,17 @@
+import { ScriptSectionCard } from "@/components/ScriptSectionCard";
+import Colors from "@/constants/Colors";
+import {
+  createScript,
+  PostCreateScriptRequest,
+  PromptScriptData,
+  ScriptData,
+} from "@/services/scriptGenerator";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
@@ -14,14 +23,6 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ScriptSectionCard } from "@/components/ScriptSectionCard";
-import Colors from "@/constants/Colors";
-import {
-  createScript,
-  PostCreateScriptRequest,
-  PromptScriptData,
-  ScriptData,
-} from "@/services/scriptGenerator";
 
 export default function CreateScreen() {
   const router = useRouter();
@@ -126,7 +127,7 @@ export default function CreateScreen() {
         reference: response.newScript.reference || [],
         situation: requestData.situation || undefined,
       };
-      setScriptHistory(prev => [...prev, currentScript]);
+      setScriptHistory((prev) => [...prev, currentScript]);
 
       // APIから返された参考URLでreferenceUrlsを上書き
       if (
@@ -169,8 +170,8 @@ export default function CreateScreen() {
       "すべての入力内容と原稿履歴をリセットしますか？",
       [
         { text: "キャンセル", style: "cancel" },
-        { 
-          text: "リセット", 
+        {
+          text: "リセット",
           style: "destructive",
           onPress: () => {
             // 全状態を初期状態にリセット
@@ -180,7 +181,7 @@ export default function CreateScreen() {
             setGeneratedScript([]);
             setIsScriptGenerated(false);
             setScriptHistory([]);
-          }
+          },
         },
       ]
     );
@@ -254,7 +255,7 @@ export default function CreateScreen() {
                 marginBottom: 12,
               }}
             >
-              テーマ入力（任意）
+              テーマ入力
             </Text>
 
             <TextInput
@@ -277,16 +278,52 @@ export default function CreateScreen() {
               maxLength={200}
             />
 
-            <Text
+            <View
               style={{
-                fontSize: 12,
-                color: Colors.dark.subtext,
-                textAlign: "right",
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
                 marginTop: 8,
               }}
             >
-              {theme.length}/200文字
-            </Text>
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 14,
+                    fontWeight: "600",
+                    color: Colors.dark.text,
+                    marginRight: 8,
+                  }}
+                >
+                  Web検索
+                </Text>
+                <Switch
+                  value={webSearch}
+                  onValueChange={setWebSearch}
+                  trackColor={{
+                    false: Colors.dark.border,
+                    true: Colors.dark.primary,
+                  }}
+                  thumbColor={webSearch ? Colors.dark.text : Colors.dark.subtext}
+                  style={{
+                    transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }],
+                  }}
+                />
+              </View>
+              <Text
+                style={{
+                  fontSize: 12,
+                  color: Colors.dark.subtext,
+                }}
+              >
+                {theme.length}/200文字
+              </Text>
+            </View>
           </View>
 
           {/* 参考URL入力セクション */}
@@ -424,46 +461,6 @@ export default function CreateScreen() {
             </View>
           </View>
 
-          {/* Web検索設定セクション */}
-          <View
-            style={{
-              backgroundColor: Colors.dark.card,
-              borderRadius: 16,
-              padding: 20,
-              marginBottom: 24,
-            }}
-          >
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-between",
-              }}
-            >
-              <View style={{ flex: 1 }}>
-                <Text
-                  style={{
-                    fontSize: 18,
-                    fontWeight: "bold",
-                    color: Colors.dark.text,
-                    marginBottom: 4,
-                  }}
-                >
-                  Web検索
-                </Text>
-              </View>
-
-              <Switch
-                value={webSearch}
-                onValueChange={setWebSearch}
-                trackColor={{
-                  false: Colors.dark.border,
-                  true: Colors.dark.primary,
-                }}
-                thumbColor={webSearch ? Colors.dark.text : Colors.dark.subtext}
-              />
-            </View>
-          </View>
 
           {/* 生成ボタン */}
           {!isScriptGenerated && (
@@ -514,6 +511,135 @@ export default function CreateScreen() {
                 </View>
               </LinearGradient>
             </TouchableOpacity>
+          )}
+
+          {/* 原稿生成後のアクションボタン */}
+          {isScriptGenerated && (
+            <View 
+              style={{ 
+                marginBottom: 40,
+                flexDirection: "row",
+                gap: 8,
+              }}
+            >
+              {/* リセットボタン */}
+              <TouchableOpacity
+                style={{ flex: 1 }}
+                onPress={handleResetConversation}
+              >
+                <View
+                  style={{
+                    backgroundColor: Colors.dark.card,
+                    paddingVertical: 16,
+                    borderRadius: 16,
+                    alignItems: "center",
+                    borderWidth: 1,
+                    borderColor: Colors.dark.border,
+                  }}
+                >
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Ionicons
+                      name="trash-outline"
+                      size={20}
+                      color={Colors.dark.text}
+                      style={{ marginRight: 4 }}
+                    />
+                    <Text
+                      style={{
+                        fontSize: 14,
+                        fontWeight: "bold",
+                        color: Colors.dark.text,
+                      }}
+                    >
+                      リセット
+                    </Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+
+              {/* 再生成ボタン */}
+              <TouchableOpacity
+                style={{ flex: 1 }}
+                onPress={handleRegenerateScript}
+              >
+                <View
+                  style={{
+                    backgroundColor: Colors.dark.card,
+                    paddingVertical: 16,
+                    borderRadius: 16,
+                    alignItems: "center",
+                    borderWidth: 1,
+                    borderColor: Colors.dark.border,
+                  }}
+                >
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Ionicons
+                      name="refresh"
+                      size={20}
+                      color={Colors.dark.text}
+                      style={{ marginRight: 4 }}
+                    />
+                    <Text
+                      style={{
+                        fontSize: 14,
+                        fontWeight: "bold",
+                        color: Colors.dark.text,
+                      }}
+                    >
+                      再生成
+                    </Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+
+              {/* 音声生成ボタン */}
+              <TouchableOpacity 
+                style={{ flex: 1 }}
+                onPress={handleGenerateAudio}
+              >
+                <LinearGradient
+                  colors={[Colors.dark.secondary, Colors.dark.primary]}
+                  style={{
+                    paddingVertical: 16,
+                    borderRadius: 16,
+                    alignItems: "center",
+                  }}
+                >
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Ionicons
+                      name="mic"
+                      size={20}
+                      color={Colors.dark.text}
+                      style={{ marginRight: 4 }}
+                    />
+                    <Text
+                      style={{
+                        fontSize: 14,
+                        fontWeight: "bold",
+                        color: Colors.dark.text,
+                      }}
+                    >
+                      音声生成
+                    </Text>
+                  </View>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
           )}
 
           {/* 生成された原稿セクション */}
@@ -573,128 +699,62 @@ export default function CreateScreen() {
               ))}
             </View>
           )}
-
-          {/* 原稿生成後のアクションボタン */}
-          {isScriptGenerated && (
-            <View style={{ marginBottom: 40 }}>
-              {/* リセットボタン */}
-              <TouchableOpacity
-                style={{ marginBottom: 16 }}
-                onPress={handleResetConversation}
-              >
-                <View
-                  style={{
-                    backgroundColor: Colors.dark.card,
-                    paddingVertical: 16,
-                    borderRadius: 16,
-                    alignItems: "center",
-                    borderWidth: 1,
-                    borderColor: Colors.dark.border,
-                  }}
-                >
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                    }}
-                  >
-                    <Ionicons
-                      name="trash-outline"
-                      size={24}
-                      color={Colors.dark.text}
-                      style={{ marginRight: 8 }}
-                    />
-                    <Text
-                      style={{
-                        fontSize: 16,
-                        fontWeight: "bold",
-                        color: Colors.dark.text,
-                      }}
-                    >
-                      リセット
-                    </Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
-
-              {/* 再生成ボタン */}
-              <TouchableOpacity
-                style={{ marginBottom: 16 }}
-                onPress={handleRegenerateScript}
-              >
-                <View
-                  style={{
-                    backgroundColor: Colors.dark.card,
-                    paddingVertical: 16,
-                    borderRadius: 16,
-                    alignItems: "center",
-                    borderWidth: 1,
-                    borderColor: Colors.dark.border,
-                  }}
-                >
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                    }}
-                  >
-                    <Ionicons
-                      name="refresh"
-                      size={24}
-                      color={Colors.dark.text}
-                      style={{ marginRight: 8 }}
-                    />
-                    <Text
-                      style={{
-                        fontSize: 16,
-                        fontWeight: "bold",
-                        color: Colors.dark.text,
-                      }}
-                    >
-                      再生成
-                    </Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
-
-              {/* 音声生成ボタン */}
-              <TouchableOpacity onPress={handleGenerateAudio}>
-                <LinearGradient
-                  colors={[Colors.dark.secondary, Colors.dark.primary]}
-                  style={{
-                    paddingVertical: 18,
-                    borderRadius: 16,
-                    alignItems: "center",
-                  }}
-                >
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                    }}
-                  >
-                    <Ionicons
-                      name="mic"
-                      size={24}
-                      color={Colors.dark.text}
-                      style={{ marginRight: 8 }}
-                    />
-                    <Text
-                      style={{
-                        fontSize: 18,
-                        fontWeight: "bold",
-                        color: Colors.dark.text,
-                      }}
-                    >
-                      音声を生成する
-                    </Text>
-                  </View>
-                </LinearGradient>
-              </TouchableOpacity>
-            </View>
-          )}
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* 原稿生成中のフルスクリーンローディング */}
+      {isGenerating && (
+        <View
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: Colors.dark.background + "99",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1000,
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: Colors.dark.card,
+              borderRadius: 20,
+              padding: 32,
+              alignItems: "center",
+              minWidth: 200,
+            }}
+          >
+            <ActivityIndicator
+              size="large"
+              color={Colors.dark.primary}
+              style={{ marginBottom: 20 }}
+            />
+            <Text
+              style={{
+                color: Colors.dark.text,
+                fontSize: 18,
+                fontWeight: "bold",
+                textAlign: "center",
+                marginBottom: 8,
+              }}
+            >
+              原稿を生成中...
+            </Text>
+            <Text
+              style={{
+                color: Colors.dark.subtext,
+                fontSize: 14,
+                textAlign: "center",
+                lineHeight: 20,
+              }}
+            >
+              しばらくお待ちください
+            </Text>
+          </View>
+        </View>
+      )}
     </SafeAreaView>
   );
 }

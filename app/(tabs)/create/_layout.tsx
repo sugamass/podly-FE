@@ -16,21 +16,21 @@ export default function CreateLayout() {
         name="index"
         options={{
           title: "原稿作成",
-          headerShown: true,
+          headerShown: false,
         }}
       />
       <Stack.Screen
         name="audio"
         options={{
           title: "音声生成",
-          headerShown: true,
+          headerShown: false,
         }}
       />
       <Stack.Screen
         name="publish"
         options={{
           title: "公開設定",
-          headerShown: true,
+          headerShown: false,
         }}
       />
     </Stack>

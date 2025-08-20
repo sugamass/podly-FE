@@ -3,6 +3,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
@@ -1251,6 +1252,60 @@ export default function CreateAudioScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* 音声生成中のフルスクリーンローディング */}
+      {isGenerating && (
+        <View
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: Colors.dark.background + "E6",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1000,
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: Colors.dark.card,
+              borderRadius: 20,
+              padding: 32,
+              alignItems: "center",
+              minWidth: 200,
+            }}
+          >
+            <ActivityIndicator
+              size="large"
+              color={Colors.dark.primary}
+              style={{ marginBottom: 20 }}
+            />
+            <Text
+              style={{
+                color: Colors.dark.text,
+                fontSize: 18,
+                fontWeight: "bold",
+                textAlign: "center",
+                marginBottom: 8,
+              }}
+            >
+              音声を生成中...
+            </Text>
+            <Text
+              style={{
+                color: Colors.dark.subtext,
+                fontSize: 14,
+                textAlign: "center",
+                lineHeight: 20,
+              }}
+            >
+              しばらくお待ちください
+            </Text>
+          </View>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
