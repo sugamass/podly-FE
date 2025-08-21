@@ -309,7 +309,9 @@ export default function CreateScreen() {
                     false: Colors.dark.border,
                     true: Colors.dark.primary,
                   }}
-                  thumbColor={webSearch ? Colors.dark.text : Colors.dark.subtext}
+                  thumbColor={
+                    webSearch ? Colors.dark.text : Colors.dark.subtext
+                  }
                   style={{
                     transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }],
                   }}
@@ -461,7 +463,6 @@ export default function CreateScreen() {
             </View>
           </View>
 
-
           {/* 生成ボタン */}
           {!isScriptGenerated && (
             <TouchableOpacity
@@ -515,8 +516,8 @@ export default function CreateScreen() {
 
           {/* 原稿生成後のアクションボタン */}
           {isScriptGenerated && (
-            <View 
-              style={{ 
+            <View
+              style={{
                 marginBottom: 40,
                 flexDirection: "row",
                 gap: 8,
@@ -603,7 +604,7 @@ export default function CreateScreen() {
               </TouchableOpacity>
 
               {/* 音声生成ボタン */}
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={{ flex: 1 }}
                 onPress={handleGenerateAudio}
               >
@@ -634,7 +635,7 @@ export default function CreateScreen() {
                         color: Colors.dark.text,
                       }}
                     >
-                      音声生成
+                      音声の生成に進む
                     </Text>
                   </View>
                 </LinearGradient>

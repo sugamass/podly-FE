@@ -1,3 +1,12 @@
+import Colors from "@/constants/Colors";
+import {
+  AudioPreviewRequest,
+  AudioPreviewResponse,
+  ScriptData as AudioScriptData,
+  generateAudioPreview,
+} from "@/services/audioGenerator";
+import { audioPlayerService } from "@/services/AudioPlayerService";
+import { ScriptData as GeneratedScriptData } from "@/services/scriptGenerator";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
@@ -13,15 +22,6 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Colors from "@/constants/Colors";
-import {
-  AudioPreviewRequest,
-  AudioPreviewResponse,
-  ScriptData as AudioScriptData,
-  generateAudioPreview,
-} from "@/services/audioGenerator";
-import { audioPlayerService } from "@/services/AudioPlayerService";
-import { ScriptData as GeneratedScriptData } from "@/services/scriptGenerator";
 
 type VoiceOption = {
   id: string;
