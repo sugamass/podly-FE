@@ -8,7 +8,7 @@ import { useAudioPlayer } from "@/hooks/useAudioPlayer";
 import { useBGMPlayer } from "@/hooks/useBGMPlayer";
 import { useSpeakerVoices } from "@/hooks/useSpeakerVoices";
 import { ScriptData as GeneratedScriptData } from "@/services/scriptGenerator";
-import { BGMOption, VoiceOption } from "@/types/audio";
+import { BGMOption } from "@/types/audio";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
@@ -43,7 +43,6 @@ export default function CreateAudioScreen() {
     }
     return [];
   });
-
 
   // BGM選択関連
   const [selectedBGM, setSelectedBGM] = useState<BGMOption>(() => {
@@ -81,17 +80,27 @@ export default function CreateAudioScreen() {
   const { currentPlayingId, isPlaying, playSection, clearPlayback } =
     useAudioPlayer();
 
-  const { currentPlayingBGM, isPlaying: isBGMPlaying, playBGM, stopBGM } =
-    useBGMPlayer();
+  const {
+    currentPlayingBGM,
+    isPlaying: isBGMPlaying,
+    playBGM,
+    stopBGM,
+  } = useBGMPlayer();
 
   // 音声生成ハンドラー
   const handleGenerateAudio = () => {
-    generateAudio(scriptData, speakerVoiceMap, defaultVoice);
+    generateAudio(scriptData, speakerVoiceMap, defaultVoice, selectedBGM.id);
   };
 
   // 音声再生成ハンドラー
   const handleRegenerateAudio = () => {
-    regenerateAudio(scriptData, speakerVoiceMap, defaultVoice, clearPlayback);
+    regenerateAudio(
+      scriptData,
+      speakerVoiceMap,
+      defaultVoice,
+      selectedBGM.id,
+      clearPlayback
+    );
   };
 
   // セクション音声再生
@@ -260,7 +269,7 @@ export default function CreateAudioScreen() {
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: Colors.dark.background + "E6",
+            backgroundColor: Colors.dark.background + "99",
             justifyContent: "center",
             alignItems: "center",
             zIndex: 1000,

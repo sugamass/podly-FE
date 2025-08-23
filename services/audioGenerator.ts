@@ -13,6 +13,7 @@ export interface AudioPreviewRequest {
   tts: string;
   voices: string[];
   speakers: string[];
+  bgmId: string;
   scriptId?: string;
 }
 

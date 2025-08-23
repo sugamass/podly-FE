@@ -19,7 +19,8 @@ export const useAudioGeneration = () => {
   const generateAudio = async (
     scriptData: GeneratedScriptData[],
     speakerVoiceMap: Record<string, VoiceOption>,
-    selectedVoice: VoiceOption
+    selectedVoice: VoiceOption,
+    selectedBgmId: string
   ) => {
     if (!scriptData || scriptData.length === 0) {
       Alert.alert("エラー", "原稿データが入力されていません");
@@ -52,6 +53,7 @@ export const useAudioGeneration = () => {
         tts: "openai",
         voices: voicesForSpeakers,
         speakers: uniqueSpeakers,
+        bgmId: selectedBgmId,
       };
 
       console.log("Generating audio with request:", requestData);
@@ -92,6 +94,7 @@ export const useAudioGeneration = () => {
     scriptData: GeneratedScriptData[],
     speakerVoiceMap: Record<string, VoiceOption>,
     selectedVoice: VoiceOption,
+    selectedBgmId: string,
     onClearPlayback: () => void
   ) => {
     Alert.alert(
@@ -106,7 +109,7 @@ export const useAudioGeneration = () => {
             setIsAudioGenerated(false);
             setAudioSections([]);
             setFullAudioUrl(null);
-            await generateAudio(scriptData, speakerVoiceMap, selectedVoice);
+            await generateAudio(scriptData, speakerVoiceMap, selectedVoice, selectedBgmId);
           },
         },
       ]
