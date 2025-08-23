@@ -518,7 +518,7 @@ export default function CreateScreen() {
           {isScriptGenerated && (
             <View
               style={{
-                marginBottom: 40,
+                marginBottom: 24,
                 flexDirection: "row",
                 gap: 8,
               }}
@@ -602,44 +602,6 @@ export default function CreateScreen() {
                   </View>
                 </View>
               </TouchableOpacity>
-
-              {/* 音声生成ボタン */}
-              <TouchableOpacity
-                style={{ flex: 1 }}
-                onPress={handleGenerateAudio}
-              >
-                <LinearGradient
-                  colors={[Colors.dark.secondary, Colors.dark.primary]}
-                  style={{
-                    paddingVertical: 16,
-                    borderRadius: 16,
-                    alignItems: "center",
-                  }}
-                >
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                    }}
-                  >
-                    <Ionicons
-                      name="mic"
-                      size={20}
-                      color={Colors.dark.text}
-                      style={{ marginRight: 4 }}
-                    />
-                    <Text
-                      style={{
-                        fontSize: 14,
-                        fontWeight: "bold",
-                        color: Colors.dark.text,
-                      }}
-                    >
-                      音声の生成に進む
-                    </Text>
-                  </View>
-                </LinearGradient>
-              </TouchableOpacity>
             </View>
           )}
 
@@ -699,6 +661,46 @@ export default function CreateScreen() {
                 />
               ))}
             </View>
+          )}
+
+          {/* 音声生成ボタン */}
+          {isScriptGenerated && (
+            <TouchableOpacity
+              style={{ marginBottom: 32 }}
+              onPress={handleGenerateAudio}
+            >
+              <LinearGradient
+                colors={[Colors.dark.secondary, Colors.dark.primary]}
+                style={{
+                  paddingVertical: 18,
+                  borderRadius: 16,
+                  alignItems: "center",
+                }}
+              >
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                  }}
+                >
+                  <Ionicons
+                    name="mic"
+                    size={24}
+                    color={Colors.dark.text}
+                    style={{ marginRight: 8 }}
+                  />
+                  <Text
+                    style={{
+                      fontSize: 18,
+                      fontWeight: "bold",
+                      color: Colors.dark.text,
+                    }}
+                  >
+                    音声の生成に進む
+                  </Text>
+                </View>
+              </LinearGradient>
+            </TouchableOpacity>
           )}
         </ScrollView>
       </KeyboardAvoidingView>
