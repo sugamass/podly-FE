@@ -1,12 +1,19 @@
-import { useState, useEffect, useMemo } from "react";
-import { VoiceOption } from "@/types/audio";
 import { ScriptData as GeneratedScriptData } from "@/services/scriptGenerator";
+import { VoiceOption } from "@/types/audio";
+import { useEffect, useMemo, useState } from "react";
 
-export const useSpeakerVoices = (
-  scriptData: GeneratedScriptData[],
-  selectedVoice: VoiceOption
-) => {
-  const [speakerVoiceMap, setSpeakerVoiceMap] = useState<Record<string, VoiceOption>>({});
+export const useSpeakerVoices = (scriptData: GeneratedScriptData[]) => {
+  // デフォルトボイスの定義
+  const defaultVoice: VoiceOption = {
+    id: "alloy",
+    name: "alloy",
+    description: "Neutral, balanced voice",
+    gender: "female",
+    language: "en",
+  };
+  const [speakerVoiceMap, setSpeakerVoiceMap] = useState<
+    Record<string, VoiceOption>
+  >({});
   const [openSpeaker, setOpenSpeaker] = useState<string | null>(null);
 
   // スクリプト内のユニーク話者一覧
@@ -16,18 +23,18 @@ export const useSpeakerVoices = (
     );
   }, [scriptData]);
 
-  // 未設定スピーカーにデフォルトのselectedVoiceを適用
+  // 未設定スピーカーにデフォルトボイスを適用
   useEffect(() => {
     setSpeakerVoiceMap((prev) => {
       const next = { ...prev } as Record<string, VoiceOption>;
       uniqueSpeakersList.forEach((speaker) => {
         if (!next[speaker]) {
-          next[speaker] = selectedVoice;
+          next[speaker] = defaultVoice;
         }
       });
       return next;
     });
-  }, [uniqueSpeakersList, selectedVoice]);
+  }, [uniqueSpeakersList]);
 
   const handleSelectSpeakerVoice = (speaker: string, voice: VoiceOption) => {
     setSpeakerVoiceMap((prev) => ({ ...prev, [speaker]: voice }));
@@ -39,5 +46,6 @@ export const useSpeakerVoices = (
     setOpenSpeaker,
     uniqueSpeakersList,
     handleSelectSpeakerVoice,
+    defaultVoice,
   };
 };

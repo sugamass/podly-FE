@@ -43,14 +43,6 @@ export default function CreateAudioScreen() {
     return [];
   });
 
-  // 音声設定
-  const [selectedVoice, setSelectedVoice] = useState<VoiceOption>({
-    id: "alloy",
-    name: "alloy",
-    description: "Neutral, balanced voice",
-    gender: "female",
-    language: "en",
-  });
 
   // BGM選択関連
   const [selectedBGM, setSelectedBGM] = useState<BGMOption>(() => {
@@ -70,7 +62,8 @@ export default function CreateAudioScreen() {
     setOpenSpeaker,
     uniqueSpeakersList,
     handleSelectSpeakerVoice,
-  } = useSpeakerVoices(scriptData, selectedVoice);
+    defaultVoice,
+  } = useSpeakerVoices(scriptData);
 
   const {
     isGenerating,
@@ -89,12 +82,12 @@ export default function CreateAudioScreen() {
 
   // 音声生成ハンドラー
   const handleGenerateAudio = () => {
-    generateAudio(scriptData, speakerVoiceMap, selectedVoice);
+    generateAudio(scriptData, speakerVoiceMap, defaultVoice);
   };
 
   // 音声再生成ハンドラー
   const handleRegenerateAudio = () => {
-    regenerateAudio(scriptData, speakerVoiceMap, selectedVoice, clearPlayback);
+    regenerateAudio(scriptData, speakerVoiceMap, defaultVoice, clearPlayback);
   };
 
   // セクション音声再生
@@ -112,7 +105,7 @@ export default function CreateAudioScreen() {
     // 話者→ボイスIDのマッピングを作成
     const speakerVoiceIds = uniqueSpeakersList.reduce<Record<string, string>>(
       (acc, s) => {
-        acc[s] = speakerVoiceMap[s]?.id ?? selectedVoice.id;
+        acc[s] = speakerVoiceMap[s]?.id ?? defaultVoice.id;
         return acc;
       },
       {}
@@ -123,7 +116,7 @@ export default function CreateAudioScreen() {
       pathname: "/create/publish",
       params: {
         script: JSON.stringify(scriptData),
-        voice: selectedVoice.id,
+        voice: defaultVoice.id,
         audioSections: JSON.stringify(audioSections),
         speakerVoices: JSON.stringify(speakerVoiceIds),
       },
@@ -176,7 +169,7 @@ export default function CreateAudioScreen() {
           <VoiceSelectionSection
             uniqueSpeakersList={uniqueSpeakersList}
             speakerVoiceMap={speakerVoiceMap}
-            selectedVoice={selectedVoice}
+            selectedVoice={defaultVoice}
             openSpeaker={openSpeaker}
             onSetOpenSpeaker={setOpenSpeaker}
             onSelectSpeakerVoice={handleSelectSpeakerVoice}
