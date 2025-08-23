@@ -1,0 +1,81 @@
+import { VoiceOption } from "@/types/audio";
+
+export const voiceOptions: VoiceOption[] = [
+  {
+    id: "alloy",
+    name: "alloy",
+    description: "Neutral, balanced voice",
+    gender: "female",
+    language: "en",
+  },
+  {
+    id: "ash",
+    name: "ash",
+    description: "Deep, resonant male voice",
+    gender: "male",
+    language: "en",
+  },
+  {
+    id: "ballad",
+    name: "ballad",
+    description: "Warm, storytelling voice",
+    gender: "female",
+    language: "en",
+  },
+  {
+    id: "coral",
+    name: "coral",
+    description: "Bright, energetic voice",
+    gender: "female",
+    language: "en",
+  },
+  {
+    id: "echo",
+    name: "echo",
+    description: "Clear, articulate voice",
+    gender: "male",
+    language: "en",
+  },
+  {
+    id: "fable",
+    name: "fable",
+    description: "Smooth, confident voice",
+    gender: "male",
+    language: "en",
+  },
+  {
+    id: "onyx",
+    name: "onyx",
+    description: "Strong, authoritative voice",
+    gender: "male",
+    language: "en",
+  },
+  {
+    id: "nova",
+    name: "nova",
+    description: "Young, vibrant voice",
+    gender: "female",
+    language: "en",
+  },
+  {
+    id: "sage",
+    name: "sage",
+    description: "Wise, mature voice",
+    gender: "male",
+    language: "en",
+  },
+  {
+    id: "shimmer",
+    name: "shimmer",
+    description: "Gentle, soothing voice",
+    gender: "female",
+    language: "en",
+  },
+  {
+    id: "verse",
+    name: "verse",
+    description: "Expressive, dynamic voice",
+    gender: "female",
+    language: "en",
+  },
+];
