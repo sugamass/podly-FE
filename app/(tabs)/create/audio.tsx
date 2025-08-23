@@ -5,6 +5,7 @@ import VoiceSelectionSection from "@/components/VoiceSelectionSection";
 import Colors from "@/constants/Colors";
 import { useAudioGeneration } from "@/hooks/useAudioGeneration";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
+import { useBGMPlayer } from "@/hooks/useBGMPlayer";
 import { useSpeakerVoices } from "@/hooks/useSpeakerVoices";
 import { ScriptData as GeneratedScriptData } from "@/services/scriptGenerator";
 import { BGMOption, VoiceOption } from "@/types/audio";
@@ -79,6 +80,9 @@ export default function CreateAudioScreen() {
 
   const { currentPlayingId, isPlaying, playSection, clearPlayback } =
     useAudioPlayer();
+
+  const { currentPlayingBGM, isPlaying: isBGMPlaying, playBGM, stopBGM } =
+    useBGMPlayer();
 
   // 音声生成ハンドラー
   const handleGenerateAudio = () => {
@@ -181,6 +185,9 @@ export default function CreateAudioScreen() {
             isBgmOpen={isBgmOpen}
             onSetIsBgmOpen={setIsBgmOpen}
             onSelectBGM={setSelectedBGM}
+            currentPlayingBGM={currentPlayingBGM}
+            isBGMPlaying={isBGMPlaying}
+            onPlayBGM={playBGM}
           />
 
           {/* 音声生成ボタン */}

@@ -164,6 +164,7 @@ class AudioPlayerService {
   setupStateListeners(): void {
     // 再生状態の変更を監視
     TrackPlayer.addEventListener(Event.PlaybackState, (data) => {
+      // State.Playing は "playing" という文字列
       const isPlaying = data.state === State.Playing;
       if (this.stateUpdateCallback) {
         this.stateUpdateCallback(isPlaying);
@@ -196,4 +197,4 @@ class AudioPlayerService {
   }
 }
 
-export const audioPlayerService = new AudioPlayerService();
+export { AudioPlayerService };

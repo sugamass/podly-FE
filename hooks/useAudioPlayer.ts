@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { Alert } from "react-native";
-import { audioPlayerService } from "@/services/AudioPlayerService";
+import { AudioPlayerService } from "@/services/AudioPlayerService";
 
 export const useAudioPlayer = () => {
+  const audioPlayerService = new AudioPlayerService();
   const [currentPlayingId, setCurrentPlayingId] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 

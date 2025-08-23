@@ -10,6 +10,7 @@ export type BGMOption = {
   id: string;
   name: string;
   description: string;
+  url: string;
 };
 
 export type AudioSection = {

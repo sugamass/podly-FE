@@ -1,15 +1,18 @@
-import React from "react";
-import { View, Text, TouchableOpacity, ScrollView, Alert } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { bgmOptions } from "@/constants/bgmOptions";
 import Colors from "@/constants/Colors";
 import { BGMOption } from "@/types/audio";
-import { bgmOptions } from "@/constants/bgmOptions";
+import { Ionicons } from "@expo/vector-icons";
+import React from "react";
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 interface BGMSelectionSectionProps {
   selectedBGM: BGMOption;
   isBgmOpen: boolean;
   onSetIsBgmOpen: (isOpen: boolean) => void;
   onSelectBGM: (bgm: BGMOption) => void;
+  currentPlayingBGM: string | null;
+  isBGMPlaying: boolean;
+  onPlayBGM: (bgmId: string, bgmUrl: string, bgmName: string) => void;
 }
 
 const BGMSelectionSection: React.FC<BGMSelectionSectionProps> = ({
@@ -17,17 +20,16 @@ const BGMSelectionSection: React.FC<BGMSelectionSectionProps> = ({
   isBgmOpen,
   onSetIsBgmOpen,
   onSelectBGM,
+  currentPlayingBGM,
+  isBGMPlaying,
+  onPlayBGM,
 }) => {
   const handleBGMPreview = (bgm: BGMOption) => {
-    Alert.alert("BGMプレビュー", `${bgm.name}を30秒間プレビュー再生します。`, [
-      { text: "キャンセル", style: "cancel" },
-      {
-        text: "再生",
-        onPress: () => {
-          console.log(`Playing BGM preview for ${bgm.name}`);
-        },
-      },
-    ]);
+    console.log("selectedBGM", selectedBGM);
+    console.log("currentPlayingBGM", currentPlayingBGM);
+    console.log("isBGMPlaying", isBGMPlaying);
+    console.log("handleBGMPreview", bgm);
+    onPlayBGM(bgm.id, bgm.url, bgm.name);
   };
 
   return (
@@ -69,11 +71,7 @@ const BGMSelectionSection: React.FC<BGMSelectionSectionProps> = ({
         >
           {selectedBGM.name}
         </Text>
-        <Ionicons
-          name="chevron-down"
-          size={16}
-          color={Colors.dark.subtext}
-        />
+        <Ionicons name="chevron-down" size={16} color={Colors.dark.subtext} />
       </TouchableOpacity>
 
       {isBgmOpen && (
@@ -151,7 +149,11 @@ const BGMSelectionSection: React.FC<BGMSelectionSectionProps> = ({
                     onPress={() => handleBGMPreview(bgm)}
                   >
                     <Ionicons
-                      name="play"
+                      name={
+                        currentPlayingBGM === bgm.id && isBGMPlaying
+                          ? "pause"
+                          : "play"
+                      }
                       size={14}
                       color={Colors.dark.text}
                     />

@@ -41,5 +41,3 @@ yarn-error.*
 .mcp.json
 
 .cursor/mcp.json
-
-.serena/

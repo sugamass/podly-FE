@@ -3,13 +3,14 @@ import { useFocusEffect } from 'expo-router';
 import React from 'react';
 import TrackPlayer from 'react-native-track-player';
 import { usePodcastStore } from '@/store/podcastStore';
-import { audioPlayerService } from '@/services/AudioPlayerService';
+import { AudioPlayerService } from '@/services/AudioPlayerService';
 import { logger } from '@/utils/logger';
 
 /**
  * 音声プレイヤーの同期とタブフォーカス管理を行うカスタムフック
  */
 export const useAudioPlayerSync = () => {
+  const audioPlayerService = new AudioPlayerService();
   const { 
     setIsPlaying,
     tryAutoResumeOnTabFocus 

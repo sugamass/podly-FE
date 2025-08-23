@@ -1,10 +1,11 @@
 import { useEffect } from "react";
 import { AppState } from "react-native";
 import { cleanupTrackPlayerService } from "@/services/TrackPlayerService";
-import { audioPlayerService } from "@/services/AudioPlayerService";
+import { AudioPlayerService } from "@/services/AudioPlayerService";
 import type { AppState as AppStateType } from "@/types/app";
 
 export const useAppStateHandler = () => {
+  const audioPlayerService = new AudioPlayerService();
   useEffect(() => {
     const handleAppStateChange = (nextAppState: AppStateType) => {
       if (nextAppState === "background" || nextAppState === "inactive") {

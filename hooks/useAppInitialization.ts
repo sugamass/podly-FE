@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { audioPlayerService } from "@/services/AudioPlayerService";
+import { AudioPlayerService } from "@/services/AudioPlayerService";
 
 export const useAppInitialization = () => {
+  const audioPlayerService = new AudioPlayerService();
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {

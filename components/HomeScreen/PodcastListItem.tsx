@@ -1,14 +1,14 @@
-import React, { memo } from 'react';
+import { memo } from 'react';
 import { View, StyleSheet } from 'react-native';
 import AudioPlayer from '@/components/AudioPlayer';
 import PodcastActions from '@/components/PodcastActions';
 import PodcastInfo from '@/components/PodcastInfo';
 import Colors from '@/constants/Colors';
-import { Podcast } from '@/types/podcast';
+import { UIPodcast } from '@/types/podcast';
 import { logger } from '@/utils/logger';
 
 interface PodcastListItemProps {
-  item: Podcast;
+  item: UIPodcast;
   index: number;
   isActive: boolean;
   itemHeight: number;
@@ -42,10 +42,14 @@ export const PodcastListItem = memo(({
         <View pointerEvents="auto">
           <PodcastInfo
             title={item.title}
-            host={item.host}
+            host={{
+              name: item.host.name,
+              avatar: item.host.avatar || '',
+              verified: item.host.verified
+            }}
             duration={item.duration}
-            description={item.description}
-            category={item.category}
+            description={item.description || ''}
+            category={item.category || ''}
             tags={item.tags}
           />
         </View>
@@ -54,7 +58,7 @@ export const PodcastListItem = memo(({
           <PodcastActions
             podcastId={item.id}
             hostId={item.host.id}
-            hostAvatar={item.host.avatar}
+            hostAvatar={item.host.avatar || ''}
             likes={item.likes}
             comments={item.comments}
             shares={item.shares}

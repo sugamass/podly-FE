@@ -1,6 +1,6 @@
 // import { podcasts } from "@/mocks/podcasts";
 import { create } from "zustand";
-import { audioPlayerService, PodcastTrack } from "@/services/AudioPlayerService";
+import { AudioPlayerService, PodcastTrack } from "@/services/AudioPlayerService";
 import { 
   fetchPublishedPodcasts, 
   fetchAllPodcasts,
@@ -72,6 +72,8 @@ interface PodcastState {
   setUseSupabaseData: (useSupabase: boolean) => void;
   refreshPodcasts: () => Promise<void>;
 }
+
+const audioPlayerService = new AudioPlayerService();
 
 export const usePodcastStore = create<PodcastState>((set, get) => ({
   podcasts: [], // 初期状態は空配列、Supabaseから取得
