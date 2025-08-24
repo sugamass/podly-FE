@@ -104,6 +104,32 @@ export default function CreatePublishScreen() {
           style={{ flex: 1, padding: 20 }}
           showsVerticalScrollIndicator={false}
         >
+          {/* 戻るボタン */}
+          <TouchableOpacity
+            style={{
+              alignSelf: "flex-start",
+              paddingVertical: 8,
+              paddingHorizontal: 12,
+              marginBottom: 20,
+              backgroundColor: Colors.dark.card,
+              borderRadius: 8,
+              flexDirection: "row",
+              alignItems: "center",
+            }}
+            onPress={() => router.back()}
+          >
+            <Ionicons name="arrow-back" size={20} color={Colors.dark.text} />
+            <Text
+              style={{
+                marginLeft: 8,
+                color: Colors.dark.text,
+                fontSize: 16,
+              }}
+            >
+              戻る
+            </Text>
+          </TouchableOpacity>
+
           {/* ヘッダーセクション */}
           <View style={{ marginBottom: 32 }}>
             <Text
