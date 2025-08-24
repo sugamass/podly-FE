@@ -1,3 +1,7 @@
+import Colors from "@/constants/Colors";
+import { createPodcast } from "@/services/supabase";
+import { useAuthStore } from "@/store/authStore";
+import { AudioSection } from "@/types/audio";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
@@ -13,9 +17,6 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Colors from "@/constants/Colors";
-import { AudioSection, createPodcast } from "@/services/supabase";
-import { useAuthStore } from "@/store/authStore";
 
 export default function CreatePublishScreen() {
   const router = useRouter();
@@ -250,68 +251,29 @@ export default function CreatePublishScreen() {
               📋 配信内容確認
             </Text>
 
-            <View style={{ marginBottom: 12 }}>
-              <Text
-                style={{
-                  fontSize: 14,
-                  color: Colors.dark.subtext,
-                  marginBottom: 4,
-                }}
-              >
-                ボイス:
-              </Text>
-              <Text
-                style={{
-                  fontSize: 16,
-                  color: Colors.dark.text,
-                  fontWeight: "500",
-                }}
-              >
-                {selectedVoice || "未選択"}
-              </Text>
-            </View>
-
-            <View style={{ marginBottom: 12 }}>
-              <Text
-                style={{
-                  fontSize: 14,
-                  color: Colors.dark.subtext,
-                  marginBottom: 4,
-                }}
-              >
-                セクション数:
-              </Text>
-              <Text
-                style={{
-                  fontSize: 16,
-                  color: Colors.dark.text,
-                  fontWeight: "500",
-                }}
-              >
-                {audioSections.length}個
-              </Text>
-            </View>
-
-            <View>
-              <Text
-                style={{
-                  fontSize: 14,
-                  color: Colors.dark.subtext,
-                  marginBottom: 4,
-                }}
-              >
-                原稿文字数:
-              </Text>
-              <Text
-                style={{
-                  fontSize: 16,
-                  color: Colors.dark.text,
-                  fontWeight: "500",
-                }}
-              >
-                {script.length}文字
-              </Text>
-            </View>
+            {audioSections.length > 0 && audioSections[0]?.duration && (
+              <View style={{ marginBottom: 12 }}>
+                <Text
+                  style={{
+                    fontSize: 14,
+                    color: Colors.dark.subtext,
+                    marginBottom: 4,
+                  }}
+                >
+                  音声時間:
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 16,
+                    color: Colors.dark.text,
+                    fontWeight: "500",
+                  }}
+                >
+                  {Math.floor(audioSections[0].duration / 60)}分
+                  {Math.floor(audioSections[0].duration % 60)}秒
+                </Text>
+              </View>
+            )}
           </View>
 
           {/* 配信ボタン */}

@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createClient } from "@supabase/supabase-js";
 import "react-native-url-polyfill/auto";
+import { AudioSection } from "@/types/audio";
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.EXPO_PUBLIC_SUPABASE_KEY;
@@ -864,12 +865,6 @@ export async function getUserSavedPodcasts(userId?: string): Promise<string[]> {
 }
 
 // ポッドキャスト作成関数
-export type AudioSection = {
-  id: string;
-  text: string;
-  audioUrl?: string;
-};
-
 export type CreatePodcastData = {
   title: string;
   script: string;
@@ -896,6 +891,9 @@ export async function createPodcast(
       podcastData.audioSections.find((section) => section.audioUrl)?.audioUrl ||
       null;
 
+    // duration情報を取得（最初のセクションのdurationを使用）
+    const duration = podcastData.audioSections.find((section) => section.duration)?.duration || null;
+
     // データベース用のポッドキャストデータを準備
     const dbPodcastData = {
       id: generateUUIDLikeId(),
@@ -906,7 +904,7 @@ export async function createPodcast(
       voices: podcastData.selectedVoice ? [podcastData.selectedVoice] : null,
       creator_id: podcastData.creatorId,
       audio_url: audioUrl,
-      duration: null,
+      duration: duration,
       // 一時的にデフォルト画像を設定
       image_url:
         "https://images.unsplash.com/photo-1444653614773-995cb1ef9efa?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",

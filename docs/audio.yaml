@@ -100,6 +100,17 @@ components:
           type: string
           x-stoplight:
             id: sd1tr0mm5ft2d
+        bgmId:
+          type: string
+          x-stoplight:
+            id: bgm1id2345
+        model:
+          type: string
+          enum:
+            - gpt-4o-mini-tts
+            - tts-1
+          x-stoplight:
+            id: model123456
     AudioPreviewResponse:
       title: AudioPreviewResponse
       x-stoplight:
@@ -122,3 +133,8 @@ components:
           type: string
           x-stoplight:
             id: t00yeucyi0p7q
+        duration:
+          type: number
+          description: Audio file duration in seconds
+          x-stoplight:
+            id: duration123456

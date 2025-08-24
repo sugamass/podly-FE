@@ -9,6 +9,7 @@ interface AudioPreviewSectionProps {
   currentPlayingId: string | null;
   fullAudioUrl: string | null;
   onPlaySection: (sectionId: string) => void;
+  onStopAudio: () => void;
 }
 
 const AudioPreviewSection: React.FC<AudioPreviewSectionProps> = ({
@@ -17,6 +18,7 @@ const AudioPreviewSection: React.FC<AudioPreviewSectionProps> = ({
   currentPlayingId,
   fullAudioUrl,
   onPlaySection,
+  onStopAudio,
 }) => {
   if (!isAudioGenerated) {
     return null;
@@ -58,13 +60,19 @@ const AudioPreviewSection: React.FC<AudioPreviewSectionProps> = ({
           marginBottom: 12,
           opacity: !fullAudioUrl ? 0.5 : 1,
         }}
-        onPress={() => onPlaySection("full-podcast")}
+        onPress={() => {
+          if (isPlaying && currentPlayingId === "full-podcast") {
+            onStopAudio();
+          } else {
+            onPlaySection("full-podcast");
+          }
+        }}
         disabled={!fullAudioUrl}
       >
         <Ionicons
           name={
-            isPlaying && currentPlayingId === "full-podcast"
-              ? "pause"
+            currentPlayingId === "full-podcast"
+              ? "stop"
               : "play"
           }
           size={24}
@@ -78,7 +86,7 @@ const AudioPreviewSection: React.FC<AudioPreviewSectionProps> = ({
             fontWeight: "bold",
           }}
         >
-          {isPlaying && currentPlayingId === "full-podcast"
+          {currentPlayingId === "full-podcast"
             ? "停止"
             : "全体を再生"}
         </Text>

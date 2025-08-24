@@ -77,7 +77,7 @@ export default function CreateAudioScreen() {
     regenerateSection,
   } = useAudioGeneration();
 
-  const { currentPlayingId, isPlaying, playSection, clearPlayback } =
+  const { currentPlayingId, isPlaying, playSection, stopAudio, clearPlayback } =
     useAudioPlayer();
 
   const {
@@ -214,6 +214,7 @@ export default function CreateAudioScreen() {
             currentPlayingId={currentPlayingId}
             fullAudioUrl={fullAudioUrl}
             onPlaySection={handlePlaySection}
+            onStopAudio={stopAudio}
           />
 
           {/* アクションボタン */}

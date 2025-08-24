@@ -21,6 +21,7 @@ export interface AudioPreviewResponse {
   audioUrl?: string;
   separatedAudioUrls?: string[];
   scriptId?: string;
+  duration?: number;
 }
 
 // APIエラーレスポンス型

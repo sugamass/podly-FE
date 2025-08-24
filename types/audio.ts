@@ -19,4 +19,5 @@ export type AudioSection = {
   audioUrl?: string;
   isPlaying?: boolean;
   isRegenerating?: boolean;
+  duration?: number;
 };

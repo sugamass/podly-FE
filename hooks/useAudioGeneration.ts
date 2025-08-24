@@ -71,6 +71,7 @@ export const useAudioGeneration = () => {
         id: `section-${index}`,
         text: item.text,
         audioUrl: response.separatedAudioUrls?.[index],
+        duration: response.duration,
       }));
 
       setAudioSections(sections);
