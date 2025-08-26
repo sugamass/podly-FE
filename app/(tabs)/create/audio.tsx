@@ -178,6 +178,31 @@ export default function CreateAudioScreen() {
             </Text>
           </TouchableOpacity>
 
+          {/* ヘッダーセクション */}
+          <View style={{ marginBottom: 32 }}>
+            <Text
+              style={{
+                fontSize: 24,
+                fontWeight: "bold",
+                color: Colors.dark.text,
+                textAlign: "center",
+                marginBottom: 8,
+              }}
+            >
+              🎧️ 音声生成
+            </Text>
+            <Text
+              style={{
+                fontSize: 16,
+                color: Colors.dark.subtext,
+                textAlign: "center",
+                lineHeight: 22,
+              }}
+            >
+              音声をAIで自動生成します
+            </Text>
+          </View>
+
           {/* 話者ごとのボイス設定セクション */}
           <VoiceSelectionSection
             uniqueSpeakersList={uniqueSpeakersList}
@@ -219,6 +244,47 @@ export default function CreateAudioScreen() {
 
           {/* アクションボタン */}
           <View style={{ flexDirection: "row", gap: 12, marginBottom: 32 }}>
+            {/* 再生成ボタン */}
+            {isAudioGenerated && (
+              <TouchableOpacity
+                style={{
+                  flex: 1,
+                  borderRadius: 12,
+                  overflow: "hidden",
+                  opacity: isGenerating ? 0.5 : 1,
+                }}
+                onPress={handleRegenerateAudio}
+                disabled={isGenerating}
+              >
+                <LinearGradient
+                  colors={[Colors.dark.primary, Colors.dark.secondary]}
+                  style={{
+                    paddingVertical: 16,
+                    paddingHorizontal: 20,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Ionicons
+                    name="refresh"
+                    size={18}
+                    color={Colors.dark.text}
+                    style={{ marginRight: 8 }}
+                  />
+                  <Text
+                    style={{
+                      color: Colors.dark.text,
+                      fontSize: 16,
+                      fontWeight: "bold",
+                    }}
+                  >
+                    再生成
+                  </Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            )}
+
             {/* 配信設定ボタン */}
             <TouchableOpacity
               style={{
