@@ -5,7 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -40,11 +40,13 @@ export default function EditProfileScreen() {
       // バリデーション
       if (!formData.username.trim()) {
         Alert.alert("エラー", "ユーザー名を入力してください");
+        setLoading(false);
         return;
       }
 
       if (formData.username.length < 3) {
         Alert.alert("エラー", "ユーザー名は3文字以上で入力してください");
+        setLoading(false);
         return;
       }
 
@@ -55,10 +57,11 @@ export default function EditProfileScreen() {
           "エラー",
           "ユーザー名は英数字とアンダースコアのみ使用できます"
         );
+        setLoading(false);
         return;
       }
 
-      let finalAvatarUrl = avatarUri;
+      let finalAvatarUrl: string | null = null;
 
       // 新しい画像がある場合はアップロード
       if (newAvatarUri && user?.id) {
@@ -70,13 +73,34 @@ export default function EditProfileScreen() {
 
           // 新しい画像をアップロード
           finalAvatarUrl = await uploadAvatar(newAvatarUri, user.id);
-        } catch (uploadError) {
-          console.error("Image upload failed:", uploadError);
-          Alert.alert(
-            "警告",
-            "画像のアップロードに失敗しましたが、その他の情報は保存されます"
-          );
-          finalAvatarUrl = avatarUri; // 既存の画像URLを保持
+        } catch (uploadError: any) {
+          console.error("Image upload process failed:", uploadError);
+
+          // エラーの種類に応じて適切な処理を行う
+          if (uploadError.message?.includes("Storage upload failed")) {
+            // Supabase Storage の実際のエラー
+            Alert.alert(
+              "エラー",
+              "画像のアップロードに失敗しました。もう一度お試しください。"
+            );
+            setLoading(false);
+            return; // プロフィール更新を中止
+          } else if (uploadError.message?.includes("Network")) {
+            // ネットワークエラー
+            Alert.alert(
+              "エラー",
+              "ネットワークエラーが発生しました。接続を確認してもう一度お試しください。"
+            );
+            setLoading(false);
+            return; // プロフィール更新を中止
+          } else {
+            // その他のエラー（一般的にはファイル読み込みエラーなど）
+            Alert.alert(
+              "警告",
+              "画像のアップロードに問題が発生しましたが、その他の情報は保存されます"
+            );
+            finalAvatarUrl = avatarUri; // 既存の画像URLを保持
+          }
         }
       }
 

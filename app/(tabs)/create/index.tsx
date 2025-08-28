@@ -266,12 +266,6 @@ export default function CreateScreen() {
             setScriptHistory([]);
             setAdditionalInstruction("");
 
-            // リセット完了のフィードバック
-            Alert.alert(
-              "リセット完了",
-              "すべての内容がリセットされました。新しい原稿作成を開始できます。",
-              [{ text: "OK" }]
-            );
           },
         },
       ]
