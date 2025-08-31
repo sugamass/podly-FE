@@ -1,4 +1,5 @@
 import { supabase } from "@/services/supabase";
+import { getUserStatistics, type UserStatistics } from "@/services/database";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { Session, User } from "@supabase/supabase-js";
 import { create } from "zustand";
@@ -17,6 +18,7 @@ interface AuthState {
   user: User | null;
   session: Session | null;
   profile: Profile | null;
+  statistics: UserStatistics | null;
   loading: boolean;
   initialized: boolean;
   signIn: (email: string, password: string) => Promise<void>;
@@ -26,6 +28,7 @@ interface AuthState {
   initialize: () => Promise<void>;
   setLoading: (loading: boolean) => void;
   loadProfile: (userId: string) => Promise<void>;
+  loadUserStatistics: (userId: string) => Promise<void>;
   checkUsernameAvailability: (username: string) => Promise<boolean>;
   createUserProfile: (userId: string, username: string) => Promise<void>;
 }
@@ -34,6 +37,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   session: null,
   profile: null,
+  statistics: null,
   loading: true,
   initialized: false,
 
@@ -49,9 +53,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       if (error) throw error;
 
-      // プロフィール情報を取得
+      // プロフィール情報と統計情報を取得
       if (data.user) {
         await get().loadProfile(data.user.id);
+        await get().loadUserStatistics(data.user.id);
       }
     } catch (error) {
       console.error("Sign in error:", error);
@@ -93,10 +98,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           await get().createUserProfile(data.user.id, username.trim());
           console.log("プロフィールが正常に作成されました");
 
-          // プロフィール情報を読み込み
+          // プロフィール情報と統計情報を読み込み
           if (data.user.email_confirmed_at) {
-            // メール確認済みの場合はプロフィールも読み込む
+            // メール確認済みの場合はプロフィールと統計情報も読み込む
             await get().loadProfile(data.user.id);
+            await get().loadUserStatistics(data.user.id);
           }
         } catch (profileError) {
           console.error("Profile creation error:", profileError);
@@ -182,6 +188,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         user: null,
         session: null,
         profile: null,
+        statistics: null,
         loading: false,
       });
 
@@ -243,6 +250,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
+  loadUserStatistics: async (userId: string) => {
+    try {
+      const statistics = await getUserStatistics(userId);
+      set({ statistics });
+    } catch (error) {
+      console.error("Load user statistics error:", error);
+      set({ statistics: { podcasts: 0, followers: 0, following: 0 } });
+    }
+  },
+
   checkUsernameAvailability: async (username: string) => {
     try {
       const { data, error } = await supabase
@@ -286,9 +303,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           user: session?.user ?? null,
         });
 
-        // プロフィール情報を取得
+        // プロフィール情報と統計情報を取得
         if (session?.user) {
           await get().loadProfile(session.user.id);
+          await get().loadUserStatistics(session.user.id);
         }
       }
 
@@ -308,6 +326,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           (event === "SIGNED_IN" || event === "TOKEN_REFRESHED")
         ) {
           await get().loadProfile(session.user.id);
+          await get().loadUserStatistics(session.user.id);
 
           // プロフィールが存在しない場合、メタデータからユーザー名を取得して作成
           const currentProfile = get().profile;
@@ -318,15 +337,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                 session.user.user_metadata.username
               );
               await get().loadProfile(session.user.id);
+              await get().loadUserStatistics(session.user.id);
             } catch (profileError) {
               console.error("Auto profile creation failed:", profileError);
             }
           }
         }
 
-        // ログアウト時にプロフィールをクリア
+        // ログアウト時にプロフィールと統計情報をクリア
         if (event === "SIGNED_OUT") {
-          set({ profile: null });
+          set({ profile: null, statistics: null });
         }
       });
     } catch (error) {

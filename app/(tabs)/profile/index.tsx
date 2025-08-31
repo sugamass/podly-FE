@@ -36,7 +36,7 @@ export default function ProfileScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [showMenuModal, setShowMenuModal] = useState(false);
   const { user, profile, isAuthenticated, signOut } = useAuth();
-  const { initialize, loadProfile } = useAuthStore();
+  const { initialize, loadProfile, loadUserStatistics, statistics } = useAuthStore();
   const {
     podcasts: allPodcasts,
     savedPodcasts,
@@ -75,9 +75,10 @@ export default function ProfileScreen() {
   const refreshProfile = async () => {
     try {
       setRefreshing(true);
-      // プロフィール情報を最新状態にする
+      // プロフィール情報と統計情報を最新状態にする
       if (user?.id) {
         await loadProfile(user.id);
+        await loadUserStatistics(user.id);
       }
     } catch (error) {
       console.error("Profile refresh error:", error);
@@ -141,26 +142,24 @@ export default function ProfileScreen() {
             currentUser.username}
         </Text>
 
-        <Text style={styles.bio}>{profile?.bio || currentUser.bio}</Text>
-
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
             <Text style={styles.statValue}>
-              {formatNumber(currentUser.podcasts)}
+              {formatNumber(statistics?.podcasts || 0)}
             </Text>
             <Text style={styles.statLabel}>Podcasts</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
             <Text style={styles.statValue}>
-              {formatNumber(currentUser.followers)}
+              {formatNumber(statistics?.followers || 0)}
             </Text>
             <Text style={styles.statLabel}>Followers</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
             <Text style={styles.statValue}>
-              {formatNumber(currentUser.following)}
+              {formatNumber(statistics?.following || 0)}
             </Text>
             <Text style={styles.statLabel}>Following</Text>
           </View>
@@ -314,14 +313,7 @@ const styles = StyleSheet.create({
   username: {
     color: Colors.dark.subtext,
     fontSize: 14,
-    marginBottom: 10,
-  },
-  bio: {
-    color: Colors.dark.text,
-    textAlign: "center",
-    marginBottom: 15,
-    lineHeight: 18,
-    fontSize: 12,
+    marginBottom: 24,
   },
   statsContainer: {
     flexDirection: "row",
