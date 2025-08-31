@@ -1,4 +1,3 @@
-import Colors from "@/constants/Colors";
 import { useAuth } from "@/hooks/useAuth";
 import { deleteAvatar, uploadAvatar } from "@/utils/uploadImage";
 import { Ionicons } from "@expo/vector-icons";
@@ -14,7 +13,6 @@ import {
   Platform,
   SafeAreaView,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
@@ -210,55 +208,53 @@ export default function EditProfileScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView className="flex-1 bg-[#121620]">
       <KeyboardAvoidingView
-        style={styles.keyboardAvoidingView}
+        className="flex-1"
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <View style={styles.touchableContent}>
+          <View className="flex-1">
             {/* ヘッダー */}
-            <View style={styles.header}>
+            <View className="flex-row items-center justify-between px-4 py-3 border-b border-[#1E2430]">
               <TouchableOpacity
-                style={styles.headerButton}
+                className="p-2 min-w-[60px]"
                 onPress={() => router.back()}
               >
                 <Ionicons
                   name="arrow-back"
                   size={24}
-                  color={Colors.dark.text}
+                  color="#FFFFFF"
                 />
               </TouchableOpacity>
 
-              <Text style={styles.headerTitle}>プロフィール編集</Text>
+              <Text className="text-white text-lg font-semibold">プロフィール編集</Text>
 
               <TouchableOpacity
-                style={[
-                  styles.headerButton,
-                  styles.saveButton,
-                  loading && styles.saveButtonDisabled,
-                ]}
+                className={`p-2 min-w-[60px] rounded-xl px-4 py-2 ${
+                  loading ? 'bg-[#A0A7B5]' : 'bg-[#4F7CFF]'
+                }`}
                 onPress={handleSave}
                 disabled={loading}
               >
                 {loading ? (
-                  <ActivityIndicator size="small" color={Colors.dark.text} />
+                  <ActivityIndicator size="small" color="#FFFFFF" />
                 ) : (
-                  <Text style={styles.saveButtonText}>保存</Text>
+                  <Text className="text-white text-sm font-semibold text-center">保存</Text>
                 )}
               </TouchableOpacity>
             </View>
 
             <ScrollView
-              style={styles.scrollView}
+              className="flex-1"
               showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.scrollContent}
+              contentContainerStyle={{ paddingBottom: 50 }}
             >
               {/* アバター編集 */}
-              <View style={styles.avatarSection}>
+              <View className="items-center py-8 px-5">
                 <TouchableOpacity
                   onPress={showImagePicker}
-                  style={styles.avatarContainer}
+                  className="relative"
                 >
                   <Image
                     source={{
@@ -266,26 +262,32 @@ export default function EditProfileScreen() {
                         avatarUri ||
                         "https://via.placeholder.com/120x120?text=Avatar",
                     }}
-                    style={styles.avatar}
+                    style={{
+                      width: 120,
+                      height: 120,
+                      borderRadius: 60,
+                      borderWidth: 3,
+                      borderColor: '#4F7CFF',
+                    }}
                   />
-                  <View style={styles.avatarOverlay}>
+                  <View className="absolute bottom-0 right-0 w-9 h-9 rounded-full bg-[#4F7CFF] justify-center items-center border-3 border-[#121620]">
                     <Ionicons
                       name="camera"
                       size={24}
-                      color={Colors.dark.text}
+                      color="#FFFFFF"
                     />
                   </View>
                 </TouchableOpacity>
-                <Text style={styles.avatarHint}>タップして写真を変更</Text>
+                <Text className="text-[#A0A7B5] text-sm mt-3">タップして写真を変更</Text>
               </View>
 
               {/* フォーム */}
-              <View style={styles.formSection}>
+              <View className="px-5">
                 {/* ユーザー名 */}
-                <View style={styles.inputGroup}>
-                  <Text style={styles.label}>ユーザー名 *</Text>
+                <View className="mb-6">
+                  <Text className="text-white text-base font-semibold mb-2">ユーザー名 *</Text>
                   <TextInput
-                    style={styles.input}
+                    className="bg-[#1E2430] rounded-xl px-4 py-4 text-white text-base border border-[#1E2430]"
                     value={formData.username}
                     onChangeText={(text) =>
                       setFormData((prev) => ({
@@ -294,48 +296,48 @@ export default function EditProfileScreen() {
                       }))
                     }
                     placeholder="ユーザー名を入力"
-                    placeholderTextColor={Colors.dark.inactive}
+                    placeholderTextColor="#A0A7B5"
                     autoCapitalize="none"
                     autoCorrect={false}
                     maxLength={30}
                   />
-                  <Text style={styles.hint}>
+                  <Text className="text-[#A0A7B5] text-xs mt-1">
                     英数字とアンダースコアのみ使用可能（3文字以上）
                   </Text>
                 </View>
 
                 {/* 表示名 */}
-                <View style={styles.inputGroup}>
-                  <Text style={styles.label}>表示名</Text>
+                <View className="mb-6">
+                  <Text className="text-white text-base font-semibold mb-2">表示名</Text>
                   <TextInput
-                    style={styles.input}
+                    className="bg-[#1E2430] rounded-xl px-4 py-4 text-white text-base border border-[#1E2430]"
                     value={formData.fullName}
                     onChangeText={(text) =>
                       setFormData((prev) => ({ ...prev, fullName: text }))
                     }
                     placeholder="表示名を入力"
-                    placeholderTextColor={Colors.dark.inactive}
+                    placeholderTextColor="#A0A7B5"
                     maxLength={50}
                   />
                 </View>
 
                 {/* 自己紹介 */}
-                <View style={styles.inputGroup}>
-                  <Text style={styles.label}>自己紹介</Text>
+                <View className="mb-6">
+                  <Text className="text-white text-base font-semibold mb-2">自己紹介</Text>
                   <TextInput
-                    style={[styles.input, styles.bioInput]}
+                    className="bg-[#1E2430] rounded-xl px-4 py-4 text-white text-base border border-[#1E2430] h-24 pt-4"
                     value={formData.bio}
                     onChangeText={(text) =>
                       setFormData((prev) => ({ ...prev, bio: text }))
                     }
                     placeholder="自己紹介を入力"
-                    placeholderTextColor={Colors.dark.inactive}
+                    placeholderTextColor="#A0A7B5"
                     multiline
                     numberOfLines={4}
                     maxLength={200}
                     textAlignVertical="top"
                   />
-                  <Text style={styles.charCount}>
+                  <Text className="text-[#A0A7B5] text-xs text-right mt-1">
                     {formData.bio.length}/200
                   </Text>
                 </View>
@@ -348,124 +350,3 @@ export default function EditProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.dark.background,
-  },
-  keyboardAvoidingView: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.dark.border,
-  },
-  headerButton: {
-    padding: 8,
-    minWidth: 60,
-  },
-  headerTitle: {
-    color: Colors.dark.text,
-    fontSize: 18,
-    fontWeight: "600",
-  },
-  saveButton: {
-    backgroundColor: Colors.dark.primary,
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  saveButtonDisabled: {
-    backgroundColor: Colors.dark.inactive,
-  },
-  saveButtonText: {
-    color: Colors.dark.text,
-    fontSize: 14,
-    fontWeight: "600",
-    textAlign: "center",
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: 50,
-  },
-  avatarSection: {
-    alignItems: "center",
-    paddingVertical: 32,
-    paddingHorizontal: 20,
-  },
-  avatarContainer: {
-    position: "relative",
-  },
-  avatar: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    borderWidth: 3,
-    borderColor: Colors.dark.primary,
-  },
-  avatarOverlay: {
-    position: "absolute",
-    bottom: 0,
-    right: 0,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: Colors.dark.primary,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 3,
-    borderColor: Colors.dark.background,
-  },
-  avatarHint: {
-    color: Colors.dark.subtext,
-    fontSize: 14,
-    marginTop: 12,
-  },
-  formSection: {
-    paddingHorizontal: 20,
-  },
-  inputGroup: {
-    marginBottom: 24,
-  },
-  label: {
-    color: Colors.dark.text,
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 8,
-  },
-  input: {
-    backgroundColor: Colors.dark.card,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    color: Colors.dark.text,
-    fontSize: 16,
-    borderWidth: 1,
-    borderColor: Colors.dark.border,
-  },
-  bioInput: {
-    height: 100,
-    paddingTop: 14,
-  },
-  hint: {
-    color: Colors.dark.inactive,
-    fontSize: 12,
-    marginTop: 4,
-  },
-  charCount: {
-    color: Colors.dark.inactive,
-    fontSize: 12,
-    textAlign: "right",
-    marginTop: 4,
-  },
-  touchableContent: {
-    flex: 1,
-  },
-});

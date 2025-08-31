@@ -1,5 +1,4 @@
 import { ProfileMenuModal } from "@/components/ProfileMenuModal";
-import Colors from "@/constants/Colors";
 import { useAuth } from "@/hooks/useAuth";
 import { podcasts } from "@/mocks/podcasts";
 import { currentUser } from "@/mocks/users";
@@ -15,7 +14,6 @@ import {
   FlatList,
   RefreshControl,
   SafeAreaView,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -93,15 +91,22 @@ export default function ProfileScreen() {
 
   const renderPodcastItem = ({ item }: any) => {
     return (
-      <TouchableOpacity style={styles.podcastCard}>
-        <Image source={{ uri: item.imageUrl }} style={styles.podcastImage} />
-        <View style={styles.podcastInfo}>
-          <Text style={styles.podcastTitle} numberOfLines={2}>
+      <TouchableOpacity 
+        className="m-3 rounded-xl bg-[#1E2430] overflow-hidden"
+        style={{ width: THUMBNAIL_SIZE }}
+      >
+        <Image 
+          source={{ uri: item.imageUrl }} 
+          className="w-full"
+          style={{ height: THUMBNAIL_SIZE }}
+        />
+        <View className="p-3">
+          <Text className="text-white text-sm font-bold mb-1" numberOfLines={2}>
             {item.title}
           </Text>
-          <View style={styles.podcastStats}>
-            <Text style={styles.podcastDuration}>{item.duration}</Text>
-            <Text style={styles.podcastLikes}>
+          <View className="flex-row justify-between">
+            <Text className="text-[#A0A7B5] text-xs">{item.duration}</Text>
+            <Text className="text-[#A0A7B5] text-xs">
               {formatNumber(item.likes)} likes
             </Text>
           </View>
@@ -113,87 +118,94 @@ export default function ProfileScreen() {
   // アプリレベルで認証チェックしているため、この画面では認証済みユーザーのみが表示される
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.headerSpacer} />
+    <SafeAreaView className="flex-1 bg-[#121620]">
+      <View className="flex-row items-center justify-between px-5 pt-2 pb-2">
+        <View className="w-6" />
         <TouchableOpacity
-          style={styles.menuButton}
+          className="p-2 rounded-lg"
           onPress={() => setShowMenuModal(true)}
         >
-          <Ionicons name="menu" size={24} color={Colors.dark.text} />
+          <Ionicons name="menu" size={24} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
 
-      <View style={styles.profileSection}>
+      <View className="items-center px-5 mb-4">
         <Image
           source={{ uri: profile?.avatar_url || currentUser.avatar }}
-          style={styles.avatar}
+          style={{
+            width: 80,
+            height: 80,
+            borderRadius: 40,
+            marginBottom: 12,
+            borderWidth: 2,
+            borderColor: '#4F7CFF',
+          }}
+          onError={(error) => {
+            console.error('Avatar image loading error:', error);
+          }}
         />
-        <Text style={styles.name}>
+        <Text className="text-white text-xl font-bold">
           {profile?.display_name ||
             profile?.username ||
             user?.email ||
             currentUser.fullName}
         </Text>
-        <Text style={styles.username}>
+        <Text className="text-[#A0A7B5] text-sm mb-6">
           @
           {profile?.username ||
             user?.email?.split("@")[0] ||
             currentUser.username}
         </Text>
 
-        <View style={styles.statsContainer}>
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>
+        <View className="flex-row justify-around w-full mb-4">
+          <View className="items-center">
+            <Text className="text-white text-base font-bold">
               {formatNumber(statistics?.podcasts || 0)}
             </Text>
-            <Text style={styles.statLabel}>Podcasts</Text>
+            <Text className="text-[#A0A7B5] text-xs">Podcasts</Text>
           </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>
+          <View className="w-px h-6 bg-[#1E2430]" />
+          <View className="items-center">
+            <Text className="text-white text-base font-bold">
               {formatNumber(statistics?.followers || 0)}
             </Text>
-            <Text style={styles.statLabel}>Followers</Text>
+            <Text className="text-[#A0A7B5] text-xs">Followers</Text>
           </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>
+          <View className="w-px h-6 bg-[#1E2430]" />
+          <View className="items-center">
+            <Text className="text-white text-base font-bold">
               {formatNumber(statistics?.following || 0)}
             </Text>
-            <Text style={styles.statLabel}>Following</Text>
+            <Text className="text-[#A0A7B5] text-xs">Following</Text>
           </View>
         </View>
 
-        <TouchableOpacity style={styles.editButton} onPress={handleEditProfile}>
-          <Text style={styles.editButtonText}>プロフィールを編集</Text>
+        <TouchableOpacity 
+          className="border border-[#4F7CFF] py-2 px-6 rounded-full"
+          onPress={handleEditProfile}
+        >
+          <Text className="text-[#4F7CFF] font-bold">プロフィールを編集</Text>
         </TouchableOpacity>
       </View>
 
-      <View style={styles.tabsContainer}>
+      <View className="flex-row border-b border-[#1E2430]">
         {tabs.map((tab) => (
           <TouchableOpacity
             key={tab.id}
-            style={[
-              styles.tabButton,
-              activeTab === tab.id && styles.activeTabButton,
-            ]}
+            className={`flex-1 items-center py-3 ${
+              activeTab === tab.id ? 'border-b-2 border-[#4F7CFF]' : ''
+            }`}
             onPress={() => setActiveTab(tab.id)}
           >
             <Ionicons
               name={tab.icon as any}
               size={20}
-              color={
-                activeTab === tab.id
-                  ? Colors.dark.primary
-                  : Colors.dark.inactive
-              }
+              color={activeTab === tab.id ? '#4F7CFF' : '#A0A7B5'}
             />
             <Text
-              style={[
-                styles.tabLabel,
-                activeTab === tab.id && styles.activeTabLabel,
-              ]}
+              className={`mt-1 text-xs ${
+                activeTab === tab.id ? 'text-[#4F7CFF]' : 'text-[#A0A7B5]'
+              }`}
             >
               {tab.label}
             </Text>
@@ -201,7 +213,7 @@ export default function ProfileScreen() {
         ))}
       </View>
 
-      <View style={styles.contentContainer}>
+      <View className="flex-1">
         {activeTab === "podcasts" ||
         activeTab === "saved" ||
         activeTab === "liked" ? (
@@ -212,18 +224,18 @@ export default function ProfileScreen() {
               keyExtractor={(item) => item.id}
               numColumns={2}
               showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.podcastGrid}
+              contentContainerStyle={{ padding: 8 }}
               refreshControl={
                 <RefreshControl
                   refreshing={refreshing}
                   onRefresh={refreshProfile}
-                  tintColor={Colors.dark.primary}
-                  colors={[Colors.dark.primary]}
+                  tintColor="#4F7CFF"
+                  colors={["#4F7CFF"]}
                 />
               }
             />
           ) : (
-            <View style={styles.emptyContainer}>
+            <View className="flex-1 justify-center items-center p-5">
               <Ionicons
                 name={
                   activeTab === "podcasts"
@@ -233,32 +245,32 @@ export default function ProfileScreen() {
                     : "heart"
                 }
                 size={50}
-                color={Colors.dark.inactive}
+                color="#A0A7B5"
               />
-              <Text style={styles.emptyText}>
+              <Text className="text-[#A0A7B5] mt-3 mb-5 text-center">
                 {activeTab === "podcasts"
                   ? "You haven't created any podcasts yet"
                   : activeTab === "saved"
                   ? "No saved podcasts yet"
                   : "No liked podcasts yet"}
               </Text>
-              <TouchableOpacity style={styles.browseButton}>
-                <Text style={styles.browseButtonText}>Browse Podcasts</Text>
+              <TouchableOpacity className="bg-[#4F7CFF] py-3 px-5 rounded-full">
+                <Text className="text-white font-bold">Browse Podcasts</Text>
               </TouchableOpacity>
             </View>
           )
         ) : activeTab === "history" ? (
-          <View style={styles.emptyContainer}>
-            <Ionicons name="time" size={50} color={Colors.dark.inactive} />
-            <Text style={styles.emptyText}>
+          <View className="flex-1 justify-center items-center p-5">
+            <Ionicons name="time" size={50} color="#A0A7B5" />
+            <Text className="text-[#A0A7B5] mt-3 text-center">
               Your listening history will appear here
             </Text>
           </View>
         ) : (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No {activeTab} content yet</Text>
-            <TouchableOpacity style={styles.browseButton}>
-              <Text style={styles.browseButtonText}>Browse Podcasts</Text>
+          <View className="flex-1 justify-center items-center p-5">
+            <Text className="text-[#A0A7B5] mb-5 text-center">No {activeTab} content yet</Text>
+            <TouchableOpacity className="bg-[#4F7CFF] py-3 px-5 rounded-full">
+              <Text className="text-white font-bold">Browse Podcasts</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -272,163 +284,3 @@ export default function ProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.dark.background,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 8,
-  },
-  headerSpacer: {
-    width: 24, // メニューボタンと同じ幅でバランスを取る
-  },
-  menuButton: {
-    padding: 8,
-    borderRadius: 8,
-  },
-  profileSection: {
-    alignItems: "center",
-    paddingHorizontal: 20,
-    marginBottom: 15,
-  },
-  avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    marginBottom: 10,
-    borderWidth: 2,
-    borderColor: Colors.dark.primary,
-  },
-  name: {
-    color: Colors.dark.text,
-    fontSize: 20,
-    fontWeight: "bold",
-  },
-  username: {
-    color: Colors.dark.subtext,
-    fontSize: 14,
-    marginBottom: 24,
-  },
-  statsContainer: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    width: "100%",
-    marginBottom: 15,
-  },
-  statItem: {
-    alignItems: "center",
-  },
-  statValue: {
-    color: Colors.dark.text,
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  statLabel: {
-    color: Colors.dark.subtext,
-    fontSize: 12,
-  },
-  statDivider: {
-    width: 1,
-    height: 25,
-    backgroundColor: Colors.dark.border,
-  },
-  editButton: {
-    borderWidth: 1,
-    borderColor: Colors.dark.primary,
-    paddingVertical: 6,
-    paddingHorizontal: 25,
-    borderRadius: 20,
-  },
-  editButtonText: {
-    color: Colors.dark.primary,
-    fontWeight: "bold",
-  },
-  tabsContainer: {
-    flexDirection: "row",
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.dark.border,
-  },
-  tabButton: {
-    flex: 1,
-    alignItems: "center",
-    paddingVertical: 12,
-  },
-  activeTabButton: {
-    borderBottomWidth: 2,
-    borderBottomColor: Colors.dark.primary,
-  },
-  tabLabel: {
-    color: Colors.dark.inactive,
-    marginTop: 4,
-    fontSize: 12,
-  },
-  activeTabLabel: {
-    color: Colors.dark.primary,
-  },
-  contentContainer: {
-    flex: 1,
-  },
-  podcastGrid: {
-    padding: 10,
-  },
-  podcastCard: {
-    width: THUMBNAIL_SIZE,
-    margin: 10,
-    borderRadius: 12,
-    backgroundColor: Colors.dark.card,
-    overflow: "hidden",
-  },
-  podcastImage: {
-    width: "100%",
-    height: THUMBNAIL_SIZE,
-  },
-  podcastInfo: {
-    padding: 10,
-  },
-  podcastTitle: {
-    color: Colors.dark.text,
-    fontSize: 14,
-    fontWeight: "bold",
-    marginBottom: 5,
-  },
-  podcastStats: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  podcastDuration: {
-    color: Colors.dark.subtext,
-    fontSize: 12,
-  },
-  podcastLikes: {
-    color: Colors.dark.subtext,
-    fontSize: 12,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-  emptyText: {
-    color: Colors.dark.subtext,
-    marginTop: 10,
-    marginBottom: 20,
-    textAlign: "center",
-  },
-  browseButton: {
-    backgroundColor: Colors.dark.primary,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-  },
-  browseButtonText: {
-    color: Colors.dark.text,
-    fontWeight: "bold",
-  },
-});
