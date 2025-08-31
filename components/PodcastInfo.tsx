@@ -1,7 +1,6 @@
 import Colors from "@/constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
-import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 interface PodcastInfoProps {
@@ -53,9 +52,7 @@ export default function PodcastInfo({
         </View>
       </View>
 
-      <Text style={styles.description} numberOfLines={2}>
-        {description}
-      </Text>
+      <Text style={styles.description}>{description}</Text>
 
       <View style={styles.tagsContainer}>
         <View style={styles.categoryBadge}>
@@ -84,13 +81,12 @@ export default function PodcastInfo({
 const styles = StyleSheet.create({
   container: {
     position: "absolute",
-    bottom: 120,
-    left: 0,
+    bottom: 8,
+    left: 8,
     right: 64,
     padding: 20,
     backgroundColor: "rgba(18, 22, 32, 0.8)",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderRadius: 20,
   },
   title: {
     color: Colors.dark.text,
