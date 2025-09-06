@@ -62,7 +62,8 @@ class ReactNativeDelegate: ExpoReactNativeFactoryDelegate {
 
   override func bundleURL() -> URL? {
 #if DEBUG
-    return RCTBundleURLProvider.sharedSettings().jsBundleURL(forBundleRoot: "index")
+    // return RCTBundleURLProvider.sharedSettings().jsBundleURL(forBundleRoot: "index")
+    return [NSURL URLWithString:@"http://127.0.0.1:8081/index.bundle?platform=ios&dev=true"];
 #else
     return Bundle.main.url(forResource: "main", withExtension: "jsbundle")
 #endif
