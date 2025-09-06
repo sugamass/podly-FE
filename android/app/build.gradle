@@ -87,9 +87,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.anonymous.tiktokstyleappgdysvax'
+    namespace 'com.podly.mobile'
     defaultConfig {
-        applicationId 'com.anonymous.tiktokstyleappgdysvax'
+        applicationId 'com.podly.mobile'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

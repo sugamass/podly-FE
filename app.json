@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "TikTok Style App",
-    "slug": "tiktok-style-app-gdysvax",
+    "name": "Podly",
+    "slug": "podly",
     "version": "1.0.0",
     "orientation": "portrait",
     "scheme": "myapp",
@@ -9,10 +9,10 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.tiktokstyleappgdysvax"
+      "bundleIdentifier": "com.podly.mobile"
     },
     "android": {
-      "package": "com.anonymous.tiktokstyleappgdysvax"
+      "package": "com.podly.mobile"
     },
     "web": {
       "favicon": "./assets/images/favicon.png"

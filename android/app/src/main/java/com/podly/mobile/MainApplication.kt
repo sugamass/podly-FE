@@ -1,4 +1,4 @@
-package com.anonymous.tiktokstyleappgdysvax
+package com.podly.mobile
 
 import android.app.Application
 import android.content.res.Configuration

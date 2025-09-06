@@ -17,7 +17,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		078F40BFF2EB2C4943BE3A02 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = TikTokStyleApp/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		078F40BFF2EB2C4943BE3A02 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = TikTokStyleApp/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		126F5D5AEA7D847DAC78B5AF /* Pods-TikTokStyleApp.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-TikTokStyleApp.release.xcconfig"; path = "Target Support Files/Pods-TikTokStyleApp/Pods-TikTokStyleApp.release.xcconfig"; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* TikTokStyleApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TikTokStyleApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = TikTokStyleApp/Images.xcassets; sourceTree = "<group>"; };
@@ -81,7 +81,6 @@
 				8B4378393A8D738A61A4584E /* Pods-TikTokStyleApp.debug.xcconfig */,
 				126F5D5AEA7D847DAC78B5AF /* Pods-TikTokStyleApp.release.xcconfig */,
 			);
-			name = Pods;
 			path = Pods;
 			sourceTree = "<group>";
 		};
@@ -340,6 +339,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = TikTokStyleApp/TikTokStyleApp.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 242W4FR6DP;
 				ENABLE_BITCODE = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
@@ -358,8 +358,8 @@
 					"-lc++",
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
-				PRODUCT_BUNDLE_IDENTIFIER = com.anonymous.tiktokstyleappgdysvax;
-				PRODUCT_NAME = TikTokStyleApp;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.podly.mobile";
+				PRODUCT_NAME = "Podly";
 				SWIFT_OBJC_BRIDGING_HEADER = "TikTokStyleApp/TikTokStyleApp-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -376,6 +376,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = TikTokStyleApp/TikTokStyleApp.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 242W4FR6DP;
 				INFOPLIST_FILE = TikTokStyleApp/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -389,8 +390,8 @@
 					"-lc++",
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
-				PRODUCT_BUNDLE_IDENTIFIER = com.anonymous.tiktokstyleappgdysvax;
-				PRODUCT_NAME = TikTokStyleApp;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.podly.mobile";
+				PRODUCT_NAME = "Podly";
 				SWIFT_OBJC_BRIDGING_HEADER = "TikTokStyleApp/TikTokStyleApp-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";

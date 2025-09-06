@@ -1,4 +1,4 @@
-package com.anonymous.tiktokstyleappgdysvax
+package com.podly.mobile
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build
