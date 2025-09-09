@@ -1,5 +1,5 @@
 import Colors from "@/constants/Colors";
-import { currentUser } from "@/mocks/users";
+import { useAuth } from "@/hooks/useAuth";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import React, { useState } from "react";
@@ -105,6 +105,7 @@ export default function CommentModal({
   onClose,
   podcastId,
 }: CommentModalProps) {
+  const { user, profile } = useAuth();
   const [comments, setComments] = useState<Comment[]>(mockComments);
   const [newComment, setNewComment] = useState("");
   const [likedComments, setLikedComments] = useState<Set<string>>(new Set());
@@ -124,8 +125,8 @@ export default function CommentModal({
       // リプライを追加
       const reply: Reply = {
         id: Date.now().toString(),
-        username: currentUser.username,
-        avatar: currentUser.avatar,
+        username: profile?.username || user?.email?.split('@')[0] || 'guest',
+        avatar: profile?.avatar_url || '',
         text: newComment,
         likes: 0,
         timestamp: "Just now",
@@ -154,8 +155,8 @@ export default function CommentModal({
       // 新しいコメントを追加
       const comment: Comment = {
         id: Date.now().toString(),
-        username: currentUser.username,
-        avatar: currentUser.avatar,
+        username: profile?.username || user?.email?.split('@')[0] || 'guest',
+        avatar: profile?.avatar_url || '',
         text: newComment,
         likes: 0,
         timestamp: "Just now",
@@ -403,7 +404,11 @@ export default function CommentModal({
         )}
         <View style={styles.inputRow}>
           <Image
-            source={{ uri: currentUser.avatar }}
+            source={
+              profile?.avatar_url 
+                ? { uri: profile.avatar_url }
+                : require('@/assets/images/defaultAvatar.png')
+            }
             style={styles.inputAvatar}
           />
           <TextInput

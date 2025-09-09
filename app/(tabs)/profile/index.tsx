@@ -1,7 +1,5 @@
 import { ProfileMenuModal } from "@/components/ProfileMenuModal";
 import { useAuth } from "@/hooks/useAuth";
-import { podcasts } from "@/mocks/podcasts";
-import { currentUser } from "@/mocks/users";
 import { useAuthStore } from "@/store/authStore";
 import { usePodcastStore } from "@/store/podcastStore";
 import { formatNumber } from "@/utils/formatNumber";
@@ -33,8 +31,8 @@ export default function ProfileScreen() {
   const [activeTab, setActiveTab] = useState("podcasts");
   const [refreshing, setRefreshing] = useState(false);
   const [showMenuModal, setShowMenuModal] = useState(false);
-  const { user, profile, isAuthenticated, signOut } = useAuth();
-  const { initialize, loadProfile, loadUserStatistics, statistics } = useAuthStore();
+  const { user, profile } = useAuth();
+  const { loadProfile, loadUserStatistics, statistics } = useAuthStore();
   const {
     podcasts: allPodcasts,
     savedPodcasts,
@@ -45,7 +43,9 @@ export default function ProfileScreen() {
   const getDisplayPodcasts = () => {
     switch (activeTab) {
       case "podcasts":
-        return podcasts.slice(0, 4); // モックデータを使用（マイポッドキャスト）
+        return allPodcasts
+          .filter((podcast) => podcast.host.id === user?.id)
+          .slice(0, 4);
       case "saved":
         return allPodcasts
           .filter((podcast) => savedPodcasts.has(podcast.id))
@@ -134,9 +134,7 @@ export default function ProfileScreen() {
           source={
             profile?.avatar_url 
               ? { uri: profile.avatar_url }
-              : currentUser.avatar 
-                ? { uri: currentUser.avatar }
-                : require('@/assets/images/defaultAvatar.png')
+              : require('@/assets/images/defaultAvatar.png')
           }
           style={{
             width: 80,
@@ -154,13 +152,13 @@ export default function ProfileScreen() {
           {profile?.display_name ||
             profile?.username ||
             user?.email ||
-            currentUser.fullName}
+            "ゲストユーザー"}
         </Text>
         <Text className="text-[#A0A7B5] text-sm mb-6">
           @
           {profile?.username ||
             user?.email?.split("@")[0] ||
-            currentUser.username}
+            "guest"}
         </Text>
 
         <View className="flex-row justify-around w-full mb-4">
