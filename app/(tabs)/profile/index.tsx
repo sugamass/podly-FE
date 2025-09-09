@@ -131,7 +131,13 @@ export default function ProfileScreen() {
 
       <View className="items-center px-5 mb-4">
         <Image
-          source={{ uri: profile?.avatar_url || currentUser.avatar }}
+          source={
+            profile?.avatar_url 
+              ? { uri: profile.avatar_url }
+              : currentUser.avatar 
+                ? { uri: currentUser.avatar }
+                : require('@/assets/images/defaultAvatar.png')
+          }
           style={{
             width: 80,
             height: 80,
