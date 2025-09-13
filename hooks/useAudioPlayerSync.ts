@@ -13,7 +13,7 @@ export const useAudioPlayerSync = () => {
   const audioPlayerService = new AudioPlayerService();
   const { 
     setIsPlaying,
-    tryAutoResumeOnTabFocus 
+    restartCurrentPodcastFromBeginning 
   } = usePodcastStore();
 
   // AudioPlayerServiceの状態同期を設定
@@ -29,8 +29,8 @@ export const useAudioPlayerSync = () => {
   useFocusEffect(
     React.useCallback(() => {
       // ホームタブにフォーカスした時の処理
-      logger.debug('Home tab focused - attempting auto resume');
-      tryAutoResumeOnTabFocus();
+      logger.debug('Home tab focused - restarting current podcast from beginning');
+      restartCurrentPodcastFromBeginning();
       
       return () => {
         // ホームタブからフォーカスが外れた時の処理
@@ -39,6 +39,6 @@ export const useAudioPlayerSync = () => {
           logger.error('音声停止エラー', error);
         });
       };
-    }, [tryAutoResumeOnTabFocus])
+    }, [restartCurrentPodcastFromBeginning])
   );
 };
