@@ -10,7 +10,6 @@ import {
   TouchableOpacity,
   View,
   ViewStyle,
-  Text,
 } from "react-native";
 
 interface AudioPlayerProps {
@@ -23,7 +22,8 @@ interface AudioPlayerProps {
 const { width } = Dimensions.get("window");
 
 // デフォルト画像URL
-const DEFAULT_IMAGE_URL = "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80";
+const DEFAULT_IMAGE_URL =
+  "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80";
 
 export default function AudioPlayer({
   podcastId,
@@ -31,7 +31,12 @@ export default function AudioPlayer({
   isActive,
   style,
 }: AudioPlayerProps) {
-  const { isPlaying, togglePlayPause, currentPlayingPodcastId, manuallyPaused } = usePodcastStore();
+  const {
+    isPlaying,
+    togglePlayPause,
+    currentPlayingPodcastId,
+    manuallyPaused,
+  } = usePodcastStore();
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [showPauseIcon, setShowPauseIcon] = useState(false);
@@ -42,14 +47,14 @@ export default function AudioPlayer({
   };
 
   const isCurrentPodcast = currentPlayingPodcastId === podcastId;
-  
+
   // 画像URLが存在しない場合はデフォルト画像を使用
   const displayImageUrl = imageUrl || DEFAULT_IMAGE_URL;
 
   // 一時停止アイコンの表示制御（安定化）
   React.useEffect(() => {
     let timeoutId: ReturnType<typeof setTimeout>;
-    
+
     // 現在のポッドキャストで、アクティブで、再生中でない場合のみ表示
     if (isCurrentPodcast && isActive && !isPlaying) {
       // 手動で一時停止した場合は即座に表示、それ以外は少し遅延
@@ -70,7 +75,7 @@ export default function AudioPlayer({
 
   // デバッグ情報をログ出力
   React.useEffect(() => {
-    console.log('AudioPlayer Debug:', {
+    console.log("AudioPlayer Debug:", {
       podcastId,
       originalImageUrl: imageUrl,
       displayImageUrl,
@@ -80,9 +85,20 @@ export default function AudioPlayer({
       isCurrentPodcast,
       isPlaying,
       manuallyPaused,
-      showPauseIcon
+      showPauseIcon,
     });
-  }, [podcastId, imageUrl, displayImageUrl, isActive, imageError, imageLoaded, isCurrentPodcast, isPlaying, manuallyPaused, showPauseIcon]);
+  }, [
+    podcastId,
+    imageUrl,
+    displayImageUrl,
+    isActive,
+    imageError,
+    imageLoaded,
+    isCurrentPodcast,
+    isPlaying,
+    manuallyPaused,
+    showPauseIcon,
+  ]);
 
   return (
     <TouchableOpacity
@@ -98,28 +114,13 @@ export default function AudioPlayer({
         placeholder="https://via.placeholder.com/400x400/1a1a2e/ffffff?text=Loading"
         onLoad={() => setImageLoaded(true)}
         onError={(error) => {
-          console.error('Image load error:', error);
+          console.error("Image load error:", error);
           setImageError(true);
         }}
       />
 
       {/* Dark Overlay for better contrast */}
       <View style={styles.overlay} />
-
-      {/* デバッグ情報表示（開発時のみ） */}
-      {!imageLoaded && !imageError && (
-        <View style={styles.debugContainer}>
-          <Text style={styles.debugText}>画像読み込み中...</Text>
-          <Text style={styles.debugText}>URL: {displayImageUrl}</Text>
-        </View>
-      )}
-
-      {imageError && (
-        <View style={styles.debugContainer}>
-          <Text style={styles.debugText}>画像読み込みエラー</Text>
-          <Text style={styles.debugText}>URL: {displayImageUrl}</Text>
-        </View>
-      )}
 
       {/* Pause Icon - Show when paused */}
       {showPauseIcon && (
