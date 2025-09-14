@@ -1,6 +1,6 @@
 import { AuthService, type Profile } from "@/services/authService";
-import { supabase } from "@/services/supabase";
 import { type UserStatistics } from "@/services/database";
+import { supabase } from "@/services/supabase";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { Session, User } from "@supabase/supabase-js";
 import { create } from "zustand";
@@ -84,7 +84,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           if (data.user.email_confirmed_at) {
             // メール確認済みの場合はプロフィールと統計情報も読み込む
             const profile = await AuthService.loadProfile(data.user.id);
-            const statistics = await AuthService.loadUserStatistics(data.user.id);
+            const statistics = await AuthService.loadUserStatistics(
+              data.user.id
+            );
             set({ profile, statistics });
           }
         } catch (profileError) {
@@ -102,7 +104,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ loading: false });
     }
   },
-
 
   signOut: async () => {
     try {
@@ -156,9 +157,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-
-
-
   initialize: async () => {
     try {
       set({ loading: true });
@@ -171,6 +169,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       if (error) {
         console.error("Get session error:", error);
+        throw error;
       } else {
         set({
           session,
@@ -181,11 +180,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         if (session?.user) {
           try {
             const profile = await AuthService.loadProfile(session.user.id);
-            const statistics = await AuthService.loadUserStatistics(session.user.id);
+            const statistics = await AuthService.loadUserStatistics(
+              session.user.id
+            );
             set({ profile, statistics });
           } catch (error) {
             console.error("Failed to load profile or statistics:", error);
-            set({ profile: null, statistics: { podcasts: 0, followers: 0, following: 0 } });
+            set({
+              profile: null,
+              statistics: { podcasts: 0, followers: 0, following: 0 },
+            });
           }
         }
       }
@@ -207,7 +211,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         ) {
           try {
             const profile = await AuthService.loadProfile(session.user.id);
-            const statistics = await AuthService.loadUserStatistics(session.user.id);
+            const statistics = await AuthService.loadUserStatistics(
+              session.user.id
+            );
             set({ profile, statistics });
 
             // プロフィールが存在しない場合、メタデータからユーザー名を取得して作成
@@ -217,16 +223,26 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                   session.user.id,
                   session.user.user_metadata.username
                 );
-                const newProfile = await AuthService.loadProfile(session.user.id);
-                const newStatistics = await AuthService.loadUserStatistics(session.user.id);
+                const newProfile = await AuthService.loadProfile(
+                  session.user.id
+                );
+                const newStatistics = await AuthService.loadUserStatistics(
+                  session.user.id
+                );
                 set({ profile: newProfile, statistics: newStatistics });
               } catch (profileError) {
                 console.error("Auto profile creation failed:", profileError);
               }
             }
           } catch (error) {
-            console.error("Failed to load profile or statistics on auth change:", error);
-            set({ profile: null, statistics: { podcasts: 0, followers: 0, following: 0 } });
+            console.error(
+              "Failed to load profile or statistics on auth change:",
+              error
+            );
+            set({
+              profile: null,
+              statistics: { podcasts: 0, followers: 0, following: 0 },
+            });
           }
         }
 

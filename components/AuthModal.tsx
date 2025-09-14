@@ -14,8 +14,8 @@ import {
 } from "react-native";
 
 // Sub-components
-import { AuthHeader } from "./AuthModal/AuthHeader";
 import { AuthForm } from "./AuthModal/AuthForm";
+import { AuthHeader } from "./AuthModal/AuthHeader";
 import { AuthSubmitButton } from "./AuthModal/AuthSubmitButton";
 import { AuthToggle } from "./AuthModal/AuthToggle";
 
@@ -46,7 +46,6 @@ export function AuthModal({
     resetForm();
     onClose();
   };
-
 
   const handleAuth = async () => {
     const validation = formHook.validate();
@@ -89,9 +88,9 @@ export function AuthModal({
 
   const toggleMode = () => {
     setIsSignUp(!isSignUp);
-    formHook.updateField('password', '');
-    formHook.updateField('confirmPassword', '');
-    formHook.updateField('username', '');
+    formHook.updateField("password", "");
+    formHook.updateField("confirmPassword", "");
+    formHook.updateField("username", "");
   };
 
   return (
@@ -114,18 +113,15 @@ export function AuthModal({
               onClose={handleClose}
               allowClose={allowClose}
             />
-            
-            <AuthForm
-              isSignUp={isSignUp}
-              formHook={formHook}
-            />
-            
+
+            <AuthForm isSignUp={isSignUp} formHook={formHook} />
+
             <AuthSubmitButton
               isSignUp={isSignUp}
               isLoading={formHook.isLoading}
               onPress={handleAuth}
             />
-            
+
             <AuthToggle
               isSignUp={isSignUp}
               onToggle={toggleMode}
@@ -187,4 +183,3 @@ export function AuthGuard({ children, fallback }: AuthGuardProps) {
 
   return <>{children}</>;
 }
-
