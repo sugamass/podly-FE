@@ -1,15 +1,15 @@
-import { Database, PodcastWithCreator } from '@/services/supabase';
+import { Database, PodcastWithCreator } from "@/services/supabase";
 
 // UI表示用の統一ポッドキャストインターフェース
 export interface UIPodcast {
   id: string;
-  audioUrl: string | null;
-  imageUrl: string | null;
+  audioUrl: string;
+  imageUrl: string;
   title: string;
   host: {
     id: string;
     name: string;
-    avatar: string | null;
+    avatar: string;
     verified: boolean;
   };
   duration: string; // "12:45" 形式
@@ -47,21 +47,24 @@ export function convertSupabaseToUIPodcast(
 ): UIPodcast {
   // 秒を "MM:SS" 形式に変換
   const formatDuration = (seconds: number | null): string => {
-    if (!seconds) return '0:00';
+    if (!seconds) return "0:00";
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
   };
 
   return {
     id: podcast.id,
-    audioUrl: podcast.audio_url,
-    imageUrl: podcast.image_url || null, // 明示的にnullを設定
+    audioUrl: podcast.audio_url || "",
+    imageUrl: podcast.image_url || "",
     title: podcast.title,
     host: {
-      id: podcast.creator?.id || '',
-      name: podcast.creator?.display_name || podcast.creator?.username || 'Unknown Host',
-      avatar: podcast.creator?.avatar_url || null,
+      id: podcast.creator?.id || "",
+      name:
+        podcast.creator?.display_name ||
+        podcast.creator?.username ||
+        "Unknown Host",
+      avatar: podcast.creator?.avatar_url || "",
       verified: true, // TODO: 実際の認証状態に基づいて設定
     },
     duration: formatDuration(podcast.duration),

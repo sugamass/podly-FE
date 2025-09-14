@@ -3,14 +3,13 @@ import {
   PodcastTrack,
 } from "@/services/AudioPlayerService";
 import {
-  fetchAllPodcasts,
-  fetchPublishedPodcasts,
-  getUserLikedPodcasts,
-  getUserSavedPodcasts,
-  toggleLike,
-  toggleSave,
-} from "@/services/supabase";
-import { UIPodcast, convertSupabaseToUIPodcast } from "@/types/podcast";
+  fetchPodcastsService,
+  getUserLikedPodcastsService,
+  getUserSavedPodcastsService,
+  togglePodcastLikeService,
+  togglePodcastSaveService,
+} from "@/services/podcastService";
+import { UIPodcast } from "@/types/podcast";
 import { create } from "zustand";
 
 interface PodcastState {
@@ -42,6 +41,15 @@ interface PodcastState {
   pendingSaveRequests: Set<string>;
 
   cleanup: () => void;
+
+  // 共通のインタラクション処理関数
+  togglePodcastInteraction: (
+    podcastId: string,
+    type: "like" | "save",
+    serviceFunction: (
+      podcastId: string
+    ) => Promise<{ success: boolean; error?: string }>
+  ) => Promise<boolean>;
 
   setCurrentPodcastIndex: (index: number) => void;
   switchToPodcast: (index: number) => Promise<void>;
@@ -142,10 +150,10 @@ export const usePodcastStore = create<PodcastState>((set, get) => ({
 
     const podcastTrack: PodcastTrack = {
       id: podcast.id,
-      url: podcast.audioUrl || "",
+      url: podcast.audioUrl,
       title: podcast.title,
-      artist: podcast.host?.name || "Unknown Host",
-      artwork: podcast.imageUrl || "",
+      artist: podcast.host.name,
+      artwork: podcast.imageUrl,
       duration:
         parseInt(podcast.duration.split(":")[0]) * 60 +
         parseInt(podcast.duration.split(":")[1]),
@@ -211,93 +219,25 @@ export const usePodcastStore = create<PodcastState>((set, get) => ({
 
   // いいね機能関連のメソッド（重複排除版）
   togglePodcastLike: async (podcastId: string) => {
-    const state = get();
-
-    // 既に進行中のリクエストがある場合は早期リターン
-    if (state.pendingLikeRequests.has(podcastId)) {
-      console.log("🚫 Like request already pending for:", podcastId);
-      return false;
-    }
-
-    const currentLikeState = state.likedPodcasts.has(podcastId);
-
-    console.log("🎯 togglePodcastLike called:", {
+    return await get().togglePodcastInteraction(
       podcastId,
-      currentLikeState,
-      pending: state.pendingLikeRequests.size,
-    });
-
-    // リクエストを進行中に追加
-    set((state) => ({
-      pendingLikeRequests: new Set([...state.pendingLikeRequests, podcastId]),
-    }));
-
-    // UIを即座に更新
-    set((state) => ({
-      likedPodcasts: currentLikeState
-        ? new Set([...state.likedPodcasts].filter((id) => id !== podcastId))
-        : new Set([...state.likedPodcasts, podcastId]),
-      podcasts: state.podcasts.map((podcast) =>
-        podcast.id === podcastId
-          ? {
-              ...podcast,
-              isLiked: !currentLikeState,
-              likes: (podcast.likes || 0) + (currentLikeState ? -1 : 1),
-            }
-          : podcast
-      ),
-    }));
-
-    try {
-      // バックエンド処理
-      await toggleLike(podcastId);
-      console.log("✅ Like request completed:", podcastId);
-    } catch (error) {
-      console.error("❌ toggleLike failed, reverting state:", error);
-
-      // エラー時のみロールバック
-      set((state) => ({
-        likedPodcasts: currentLikeState
-          ? new Set([...state.likedPodcasts, podcastId])
-          : new Set([...state.likedPodcasts].filter((id) => id !== podcastId)),
-        podcasts: state.podcasts.map((podcast) =>
-          podcast.id === podcastId
-            ? {
-                ...podcast,
-                isLiked: currentLikeState,
-                likes: (podcast.likes || 0) + (currentLikeState ? 1 : -1),
-              }
-            : podcast
-        ),
-      }));
-    } finally {
-      // 進行中リクエストから削除
-      set((state) => ({
-        pendingLikeRequests: new Set(
-          [...state.pendingLikeRequests].filter((id) => id !== podcastId)
-        ),
-      }));
-    }
-
-    return true;
+      "like",
+      togglePodcastLikeService
+    );
   },
 
   loadUserLikedPodcasts: async () => {
-    try {
-      const likedPodcastIds = await getUserLikedPodcasts();
-      set({ likedPodcasts: new Set(likedPodcastIds) });
+    const likedPodcastIds = await getUserLikedPodcastsService();
+    set({ likedPodcasts: new Set(likedPodcastIds) });
 
-      // 現在のポッドキャストリストのisLiked状態を更新
-      const state = get();
-      const updatedPodcasts = state.podcasts.map((podcast) => ({
-        ...podcast,
-        isLiked: likedPodcastIds.includes(podcast.id),
-      }));
+    // 現在のポッドキャストリストのisLiked状態を更新
+    const state = get();
+    const updatedPodcasts = state.podcasts.map((podcast) => ({
+      ...podcast,
+      isLiked: likedPodcastIds.includes(podcast.id),
+    }));
 
-      set({ podcasts: updatedPodcasts });
-    } catch (error) {
-      console.error("❌ Failed to load user liked podcasts:", error);
-    }
+    set({ podcasts: updatedPodcasts });
   },
 
   updatePodcastLikeState: (
@@ -333,97 +273,27 @@ export const usePodcastStore = create<PodcastState>((set, get) => ({
 
   // 保存機能関連のメソッド（重複排除版）
   togglePodcastSave: async (podcastId: string) => {
-    const state = get();
-
-    // 既に進行中のリクエストがある場合は早期リターン
-    if (state.pendingSaveRequests.has(podcastId)) {
-      console.log("🚫 Save request already pending for:", podcastId);
-      return false;
-    }
-
-    const currentSaveState = state.savedPodcasts.has(podcastId);
-
-    console.log("🎯 togglePodcastSave called:", {
+    return await get().togglePodcastInteraction(
       podcastId,
-      currentSaveState,
-      pending: state.pendingSaveRequests.size,
-    });
-
-    // リクエストを進行中に追加
-    set((state) => ({
-      pendingSaveRequests: new Set([...state.pendingSaveRequests, podcastId]),
-    }));
-
-    // UIを即座に更新
-    set((state) => ({
-      savedPodcasts: currentSaveState
-        ? new Set([...state.savedPodcasts].filter((id) => id !== podcastId))
-        : new Set([...state.savedPodcasts, podcastId]),
-      podcasts: state.podcasts.map((podcast) =>
-        podcast.id === podcastId
-          ? {
-              ...podcast,
-              isSaved: !currentSaveState,
-              save_count:
-                (podcast.save_count || 0) + (currentSaveState ? -1 : 1),
-            }
-          : podcast
-      ),
-    }));
-
-    try {
-      // バックエンド処理
-      await toggleSave(podcastId);
-      console.log("✅ Save request completed:", podcastId);
-    } catch (error) {
-      console.error("❌ toggleSave failed, reverting state:", error);
-
-      // エラー時のみロールバック
-      set((state) => ({
-        savedPodcasts: currentSaveState
-          ? new Set([...state.savedPodcasts, podcastId])
-          : new Set([...state.savedPodcasts].filter((id) => id !== podcastId)),
-        podcasts: state.podcasts.map((podcast) =>
-          podcast.id === podcastId
-            ? {
-                ...podcast,
-                isSaved: currentSaveState,
-                save_count:
-                  (podcast.save_count || 0) + (currentSaveState ? 1 : -1),
-              }
-            : podcast
-        ),
-      }));
-    } finally {
-      // 進行中リクエストから削除
-      set((state) => ({
-        pendingSaveRequests: new Set(
-          [...state.pendingSaveRequests].filter((id) => id !== podcastId)
-        ),
-      }));
-    }
-
-    return true;
+      "save",
+      togglePodcastSaveService
+    );
   },
 
   loadUserSavedPodcasts: async () => {
-    try {
-      const savedPodcastIds = await getUserSavedPodcasts();
-      set({ savedPodcasts: new Set(savedPodcastIds) });
+    const savedPodcastIds = await getUserSavedPodcastsService();
+    set({ savedPodcasts: new Set(savedPodcastIds) });
 
-      // 現在のポッドキャストリストのisSaved状態を更新
-      const state = get();
-      const updatedPodcasts = state.podcasts.map((podcast) => ({
-        ...podcast,
-        isSaved: savedPodcastIds.includes(podcast.id),
-      }));
+    // 現在のポッドキャストリストのisSaved状態を更新
+    const state = get();
+    const updatedPodcasts = state.podcasts.map((podcast) => ({
+      ...podcast,
+      isSaved: savedPodcastIds.includes(podcast.id),
+    }));
 
-      set({ podcasts: updatedPodcasts });
+    set({ podcasts: updatedPodcasts });
 
-      console.log("✅ User saved podcasts loaded:", savedPodcastIds.length);
-    } catch (error) {
-      console.error("❌ Failed to load user saved podcasts:", error);
-    }
+    console.log("User saved podcasts loaded:", savedPodcastIds.length);
   },
 
   updatePodcastSaveState: (
@@ -492,6 +362,150 @@ export const usePodcastStore = create<PodcastState>((set, get) => ({
     }
   },
 
+  // 共通のインタラクション処理関数
+  togglePodcastInteraction: async (
+    podcastId: string,
+    type: "like" | "save",
+    serviceFunction: (
+      podcastId: string
+    ) => Promise<{ success: boolean; error?: string }>
+  ) => {
+    const state = get();
+    const pendingRequests =
+      type === "like" ? state.pendingLikeRequests : state.pendingSaveRequests;
+    const currentState =
+      type === "like" ? state.likedPodcasts : state.savedPodcasts;
+
+    // 既に進行中のリクエストがある場合は早期リターン
+    if (pendingRequests.has(podcastId)) {
+      console.log(`${type} request already pending for:`, podcastId);
+      return false;
+    }
+
+    const isCurrentlyActive = currentState.has(podcastId);
+
+    console.log(
+      `toggle${type.charAt(0).toUpperCase() + type.slice(1)} called:`,
+      {
+        podcastId,
+        [`current${type.charAt(0).toUpperCase() + type.slice(1)}State`]:
+          isCurrentlyActive,
+        pending: pendingRequests.size,
+      }
+    );
+
+    // リクエストを進行中に追加
+    if (type === "like") {
+      set((state) => ({
+        pendingLikeRequests: new Set([...state.pendingLikeRequests, podcastId]),
+      }));
+    } else {
+      set((state) => ({
+        pendingSaveRequests: new Set([...state.pendingSaveRequests, podcastId]),
+      }));
+    }
+
+    // UIを即座に更新
+    if (type === "like") {
+      set((state) => ({
+        likedPodcasts: isCurrentlyActive
+          ? new Set([...state.likedPodcasts].filter((id) => id !== podcastId))
+          : new Set([...state.likedPodcasts, podcastId]),
+        podcasts: state.podcasts.map((podcast) =>
+          podcast.id === podcastId
+            ? {
+                ...podcast,
+                isLiked: !isCurrentlyActive,
+                likes: (podcast.likes || 0) + (isCurrentlyActive ? -1 : 1),
+              }
+            : podcast
+        ),
+      }));
+    } else {
+      set((state) => ({
+        savedPodcasts: isCurrentlyActive
+          ? new Set([...state.savedPodcasts].filter((id) => id !== podcastId))
+          : new Set([...state.savedPodcasts, podcastId]),
+        podcasts: state.podcasts.map((podcast) =>
+          podcast.id === podcastId
+            ? {
+                ...podcast,
+                isSaved: !isCurrentlyActive,
+                save_count:
+                  (podcast.save_count || 0) + (isCurrentlyActive ? -1 : 1),
+              }
+            : podcast
+        ),
+      }));
+    }
+
+    try {
+      const result = await serviceFunction(podcastId);
+      if (result.success) {
+        console.log(`${type} request completed:`, podcastId);
+      } else {
+        throw new Error(result.error || "Unknown error");
+      }
+    } catch (error) {
+      console.error(`${type} failed, reverting state:`, error);
+
+      // エラー時のみロールバック
+      if (type === "like") {
+        set((state) => ({
+          likedPodcasts: isCurrentlyActive
+            ? new Set([...state.likedPodcasts, podcastId])
+            : new Set(
+                [...state.likedPodcasts].filter((id) => id !== podcastId)
+              ),
+          podcasts: state.podcasts.map((podcast) =>
+            podcast.id === podcastId
+              ? {
+                  ...podcast,
+                  isLiked: isCurrentlyActive,
+                  likes: (podcast.likes || 0) + (isCurrentlyActive ? 1 : -1),
+                }
+              : podcast
+          ),
+        }));
+      } else {
+        set((state) => ({
+          savedPodcasts: isCurrentlyActive
+            ? new Set([...state.savedPodcasts, podcastId])
+            : new Set(
+                [...state.savedPodcasts].filter((id) => id !== podcastId)
+              ),
+          podcasts: state.podcasts.map((podcast) =>
+            podcast.id === podcastId
+              ? {
+                  ...podcast,
+                  isSaved: isCurrentlyActive,
+                  save_count:
+                    (podcast.save_count || 0) + (isCurrentlyActive ? 1 : -1),
+                }
+              : podcast
+          ),
+        }));
+      }
+    } finally {
+      // 進行中リクエストから削除
+      if (type === "like") {
+        set((state) => ({
+          pendingLikeRequests: new Set(
+            [...state.pendingLikeRequests].filter((id) => id !== podcastId)
+          ),
+        }));
+      } else {
+        set((state) => ({
+          pendingSaveRequests: new Set(
+            [...state.pendingSaveRequests].filter((id) => id !== podcastId)
+          ),
+        }));
+      }
+    }
+
+    return true;
+  },
+
   // Supabase関連のメソッド
   fetchPodcasts: async (page: number = 0) => {
     const state = get();
@@ -501,45 +515,29 @@ export const usePodcastStore = create<PodcastState>((set, get) => ({
 
     try {
       const limit = 10;
-
-      // まず公開済みポッドキャストを試す
-      let supabasePodcasts = await fetchPublishedPodcasts(page, limit);
-
-      // 結果が空の場合、全てのポッドキャストを試す
-      if (!supabasePodcasts || supabasePodcasts.length === 0) {
-        supabasePodcasts = await fetchAllPodcasts(page, limit);
-      }
-
-      // ユーザーのいいね状態を取得
-      const likedPodcastIds = await getUserLikedPodcasts();
-      const likedPodcastsSet = new Set(likedPodcastIds);
-
-      const uiPodcasts = supabasePodcasts.map((podcast) => {
-        const isLiked = likedPodcastsSet.has(podcast.id);
-        return convertSupabaseToUIPodcast(podcast, isLiked, false);
-      });
+      const result = await fetchPodcastsService(page, limit);
 
       if (page === 0) {
         // 最初のページの場合は置き換え
         set({
-          podcasts: uiPodcasts,
+          podcasts: result.podcasts,
           currentPage: page,
-          hasNextPage: uiPodcasts.length === limit,
+          hasNextPage: result.hasNextPage,
           isLoading: false,
-          likedPodcasts: likedPodcastsSet,
+          likedPodcasts: new Set(result.likedPodcastIds),
         });
       } else {
         // 追加ページの場合は既存のデータに追加
         set((state) => ({
-          podcasts: [...state.podcasts, ...uiPodcasts],
+          podcasts: [...state.podcasts, ...result.podcasts],
           currentPage: page,
-          hasNextPage: uiPodcasts.length === limit,
+          hasNextPage: result.hasNextPage,
           isLoading: false,
-          likedPodcasts: likedPodcastsSet,
+          likedPodcasts: new Set(result.likedPodcastIds),
         }));
       }
     } catch (error) {
-      console.error("❌ Failed to fetch podcasts:", error);
+      console.error("Failed to fetch podcasts:", error);
       set({
         error:
           error instanceof Error

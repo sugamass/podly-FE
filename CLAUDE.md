@@ -132,6 +132,7 @@ npx expo run:ios --configuration Release
 
 - グローバル状態は Zustand を使用
 - ローカル状態は React の useState を使用
+- useState の使用は最小限にし、派生状態は useMemo、複雑な状態遷移は useReducer か Zustand に委譲
 - 状態の型定義を必須とする
 - AsyncStorage を使用して永続化
 
