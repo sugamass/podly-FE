@@ -1,15 +1,18 @@
 ---
-description: 
-globs: 
+description:
+globs:
 alwaysApply: true
 ---
+
 # TikTok Style Expo React Native App - Cursor Rules
 
 ## プロジェクト概要
-このプロジェクトは**eject済み**のExpo React Nativeアプリケーションです。TikTokスタイルのソーシャルメディアアプリで、動画とポッドキャストの両方に対応しています。
+
+このプロジェクトは**eject 済み**の Expo React Native アプリケーションです。TikTok スタイルのソーシャルメディアアプリで、動画とポッドキャストの両方に対応しています。
 
 ## 技術スタック
-- **Expo SDK**: 53.0.4 (eject済み)
+
+- **Expo SDK**: 53.0.4 (eject 済み)
 - **React Native**: 0.79.1
 - **React**: 19.0.0
 - **TypeScript**: 5.8.3
@@ -18,7 +21,7 @@ alwaysApply: true
 - **Styling**: NativeWind (Tailwind CSS for React Native)
 - **Audio Player**: React Native Track Player
 - **Backend as a Service (BaaS)**: Supabase
-- **Native Features**: Expo Image, Video, Location, Image Picker等
+- **Native Features**: Expo Image, Video, Location, Image Picker 等
 
 ## フォルダ構成
 
@@ -63,93 +66,115 @@ alwaysApply: true
 ## 開発ルール
 
 ### 1. ファイル作成・編集時の注意点
-- **eject済みプロジェクト**のため、ネイティブフォルダ（ios/android）の変更は慎重に行う
-- Expo Router v5のファイルベースルーティングを使用
-- TypeScriptを必須とし、型安全性を重視
-- NativeWindクラスを使用してスタイリング
+
+- **eject 済みプロジェクト**のため、ネイティブフォルダ（ios/android）の変更は慎重に行う
+- Expo Router v5 のファイルベースルーティングを使用
+- TypeScript を必須とし、型安全性を重視
+- NativeWind クラスを使用してスタイリング
 
 ### 2. コンポーネント設計
-- 機能別にコンポーネントを分割（Video/Audio/Profile等）
+
+- 機能別にコンポーネントを分割（Video/Audio/Profile 等）
 - 再利用可能なコンポーネントは`components/`フォルダに配置
 - プロップスとステートの型定義を必須とする
 
 ### 3. 状態管理
-- グローバル状態はZustandを使用
-- ローカル状態はReactのuseStateを使用
+
+- グローバル状態は Zustand を使用
+- ローカル状態は React の useState を使用
 - 状態の型定義を必須とする
+- AsyncStorage を使用して永続化
+- I/O（Supabase、外部 API、AsyncStorage、ファイル等）は `services/` に集約する
+- ストアは状態とフロー制御に専念し、I/O は直接呼ばない（必ずサービス経由）
+- ストアの公開関数は「サービス呼び出し → 結果を状態へ反映」に統一する
 
 ### 4. ナビゲーション
-- Expo Router v5のファイルベースルーティングを使用
+
+- Expo Router v5 のファイルベースルーティングを使用
 - タブナビゲーションは`app/(tabs)/`で管理
 - モーダルは`app/modal.tsx`で管理
 
 ### 5. スタイリング
+
 - NativeWind（Tailwind CSS）を使用
 - インラインスタイルは最小限に留める
 - レスポンシブデザインを考慮
 
 ### 6. メディア処理
-- 動画: expo-videoを使用
-- 音声: react-native-track-playerを使用
-- 画像: expo-imageを使用
+
+- 動画: expo-video を使用
+- 音声: react-native-track-player を使用
+- 画像: expo-image を使用
 
 ### 7. パフォーマンス
-- 大きなリストはFlatListを使用
+
+- 大きなリストは FlatList を使用
 - 画像の最適化を考慮
 - メモ化（React.memo, useMemo, useCallback）を適切に使用
 
 ### 8. 型定義
-- 全てのpropsとstateに型定義を追加
-- APIレスポンスの型定義を作成
+
+- 全ての props と state に型定義を追加
+- API レスポンスの型定義を作成
 - 共通で使用する型は`types/`フォルダまたは適切な場所に定義
 
-### 9. バックエンド・API設計
-- **BaaS**: Supabaseを使用してバックエンド機能を提供
-- **データベースアクセス**: APIを叩く際は、Supabaseクライアントを使用して直接DBにアクセス
-- **認証**: Supabase Authを使用してユーザー認証を管理
-- **リアルタイム機能**: Supabase Realtimeを使用してリアルタイムデータ同期
-- **ファイルストレージ**: Supabase Storageを使用して動画・音声・画像ファイルを管理
+### 9. バックエンド・API 設計
 
-- **API設計**:
-  - REST APIの代わりにSupabaseクライアントのメソッドを使用
+- **BaaS**: Supabase を使用してバックエンド機能を提供
+- **データベースアクセス**: API を叩く際は、Supabase クライアントを使用して直接 DB にアクセス
+- **認証**: Supabase Auth を使用してユーザー認証を管理
+- セッションは AsyncStorage を用いて永続化
+- **リアルタイム機能**: Supabase Realtime を使用してリアルタイムデータ同期
+- **ファイルストレージ**: Supabase Storage を使用して動画・音声・画像ファイルを管理
+
+- **API 設計**:
+  - REST API の代わりに Supabase クライアントのメソッドを使用
   - データベース操作は`supabase.from().select()`, `supabase.from().insert()`等を使用
-  - 認証が必要な操作では、適切なRow Level Security (RLS)ポリシーを設定
-- **例外: 外部API使用**:
-  - **原稿生成**: Supabaseではなくアプリケーションサーバー側で用意されたAPIを使用
-  - **音声生成**: Supabaseではなくアプリケーションサーバー側で用意されたAPIを使用
-  - **実装場所**: 外部API連携は`services/`フォルダ内に専用のサービスファイルを作成（例: `services/scriptGenerator.ts`, `services/audioGenerator.ts`）
-  - **エラーハンドリング**: アプリケーションサーバーAPIの接続エラーや制限に対する適切なエラーハンドリングを実装
-  - **設定管理**: APIエンドポイントやAPIキーは環境変数として管理し、コードに直接記述しない
+  - 認証が必要な操作では、適切な Row Level Security (RLS)ポリシーを設定
+- **例外: 外部 API 使用**:
+  - **原稿生成**: Supabase ではなくアプリケーションサーバー側で用意された API を使用
+  - **音声生成**: Supabase ではなくアプリケーションサーバー側で用意された API を使用
+  - **実装場所**: 外部 API 連携は`services/`フォルダ内に専用のサービスファイルを作成（例: `services/scriptGenerator.ts`, `services/audioGenerator.ts`）
+  - **エラーハンドリング**: アプリケーションサーバー API の接続エラーや制限に対する適切なエラーハンドリングを実装
+  - **設定管理**: API エンドポイントや API キーは環境変数として管理し、コードに直接記述しない
 
 ### 10. データベースマイグレーション・責務分離
-- **重要**: データベースマイグレーションファイル（*.sql）を作ってはいけない。
-- **禁止事項**: SQLマイグレーションファイルやスクリプトフォルダを作成してはいけない
+
+- **重要**: データベースマイグレーションファイル（\*.sql）を作ってはいけない。
+- **禁止事項**: SQL マイグレーションファイルやスクリプトフォルダを作成してはいけない
+- **ID 設計**: ヘルパー関数で一貫した ID を生成する（`profiles.id` は auth.users とリンクする UUID、その他は文字列 ID など）
 
 ## 重要な注意事項
-- このプロジェクトは**eject済み**のため、Expo CLIとReact Native CLIの両方の機能が使用可能
+
+- このプロジェクトは**eject 済み**のため、Expo CLI と React Native CLI の両方の機能が使用可能
 - ネイティブコードの変更時は、適切なビルドプロセスを実行
-- 新しいネイティブ依存関係の追加時は、iOS/Androidの両方でのビルドを確認
+- 新しいネイティブ依存関係の追加時は、iOS/Android の両方でのビルドを確認
+- eject 済みのため、`npx expo start` は使用しない。開発実行は `npm run ios` / `npm run android`、本番ビルドは `npx expo run:ios --configuration Release` / `npx expo run:android --variant release` を使用する
 
 ### 11. ログ・エラー出力ルール
-- **絵文字禁止**: console.log、console.error、throw new Error等の出力メッセージに絵文字を使用しない
+
+- **絵文字禁止**: console.log、console.error、throw new Error 等の出力メッセージに絵文字を使用しない
 - **プレーンテキスト**: ログやエラーメッセージは英数字、記号、日本語のみを使用
-- **理由**: 
+- **理由**:
   - ターミナルやログファイルでの表示崩れを防ぐ
-  - CI/CDパイプラインでのログ解析を容易にする
+  - CI/CD パイプラインでのログ解析を容易にする
   - 開発チーム間での一貫性を保つ
-- **対象範囲**: 
+- **対象範囲**:
   - console.log, console.error, console.warn, console.info
   - throw new Error()のエラーメッセージ
   - デバッグ用の出力
   - アラート・トースト等のシステムメッセージ
 
-## 12. UIデザインテーマ
+## 12. UI デザインテーマ
+
 ### テーマ: 「プロフェッショナル・ミニマリズム」
-このアプリのUIは**ダークモード特化の没入型メディア体験**をコンセプトとしています。
+
+このアプリの UI は**ダークモード特化の没入型メディア体験**をコンセプトとしています。
 
 #### カラーパレット
+
 - **Background**: #121620 (深いダークブルー背景)
-- **Card**: #1E2430 (マットなチャコール)  
+- **Card**: #1E2430 (マットなチャコール)
 - **Primary**: #4F7CFF (プロフェッショナルブルー)
 - **Secondary**: #6AD5E8 (ソフトティールアクセント)
 - **Highlight**: #F2994A (オレンジハイライト)
@@ -157,32 +182,44 @@ alwaysApply: true
 - **Subtext**: #A0A7B5 (サブテキスト)
 
 #### デザイン原則
-- **フルスクリーン没入**: TikTok風の画面いっぱいを使った動画・音声体験
+
+- **フルスクリーン没入**: TikTok 風の画面いっぱいを使った動画・音声体験
 - **ミニマル情報設計**: 必要な情報のみを適切なタイミングで表示
 - **ジェスチャーベース**: スワイプ中心の直感的操作
-- **触覚フィードバック**: Hapticsによる操作感の向上
-- **統一されたボーダー半径**: 8pxでソフトな印象
+- **触覚フィードバック**: Haptics による操作感の向上
+- **統一されたボーダー半径**: 8px でソフトな印象
 - **カード型レイアウト**: 情報のグルーピング
-- **グラデーション**: CTAボタンでの効果的活用
+- **グラデーション**: CTA ボタンでの効果的活用
 
 #### コンポーネント統一ルール
-- アイコンはIoniconsで統一
+
+- アイコンは Ionicons で統一
 - 状態表現の明確性（アクティブ/非アクティブ）
 - オーバーレイコントロールで操作性を保持
 - リアルタイム反応（いいね、再生状態など）
 - プログレスインジケーターで進行状況を可視化
 
 #### レイアウト統一ルール
-- **4の倍数ルール**: padding、margin、width、height、border-radius等のすべての数値は4の倍数で統一する
+
+- **4 の倍数ルール**: padding、margin、width、height、border-radius 等のすべての数値は 4 の倍数で統一する
   - 例: 4, 8, 12, 16, 20, 24, 32, 40, 48, 56, 64, 80, 96, 120...
   - 一貫性のあるリズムとグリッドベースのデザインを実現
   - デザイナーとエンジニア間でのコミュニケーションを簡素化
   - レスポンシブデザインでの計算が容易になる
-- **例外**: フォントサイズやline-heightは可読性を優先し、4の倍数でなくても可
-- **アイコンサイズ**: 16, 20, 24, 28, 32, 40, 48等を基本とする
-- **間隔の基準値**: 
+- **例外**: フォントサイズや line-height は可読性を優先し、4 の倍数でなくても可
+- **アイコンサイズ**: 16, 20, 24, 28, 32, 40, 48 等を基本とする
+- **間隔の基準値**:
   - 最小間隔: 4px
   - 通常間隔: 8px, 12px, 16px
   - 大きな間隔: 20px, 24px, 32px
   - セクション間隔: 40px, 48px, 64px
-- **適用対象**: StyleSheetのすべての数値プロパティ（position、size、spacing関連） 
+- **適用対象**: StyleSheet のすべての数値プロパティ（position、size、spacing 関連）
+
+## 13. useEffect の使用方針
+
+- 責務は 1 つの目的に限定（データ取得、イベントリスナー管理など）
+- 依存配列を明示し、無限ループや不要な再実行を避ける
+- 不要な useEffect を避ける（派生値は `useMemo`、コールバック安定化は `useCallback`）
+- 関連処理が増える場合はカスタムフック化して可読性を保つ
+- グローバルな副作用やデータ同期は Zustand 等と適切に分担する
+- 頻繁に変わる状態に依存する副作用は極力避け、パフォーマンスに配慮する
