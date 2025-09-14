@@ -10,6 +10,7 @@ import {
   togglePodcastSaveService,
 } from "@/services/podcastService";
 import { UIPodcast } from "@/types/podcast";
+import { DeviceEventEmitter } from "react-native";
 import { create } from "zustand";
 
 interface PodcastState {
@@ -87,6 +88,9 @@ interface PodcastState {
   loadMorePodcasts: () => Promise<void>;
   setUseSupabaseData: (useSupabase: boolean) => void;
   refreshPodcasts: () => Promise<void>;
+
+  // 自動進行機能
+  autoAdvanceToNext: () => void;
 }
 
 const audioPlayerService = new AudioPlayerService();
@@ -569,6 +573,31 @@ export const usePodcastStore = create<PodcastState>((set, get) => ({
 
     if (state.useSupabaseData) {
       await get().fetchPodcasts(0);
+    }
+  },
+
+  // 自動進行機能: 次のポッドキャストに自動遷移
+  autoAdvanceToNext: () => {
+    const state = get();
+    const nextIndex = state.currentPodcastIndex + 1;
+
+    // 次のポッドキャストが存在するかチェック
+    if (nextIndex < state.podcasts.length) {
+      // UI側に自動スクロールのイベントを送信
+      DeviceEventEmitter.emit("autoAdvanceToNext", { nextIndex });
+    } else if (state.hasNextPage && state.useSupabaseData) {
+      // 次のページがある場合は追加読み込み
+      get()
+        .loadMorePodcasts()
+        .then(() => {
+          // 読み込み完了後に再度次のポッドキャストへ進行
+          const updatedState = get();
+          if (nextIndex < updatedState.podcasts.length) {
+            DeviceEventEmitter.emit("autoAdvanceToNext", { nextIndex });
+          }
+        });
+    } else {
+      console.log("No more podcasts available for auto advance");
     }
   },
 }));

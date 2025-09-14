@@ -35,7 +35,6 @@ export default function FeedScreen() {
 
   // カスタムフックを使用
   const { isLoading, error } = useHomeScreenInitialization();
-  useAudioPlayerSync();
 
   const [activePodcastIndex, setActivePodcastIndex] = useState<number>(0);
   const [showComments, setShowComments] = useState<boolean>(false);
@@ -43,6 +42,12 @@ export default function FeedScreen() {
   const [tabBarHeight, setTabBarHeight] = useState<number>(0);
   const flatListRef = useRef<FlatList>(null);
   const safeAreaInsets = useSafeAreaInsets();
+
+  useAudioPlayerSync({
+    flatListRef,
+    setActivePodcastIndex,
+    activePodcastIndex,
+  });
 
   const itemHeight = useMemo(() => {
     const height = getItemHeight(safeAreaInsets, tabBarHeight);
@@ -101,6 +106,7 @@ export default function FeedScreen() {
       loadMorePodcasts();
     }
   }, [hasNextPage, isLoading, useSupabaseData, loadMorePodcasts]);
+
 
   const renderItem = useCallback(
     ({ item, index }: { item: UIPodcast; index: number }) => (
