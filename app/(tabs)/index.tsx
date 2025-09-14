@@ -17,7 +17,6 @@ import {
   Dimensions,
   FlatList,
   RefreshControl,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -117,16 +116,25 @@ export default function FeedScreen() {
   );
 
   return (
-    <View style={styles.container} onLayout={handleContainerLayout}>
+    <View className="flex-1 bg-background" onLayout={handleContainerLayout}>
       <StatusBar style="light" />
 
-      <View style={styles.tabsContainer}>
-        <TouchableOpacity style={styles.tabButton}>
-          <Text style={[styles.tabText, styles.activeTabText]}>For You</Text>
-          <View style={styles.activeTabIndicator} />
+      <View
+        className="absolute left-0 right-0 z-10 flex-row justify-center"
+        style={{ top: 50 }}
+      >
+        <TouchableOpacity
+          className="items-center"
+          style={{ paddingHorizontal: 20, paddingVertical: 10 }}
+        >
+          <Text className="text-white text-base font-bold">おすすめ</Text>
+          <View className="h-0.5 w-5 mt-1 bg-primary" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.tabButton}>
-          <Text style={styles.tabText}>Following</Text>
+        <TouchableOpacity
+          className="items-center"
+          style={{ paddingHorizontal: 20, paddingVertical: 10 }}
+        >
+          <Text className="text-base text-subtext">フォロー中</Text>
         </TouchableOpacity>
       </View>
 
@@ -182,7 +190,7 @@ export default function FeedScreen() {
         })}
         ListFooterComponent={
           isLoading && hasNextPage ? (
-            <View style={styles.loadingFooter}>
+            <View className="p-5 items-center">
               <ActivityIndicator size="small" color={Colors.dark.primary} />
             </View>
           ) : null
@@ -199,42 +207,3 @@ export default function FeedScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.dark.background,
-  },
-  tabsContainer: {
-    position: "absolute",
-    top: 50,
-    left: 0,
-    right: 0,
-    zIndex: 10,
-    flexDirection: "row",
-    justifyContent: "center",
-  },
-  tabButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    alignItems: "center",
-  },
-  tabText: {
-    color: Colors.dark.subtext,
-    fontSize: 16,
-  },
-  activeTabText: {
-    color: Colors.dark.text,
-    fontWeight: "bold",
-  },
-  activeTabIndicator: {
-    height: 2,
-    width: 20,
-    backgroundColor: Colors.dark.primary,
-    marginTop: 5,
-  },
-  loadingFooter: {
-    padding: 20,
-    alignItems: "center",
-  },
-});

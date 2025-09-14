@@ -12,18 +12,16 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // プロジェクト固有のカラーパレット
-        podly: {
-          background: '#121620',
-          card: '#1E2430',
-          primary: '#4F7CFF',
-          secondary: '#6AD5E8',
-          highlight: '#F2994A',
-          text: '#FFFFFF',
-          subtext: '#A0A7B5',
-          inactive: '#6B7280',
-          border: '#374151',
-        }
+        // プロジェクト固有のカラーパレット（直接アクセス可能）
+        background: '#121620',
+        card: '#1E2430', 
+        primary: '#4F7CFF',
+        secondary: '#6AD5E8',
+        highlight: '#F2994A',
+        subtext: '#A0A7B5',
+        inactive: '#6E7585',
+        success: '#4CAF50',
+        border: '#2A3040',
       },
     },
   },
