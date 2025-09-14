@@ -135,6 +135,11 @@ npx expo run:ios --configuration Release
 - 状態の型定義を必須とする
 - AsyncStorage を使用して永続化
 
+- I/O（Supabase、外部 API、AsyncStorage、ファイル等）は `services/` に集約する
+- ストアは状態とフロー制御に専念し、I/O は直接呼ばない（必ずサービス経由）
+- ストアの公開関数は「サービス呼び出し → 結果を状態へ反映」の流れに統一する
+- 例外が必要な場合は理由を明記し、後で是正する
+
 ### 4. ナビゲーション
 
 - Expo Router v5 のファイルベースルーティングを使用

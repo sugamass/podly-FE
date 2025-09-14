@@ -2,6 +2,7 @@ import { ProfileMenuModal } from "@/components/ProfileMenuModal";
 import { useAuth } from "@/hooks/useAuth";
 import { useAuthStore } from "@/store/authStore";
 import { usePodcastStore } from "@/store/podcastStore";
+import { AuthService } from "@/services/authService";
 import { formatNumber } from "@/utils/formatNumber";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
@@ -32,7 +33,7 @@ export default function ProfileScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [showMenuModal, setShowMenuModal] = useState(false);
   const { user, profile } = useAuth();
-  const { loadProfile, loadUserStatistics, statistics } = useAuthStore();
+  const { statistics, refreshProfileData } = useAuthStore();
   const {
     podcasts: allPodcasts,
     savedPodcasts,
@@ -75,8 +76,7 @@ export default function ProfileScreen() {
       setRefreshing(true);
       // プロフィール情報と統計情報を最新状態にする
       if (user?.id) {
-        await loadProfile(user.id);
-        await loadUserStatistics(user.id);
+        await refreshProfileData(user.id);
       }
     } catch (error) {
       console.error("Profile refresh error:", error);
