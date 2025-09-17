@@ -7,6 +7,8 @@ import {
   toggleSave,
 } from "@/services/supabase";
 import { UIPodcast, convertSupabaseToUIPodcast } from "@/types/podcast";
+import { withErrorHandling, toAppError } from '../utils/errorHandler';
+import { logger } from '../utils/logger';
 
 export interface PodcastFetchResult {
   podcasts: UIPodcast[];
@@ -26,28 +28,37 @@ export async function fetchPodcastsService(
   page: number = 0,
   limit: number = 10
 ): Promise<PodcastFetchResult> {
-  // まず公開済みポッドキャストを試す
-  let supabasePodcasts = await fetchPublishedPodcasts(page, limit);
+  return withErrorHandling(async () => {
+    logger.info("Fetching podcasts", { page, limit }, 'fetchPodcastsService');
+    
+    // まず公開済みポッドキャストを試す
+    let supabasePodcasts = await fetchPublishedPodcasts(page, limit);
 
-  // 結果が空の場合、全てのポッドキャストを試す
-  if (!supabasePodcasts || supabasePodcasts.length === 0) {
-    supabasePodcasts = await fetchAllPodcasts(page, limit);
-  }
+    // 結果が空の場合、全てのポッドキャストを試す
+    if (!supabasePodcasts || supabasePodcasts.length === 0) {
+      supabasePodcasts = await fetchAllPodcasts(page, limit);
+    }
 
-  // ユーザーのいいね状態を取得
-  const likedPodcastIds = await getUserLikedPodcasts();
-  const likedPodcastsSet = new Set(likedPodcastIds);
+    // ユーザーのいいね状態を取得
+    const likedPodcastIds = await getUserLikedPodcasts();
+    const likedPodcastsSet = new Set(likedPodcastIds);
 
-  const uiPodcasts = supabasePodcasts.map((podcast) => {
-    const isLiked = likedPodcastsSet.has(podcast.id);
-    return convertSupabaseToUIPodcast(podcast, isLiked, false);
-  });
+    const uiPodcasts = supabasePodcasts.map((podcast) => {
+      const isLiked = likedPodcastsSet.has(podcast.id);
+      return convertSupabaseToUIPodcast(podcast, isLiked, false);
+    });
 
-  return {
-    podcasts: uiPodcasts,
-    likedPodcastIds,
-    hasNextPage: uiPodcasts.length === limit,
-  };
+    logger.info("Podcasts fetched successfully", {
+      count: uiPodcasts.length,
+      hasNextPage: uiPodcasts.length === limit
+    }, 'fetchPodcastsService');
+
+    return {
+      podcasts: uiPodcasts,
+      likedPodcastIds,
+      hasNextPage: uiPodcasts.length === limit,
+    };
+  }, 'fetchPodcastsService');
 }
 
 /**
@@ -56,16 +67,17 @@ export async function fetchPodcastsService(
 export async function togglePodcastLikeService(
   podcastId: string
 ): Promise<ToggleResult> {
-  try {
+  return withErrorHandling(async () => {
     await toggleLike(podcastId);
+    logger.info("Podcast like toggled successfully", { podcastId }, 'togglePodcastLikeService');
     return { success: true };
-  } catch (error) {
-    console.error("toggleLike failed, reverting state:", error);
+  }, 'togglePodcastLikeService').catch((error) => {
+    logger.error("Failed to toggle podcast like", error, 'togglePodcastLikeService');
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: error.message || "Unknown error",
     };
-  }
+  });
 }
 
 /**
@@ -74,38 +86,39 @@ export async function togglePodcastLikeService(
 export async function togglePodcastSaveService(
   podcastId: string
 ): Promise<ToggleResult> {
-  try {
+  return withErrorHandling(async () => {
     await toggleSave(podcastId);
+    logger.info("Podcast save toggled successfully", { podcastId }, 'togglePodcastSaveService');
     return { success: true };
-  } catch (error) {
-    console.error("toggleSave failed, reverting state:", error);
+  }, 'togglePodcastSaveService').catch((error) => {
+    logger.error("Failed to toggle podcast save", error, 'togglePodcastSaveService');
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: error.message || "Unknown error",
     };
-  }
+  });
 }
 
 /**
  * ユーザーのいいね済みポッドキャスト一覧を取得
  */
 export async function getUserLikedPodcastsService(): Promise<string[]> {
-  try {
+  return withErrorHandling(async () => {
     return await getUserLikedPodcasts();
-  } catch (error) {
-    console.error("Failed to load user liked podcasts:", error);
+  }, 'getUserLikedPodcastsService').catch((error) => {
+    logger.error("Failed to load user liked podcasts", error, 'getUserLikedPodcastsService');
     return [];
-  }
+  });
 }
 
 /**
  * ユーザーの保存済みポッドキャスト一覧を取得
  */
 export async function getUserSavedPodcastsService(): Promise<string[]> {
-  try {
+  return withErrorHandling(async () => {
     return await getUserSavedPodcasts();
-  } catch (error) {
-    console.error("Failed to load user saved podcasts:", error);
+  }, 'getUserSavedPodcastsService').catch((error) => {
+    logger.error("Failed to load user saved podcasts", error, 'getUserSavedPodcastsService');
     return [];
-  }
+  });
 }

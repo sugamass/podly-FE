@@ -1,6 +1,9 @@
 // 音声生成API関連の型定義とサービス関数
 // docs/audio.yaml を参照して実装
 
+import { withErrorHandling, toAppError } from '../utils/errorHandler';
+import { logger } from '../utils/logger';
+
 // スキーマに基づく型定義
 export interface ScriptData {
   speaker: string;
@@ -48,7 +51,7 @@ const getApiKey = (): string | null => {
 export const generateAudioPreview = async (
   requestData: AudioPreviewRequest
 ): Promise<AudioPreviewResponse> => {
-  try {
+  return withErrorHandling(async () => {
     const baseUrl = getApiBaseUrl();
     const apiKey = getApiKey();
 
@@ -61,7 +64,11 @@ export const generateAudioPreview = async (
       headers["Authorization"] = `Bearer ${apiKey}`;
     }
 
-    console.log("Generating audio preview with request:", requestData);
+    logger.info("Generating audio preview", {
+      tts: requestData.tts,
+      speakersCount: requestData.speakers.length,
+      bgmId: requestData.bgmId
+    }, 'generateAudioPreview');
 
     const response = await fetch(`${baseUrl}/audio/preview`, {
       method: "POST",
@@ -71,29 +78,25 @@ export const generateAudioPreview = async (
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Audio generation API error:", {
+      logger.error("Audio generation API failed", {
         status: response.status,
         statusText: response.statusText,
         errorText,
-      });
+      }, 'generateAudioPreview');
 
-      throw new Error(
-        `Audio generation failed: ${response.status} ${response.statusText}`
+      throw toAppError(
+        new Error(`Audio generation failed: ${response.status} ${response.statusText}`),
+        'generateAudioPreview'
       );
     }
 
     const responseData: AudioPreviewResponse = await response.json();
 
-    console.log("Audio generated successfully:", responseData);
+    logger.info("Audio generated successfully", {
+      hasAudioUrl: !!responseData.audioUrl,
+      duration: responseData.duration
+    }, 'generateAudioPreview');
 
     return responseData;
-  } catch (error) {
-    console.error("Error in generateAudioPreview:", error);
-
-    if (error instanceof Error) {
-      throw error;
-    } else {
-      throw new Error("Unknown error occurred during audio generation");
-    }
-  }
+  }, 'generateAudioPreview');
 };

@@ -1,4 +1,6 @@
 import { supabase } from './supabase';
+import { withErrorHandling, toAppError } from '../utils/errorHandler';
+import { logger } from '../utils/logger';
 
 export interface UserStatistics {
   podcasts: number;
@@ -12,7 +14,9 @@ export interface UserStatistics {
  * @returns ポッドキャスト数、フォロワー数、フォロー中数
  */
 export async function getUserStatistics(userId: string): Promise<UserStatistics> {
-  try {
+  return withErrorHandling(async () => {
+    logger.info('Fetching user statistics', { userId }, 'getUserStatistics');
+
     // ポッドキャスト数を取得
     const { count: podcastCount, error: podcastError } = await supabase
       .from('podcasts')
@@ -20,7 +24,7 @@ export async function getUserStatistics(userId: string): Promise<UserStatistics>
       .eq('creator_id', userId);
 
     if (podcastError) {
-      console.error('Podcast count error:', podcastError);
+      logger.warn('Podcast count query failed', podcastError, 'getUserStatistics');
     }
 
     // フォロワー数を取得 (このユーザーをフォローしている人数)
@@ -30,7 +34,7 @@ export async function getUserStatistics(userId: string): Promise<UserStatistics>
       .eq('following_id', userId);
 
     if (followerError) {
-      console.error('Follower count error:', followerError);
+      logger.warn('Follower count query failed', followerError, 'getUserStatistics');
     }
 
     // フォロー中数を取得 (このユーザーがフォローしている人数)
@@ -40,20 +44,24 @@ export async function getUserStatistics(userId: string): Promise<UserStatistics>
       .eq('follower_id', userId);
 
     if (followingError) {
-      console.error('Following count error:', followingError);
+      logger.warn('Following count query failed', followingError, 'getUserStatistics');
     }
 
-    return {
+    const statistics = {
       podcasts: podcastCount || 0,
       followers: followerCount || 0,
       following: followingCount || 0,
     };
-  } catch (error) {
-    console.error('Get user statistics error:', error);
+
+    logger.info('User statistics fetched successfully', { userId, statistics }, 'getUserStatistics');
+
+    return statistics;
+  }, 'getUserStatistics').catch((error) => {
+    logger.error('Failed to get user statistics', error, 'getUserStatistics');
     return {
       podcasts: 0,
       followers: 0,
       following: 0,
     };
-  }
+  });
 }

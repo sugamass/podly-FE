@@ -1,5 +1,7 @@
 import { supabase } from "@/services/supabase";
 import { getUserStatistics, type UserStatistics } from "@/services/database";
+import { withErrorHandling, toAppError } from '../utils/errorHandler';
+import { logger } from '../utils/logger';
 
 export interface Profile {
   id: string;
@@ -18,7 +20,7 @@ export class AuthService {
    * @returns プロフィール情報またはnull
    */
   static async loadProfile(userId: string): Promise<Profile | null> {
-    try {
+    return withErrorHandling(async () => {
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
@@ -26,14 +28,11 @@ export class AuthService {
         .single();
 
       if (error && error.code !== "PGRST116") {
-        throw error;
+        throw toAppError(error, 'loadProfile');
       }
 
       return data || null;
-    } catch (error) {
-      console.error("Load profile error:", error);
-      throw error;
-    }
+    }, 'loadProfile');
   }
 
   /**
@@ -42,7 +41,7 @@ export class AuthService {
    * @param username ユーザー名
    */
   static async createUserProfile(userId: string, username: string): Promise<void> {
-    try {
+    return withErrorHandling(async () => {
       // プロフィールが既に存在するかチェック
       const { data: existingProfile, error: checkError } = await supabase
         .from("profiles")
@@ -52,7 +51,7 @@ export class AuthService {
 
       // 既に存在する場合は作成をスキップ
       if (existingProfile) {
-        console.log("プロフィールは既に存在します");
+        logger.info("Profile already exists, skipping creation", { userId }, 'createUserProfile');
         return;
       }
 
@@ -65,17 +64,11 @@ export class AuthService {
       });
 
       if (insertError) {
-        console.error("Profile insert error:", insertError);
-        throw new Error(
-          "プロフィールの作成に失敗しました。もう一度お試しください。"
-        );
+        throw toAppError(insertError, 'createUserProfile');
       }
 
-      console.log("プロフィールが正常に作成されました:", { userId, username });
-    } catch (error) {
-      console.error("Create profile error:", error);
-      throw error;
-    }
+      logger.info("Profile created successfully", { userId, username }, 'createUserProfile');
+    }, 'createUserProfile');
   }
 
   /**
@@ -85,7 +78,7 @@ export class AuthService {
    * @returns 更新されたプロフィール
    */
   static async updateProfile(userId: string, updates: Partial<Profile>): Promise<Profile> {
-    try {
+    return withErrorHandling(async () => {
       const { data, error } = await supabase
         .from("profiles")
         .update({
@@ -96,13 +89,10 @@ export class AuthService {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) throw toAppError(error, 'updateProfile');
 
       return data;
-    } catch (error) {
-      console.error("Profile update error:", error);
-      throw error;
-    }
+    }, 'updateProfile');
   }
 
   /**
@@ -111,7 +101,7 @@ export class AuthService {
    * @returns 利用可能な場合はtrue
    */
   static async checkUsernameAvailability(username: string): Promise<boolean> {
-    try {
+    return withErrorHandling(async () => {
       const { data, error } = await supabase
         .from("profiles")
         .select("id")
@@ -124,15 +114,12 @@ export class AuthService {
       }
 
       if (error) {
-        throw error;
+        throw toAppError(error, 'checkUsernameAvailability');
       }
 
       // レコードが見つかった場合は既に使用されている
       return false;
-    } catch (error) {
-      console.error("Username availability check error:", error);
-      throw error;
-    }
+    }, 'checkUsernameAvailability');
   }
 
   /**
@@ -141,12 +128,9 @@ export class AuthService {
    * @returns 統計情報
    */
   static async loadUserStatistics(userId: string): Promise<UserStatistics> {
-    try {
+    return withErrorHandling(async () => {
       return await getUserStatistics(userId);
-    } catch (error) {
-      console.error("Load user statistics error:", error);
-      throw error;
-    }
+    }, 'loadUserStatistics');
   }
 
   /**
@@ -156,19 +140,16 @@ export class AuthService {
    * @returns 認証結果
    */
   static async signIn(email: string, password: string) {
-    try {
+    return withErrorHandling(async () => {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) throw error;
+      if (error) throw toAppError(error, 'signIn');
 
       return data;
-    } catch (error) {
-      console.error("Sign in error:", error);
-      throw error;
-    }
+    }, 'signIn');
   }
 
   /**
@@ -179,11 +160,11 @@ export class AuthService {
    * @returns 認証結果
    */
   static async signUp(email: string, password: string, username: string) {
-    try {
+    return withErrorHandling(async () => {
       // ユーザー名の重複チェック
       const isUsernameAvailable = await this.checkUsernameAvailability(username);
       if (!isUsernameAvailable) {
-        throw new Error("このユーザー名は既に使用されています");
+        throw toAppError(new Error("このユーザー名は既に使用されています"), 'signUp');
       }
 
       // Supabase Authでユーザー作成
@@ -197,29 +178,22 @@ export class AuthService {
         },
       });
 
-      if (error) throw error;
+      if (error) throw toAppError(error, 'signUp');
 
       return data;
-    } catch (error) {
-      console.error("Sign up error:", error);
-      throw error;
-    }
+    }, 'signUp');
   }
 
   /**
    * サインアウト処理
    */
   static async signOut(): Promise<void> {
-    try {
+    return withErrorHandling(async () => {
       const { error } = await supabase.auth.signOut();
       if (error) {
-        console.error("Supabase sign out error:", error);
-        throw error;
+        throw toAppError(error, 'signOut');
       }
-      console.log("Supabase sign out successful");
-    } catch (error) {
-      console.error("Sign out error:", error);
-      throw error;
-    }
+      logger.info("Sign out completed successfully", undefined, 'signOut');
+    }, 'signOut');
   }
 }

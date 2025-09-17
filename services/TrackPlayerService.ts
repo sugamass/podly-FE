@@ -1,5 +1,6 @@
 import TrackPlayer, { Event } from "react-native-track-player";
 import { DeviceEventEmitter } from "react-native";
+import { logger } from '../utils/logger';
 
 // 🔧 FIX: イベントリスナーの参照を保持
 const eventListeners: any[] = [];
@@ -26,19 +27,19 @@ export const TrackPlayerService = async () => {
     // Playback state events
     TrackPlayer.addEventListener(Event.PlaybackState, (event) => {
       // Handle playback state changes
-      console.log('Playback state changed:', event.state);
+      logger.debug('Playback state changed', { state: event.state }, 'TrackPlayerService');
     }),
     TrackPlayer.addEventListener(Event.PlaybackActiveTrackChanged, (event) => {
       // Handle active track changes  
-      console.log('Active track changed:', event.index);
+      logger.debug('Active track changed', { index: event.index }, 'TrackPlayerService');
       // トラック変更時の追加処理（自動進行用）
       if (event.track === null) {
-        console.log('Track ended, no next track available');
+        logger.debug('Track ended, no next track available', undefined, 'TrackPlayerService');
       }
     }),
     TrackPlayer.addEventListener(Event.PlaybackQueueEnded, async (event) => {
       // キューの終了時（再生完了）にカスタムイベントを発火
-      console.log('Playback queue ended:', event);
+      logger.info('Playback queue ended', event, 'TrackPlayerService');
       DeviceEventEmitter.emit('trackPlaybackEnded');
     })
   );

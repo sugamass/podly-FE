@@ -1,6 +1,9 @@
 // 原稿作成API関連の型定義とサービス関数
 // docs/script.yaml を参照して実装
 
+import { withErrorHandling, toAppError } from '../utils/errorHandler';
+import { logger } from '../utils/logger';
+
 // スキーマに基づく型定義
 export interface ScriptData {
   speaker?: string;
@@ -65,7 +68,7 @@ const getApiKey = (): string | null => {
 export const createScript = async (
   requestData: PostCreateScriptRequest
 ): Promise<PostCreateScriptResponse> => {
-  try {
+  return withErrorHandling(async () => {
     const baseUrl = getApiBaseUrl();
     const apiKey = getApiKey();
 
@@ -78,7 +81,12 @@ export const createScript = async (
       headers["Authorization"] = `Bearer ${apiKey}`;
     }
 
-    console.log("Creating script with request:", requestData);
+    logger.info("Creating script", {
+      prompt: requestData.prompt.substring(0, 100),
+      situation: requestData.situation,
+      wordCount: requestData.wordCount,
+      hasReference: !!requestData.reference?.length
+    }, 'createScript');
 
     const response = await fetch(`${baseUrl}/script/create`, {
       method: "POST",
@@ -88,29 +96,25 @@ export const createScript = async (
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Script creation API error:", {
+      logger.error("Script creation API failed", {
         status: response.status,
         statusText: response.statusText,
         errorText,
-      });
+      }, 'createScript');
 
-      throw new Error(
-        `Script creation failed: ${response.status} ${response.statusText}`
+      throw toAppError(
+        new Error(`Script creation failed: ${response.status} ${response.statusText}`),
+        'createScript'
       );
     }
 
     const responseData: PostCreateScriptResponse = await response.json();
 
-    console.log("Script created successfully:", responseData);
+    logger.info("Script created successfully", {
+      hasNewScript: !!responseData.newScript,
+      scriptLength: responseData.newScript?.script?.length || 0
+    }, 'createScript');
 
     return responseData;
-  } catch (error) {
-    console.error("Error in createScript:", error);
-
-    if (error instanceof Error) {
-      throw error;
-    } else {
-      throw new Error("Unknown error occurred during script creation");
-    }
-  }
+  }, 'createScript');
 };

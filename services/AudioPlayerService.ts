@@ -6,6 +6,7 @@ import TrackPlayer, {
   Track,
 } from "react-native-track-player";
 import { TrackPlayerService } from "./TrackPlayerService";
+import { logger } from '../utils/logger';
 
 export interface PodcastTrack {
   id: string;
@@ -65,7 +66,7 @@ class AudioPlayerService {
       await TrackPlayer.setRepeatMode(RepeatMode.Off);
       this.isInitialized = true;
     } catch (error) {
-      console.log("TrackPlayer setup error:", error);
+      logger.error("TrackPlayer setup failed", error, 'AudioPlayerService.initialize');
     }
   }
 
@@ -102,7 +103,7 @@ class AudioPlayerService {
       this.isSwitching = false;
       return true;
     } catch (error) {
-      console.log("Track switch error:", error);
+      logger.error("Track switch failed", error, 'AudioPlayerService.switchTrack');
       this.isSwitching = false;
       return false;
     }
@@ -117,7 +118,7 @@ class AudioPlayerService {
       await TrackPlayer.reset();
       this.currentTrackId = null;
     } catch (error) {
-      console.log("Stop and clear error:", error);
+      logger.error("Stop and clear failed", error, 'AudioPlayerService.stop');
     }
   }
 
@@ -125,7 +126,7 @@ class AudioPlayerService {
     try {
       await TrackPlayer.play();
     } catch (error) {
-      console.log("Play error:", error);
+      logger.error("Play failed", error, 'AudioPlayerService.play');
     }
   }
 
@@ -133,7 +134,7 @@ class AudioPlayerService {
     try {
       await TrackPlayer.pause();
     } catch (error) {
-      console.log("Pause error:", error);
+      logger.error("Pause failed", error, 'AudioPlayerService.pause');
     }
   }
 
@@ -141,7 +142,7 @@ class AudioPlayerService {
     try {
       await TrackPlayer.seekTo(position);
     } catch (error) {
-      console.log("Seek error:", error);
+      logger.error("Seek failed", error, 'AudioPlayerService.seekTo');
     }
   }
 
@@ -149,7 +150,7 @@ class AudioPlayerService {
     try {
       await TrackPlayer.setRate(rate);
     } catch (error) {
-      console.log("Set playback rate error:", error);
+      logger.error("Set playback rate failed", error, 'AudioPlayerService.setPlaybackRate');
     }
   }
 
@@ -181,7 +182,7 @@ class AudioPlayerService {
       const state = await TrackPlayer.getPlaybackState();
       return state.state === State.Playing;
     } catch (error) {
-      console.log("Get playback state error:", error);
+      logger.error("Get playback state failed", error, 'AudioPlayerService.isPlaying');
       return false;
     }
   }
@@ -192,7 +193,7 @@ class AudioPlayerService {
       this.stateUpdateCallback = null;
       this.isInitialized = false;
     } catch (error) {
-      console.log("Cleanup error:", error);
+      logger.error("Cleanup failed", error, 'AudioPlayerService.cleanup');
     }
   }
 }

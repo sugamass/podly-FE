@@ -4,8 +4,11 @@ import { supabase } from "@/services/supabase";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { Session, User } from "@supabase/supabase-js";
 import { create } from "zustand";
+import { AppError, ErrorState } from "../types/error";
+import { formatErrorMessage, isAppError } from "../utils/errorHandler";
+import { logger } from "../utils/logger";
 
-interface AuthState {
+interface AuthState extends ErrorState {
   user: User | null;
   session: Session | null;
   profile: Profile | null;
@@ -21,6 +24,8 @@ interface AuthState {
   setProfile: (profile: Profile | null) => void;
   setStatistics: (statistics: UserStatistics | null) => void;
   refreshProfileData: (userId: string) => Promise<void>;
+  clearError: () => void;
+  retryLastOperation: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -30,6 +35,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   statistics: null,
   loading: true,
   initialized: false,
+  // エラー状態の初期化
+  uiErrorMessage: null,
+  lastError: null,
+  canRetry: false,
 
   setLoading: (loading: boolean) => set({ loading }),
 
@@ -37,20 +46,49 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   setStatistics: (statistics: UserStatistics | null) => set({ statistics }),
 
+  // エラー管理関数
+  clearError: () => set({ 
+    uiErrorMessage: null, 
+    lastError: null, 
+    canRetry: false 
+  }),
+
+  retryLastOperation: async () => {
+    const { lastError } = get();
+    if (!lastError || !lastError.retryable) return;
+    
+    // 最後の操作を再試行する実装は具体的な操作によって異なる
+    logger.info("Retrying last auth operation", { context: lastError.context }, 'authStore');
+    // 実際の再試行ロジックはここに追加
+  },
+
   refreshProfileData: async (userId: string) => {
     try {
+      set({ uiErrorMessage: null, lastError: null });
       const profile = await AuthService.loadProfile(userId);
       const statistics = await AuthService.loadUserStatistics(userId);
       set({ profile, statistics });
     } catch (error) {
-      console.error("Failed to refresh profile data:", error);
+      const appError = isAppError(error) ? error : { 
+        message: error instanceof Error ? error.message : "プロフィールデータの読み込みに失敗しました",
+        code: 'unknown' as const,
+        retryable: true,
+        context: 'refreshProfileData'
+      } as AppError;
+      
+      set({ 
+        uiErrorMessage: formatErrorMessage(appError),
+        lastError: appError,
+        canRetry: appError.retryable
+      });
+      logger.error("Failed to refresh profile data", error, 'authStore.refreshProfileData');
       throw error;
     }
   },
 
   signIn: async (email: string, password: string) => {
     try {
-      set({ loading: true });
+      set({ loading: true, uiErrorMessage: null, lastError: null });
       const data = await AuthService.signIn(email, password);
 
       // プロフィール情報と統計情報を取得
@@ -60,7 +98,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         set({ profile, statistics });
       }
     } catch (error) {
-      console.error("Sign in error:", error);
+      const appError = isAppError(error) ? error : { 
+        message: error instanceof Error ? error.message : "サインインに失敗しました",
+        code: 'unauthorized' as const,
+        retryable: false,
+        context: 'signIn'
+      } as AppError;
+      
+      set({ 
+        uiErrorMessage: formatErrorMessage(appError),
+        lastError: appError,
+        canRetry: appError.retryable
+      });
+      logger.error("Sign in failed", error, 'authStore.signIn');
       throw error;
     } finally {
       set({ loading: false });

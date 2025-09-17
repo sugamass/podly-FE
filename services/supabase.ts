@@ -2,6 +2,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createClient } from "@supabase/supabase-js";
 import "react-native-url-polyfill/auto";
 import { AudioSection } from "@/types/audio";
+import { withErrorHandling, toAppError } from '../utils/errorHandler';
+import { logger } from '../utils/logger';
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.EXPO_PUBLIC_SUPABASE_KEY;
@@ -417,48 +419,42 @@ export async function fetchAllPodcasts(
 
 // Supabase接続テスト用
 export async function testSupabaseConnection() {
-  try {
-    console.log("🔧 Testing Supabase connection...");
+  return withErrorHandling(async () => {
+    logger.info("Testing Supabase connection", undefined, 'testSupabaseConnection');
     const { count, error } = await supabase
       .from("podcasts")
       .select("*", { count: "exact", head: true });
 
     if (error) {
-      console.error("❌ Supabase connection test failed:", error);
-      return { success: false, error: error.message };
+      throw toAppError(error, 'testSupabaseConnection');
     }
 
-    console.log("✅ Supabase connection successful. Total podcasts:", count);
+    logger.info("Supabase connection successful", { count }, 'testSupabaseConnection');
     return { success: true, count: count };
-  } catch (error) {
-    console.error("❌ Supabase connection test error:", error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown error",
-    };
-  }
+  }, 'testSupabaseConnection');
 }
 
 // シンプルなテスト関数
 export async function fetchSimplePodcasts(): Promise<any[]> {
-  console.log("🧪 Simple podcast fetch test...");
+  return withErrorHandling(async () => {
+    logger.info("Starting simple podcast fetch test", undefined, 'fetchSimplePodcasts');
 
-  const { data, error } = await supabase
-    .from("podcasts")
-    .select("id, title, audio_url, created_at")
-    .limit(5);
+    const { data, error } = await supabase
+      .from("podcasts")
+      .select("id, title, audio_url, created_at")
+      .limit(5);
 
-  console.log("🧪 Simple test result:", {
-    dataLength: data?.length || 0,
-    error: error,
-    sampleData: data?.slice(0, 2),
-  });
+    if (error) {
+      throw toAppError(error, 'fetchSimplePodcasts');
+    }
 
-  if (error) {
-    throw new Error(`Simple fetch failed: ${error.message}`);
-  }
+    logger.info("Simple test completed", {
+      dataLength: data?.length || 0,
+      sampleData: data?.slice(0, 2),
+    }, 'fetchSimplePodcasts');
 
-  return data || [];
+    return data || [];
+  }, 'fetchSimplePodcasts');
 }
 
 // ID生成ヘルパー関数
@@ -478,8 +474,8 @@ export function generateUUIDLikeId(): string {
 export async function toggleLike(
   podcastId: string
 ): Promise<{ success: boolean; isLiked: boolean; likeCount: number }> {
-  try {
-    console.log("🔄 toggleLike called for podcast:", podcastId);
+  return withErrorHandling(async () => {
+    logger.info("Toggle like called", { podcastId }, 'toggleLike');
 
     // 現在のユーザーを取得
     const {
@@ -488,11 +484,10 @@ export async function toggleLike(
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      console.error("❌ Auth error:", authError);
-      throw new Error("ログインが必要です");
+      throw toAppError(authError || new Error("ログインが必要です"), 'toggleLike');
     }
 
-    console.log("👤 User ID:", user.id);
+    logger.debug("User authenticated", { userId: user.id }, 'toggleLike');
 
     // 現在のいいね状態を確認（軽量チェック）
     const { data: existingLike } = await supabase
@@ -506,7 +501,7 @@ export async function toggleLike(
 
     if (existingLike) {
       // いいねが存在する場合は削除
-      console.log("➖ Deleting existing like");
+      logger.debug("Deleting existing like", { podcastId, userId: user.id }, 'toggleLike');
       const { error: deleteError } = await supabase
         .from("likes")
         .delete()
@@ -514,14 +509,13 @@ export async function toggleLike(
         .eq("podcast_id", podcastId);
 
       if (deleteError) {
-        console.error("❌ Delete error:", deleteError);
-        throw deleteError;
+        throw toAppError(deleteError, 'toggleLike');
       }
 
       isLiked = false;
     } else {
       // いいねが存在しない場合は追加（upsert使用）
-      console.log("➕ Adding new like with upsert");
+      logger.debug("Adding new like", { podcastId, userId: user.id }, 'toggleLike');
       const { error: upsertError } = await supabase.from("likes").upsert(
         {
           id: generateUUIDLikeId(),
@@ -535,57 +529,55 @@ export async function toggleLike(
       );
 
       if (upsertError) {
-        console.error("❌ Upsert error:", upsertError);
-        throw upsertError;
+        throw toAppError(upsertError, 'toggleLike');
       }
 
       isLiked = true;
     }
 
     // 更新後のいいね数を取得
-    console.log("📊 Getting updated like count...");
+    logger.debug("Getting updated like count", { podcastId }, 'toggleLike');
     const { count: likeCount, error: countError } = await supabase
       .from("likes")
       .select("*", { count: "exact", head: true })
       .eq("podcast_id", podcastId);
 
     if (countError) {
-      console.error("❌ Count error:", countError);
-      throw countError;
+      throw toAppError(countError, 'toggleLike');
     }
 
-    console.log("📊 New like count:", likeCount);
+    logger.debug("Retrieved like count", { likeCount, podcastId }, 'toggleLike');
 
     // ポッドキャストのlike_countを更新
-    console.log("📝 Updating podcast like_count...");
+    logger.debug("Updating podcast like count", { podcastId, likeCount }, 'toggleLike');
     const { error: updateError } = await supabase
       .from("podcasts")
       .update({ like_count: likeCount || 0 })
       .eq("id", podcastId);
 
     if (updateError) {
-      console.error("❌ Update error:", updateError);
-      throw updateError;
+      throw toAppError(updateError, 'toggleLike');
     }
 
-    console.log("✅ toggleLike completed successfully:", {
+    logger.info("Toggle like completed successfully", {
       isLiked,
       likeCount: likeCount || 0,
-    });
+      podcastId
+    }, 'toggleLike');
 
     return {
       success: true,
       isLiked,
       likeCount: likeCount || 0,
     };
-  } catch (error) {
-    console.error("❌ Failed to toggle like:", error);
+  }, 'toggleLike').catch((error) => {
+    logger.error("Failed to toggle like", error, 'toggleLike');
     return {
       success: false,
       isLiked: false,
       likeCount: 0,
     };
-  }
+  });
 }
 
 export async function getLikeStatus(podcastId: string): Promise<boolean> {
@@ -883,8 +875,8 @@ export type CreatePodcastResult = {
 export async function createPodcast(
   podcastData: CreatePodcastData
 ): Promise<CreatePodcastResult> {
-  try {
-    console.log("Creating podcast with data:", podcastData);
+  return withErrorHandling(async () => {
+    logger.info("Creating podcast", { title: podcastData.title }, 'createPodcast');
 
     // 音声URLを統合（最初の音声URLを使用）
     const audioUrl =
@@ -924,28 +916,21 @@ export async function createPodcast(
       .single();
 
     if (error) {
-      console.error("Database insert error:", error);
-      return {
-        success: false,
-        error: `データベースエラー: ${error.message}`,
-      };
+      throw toAppError(error, 'createPodcast');
     }
 
-    console.log("Podcast inserted successfully:", data);
+    logger.info("Podcast created successfully", { podcastId: data.id }, 'createPodcast');
 
     return {
       success: true,
       data: data,
     };
-  } catch (error) {
-    console.error("Create podcast error:", error);
-    const errorMessage =
-      error instanceof Error
-        ? error.message
-        : "ポッドキャストの作成に失敗しました";
+  }, 'createPodcast').catch((error) => {
+    logger.error("Failed to create podcast", error, 'createPodcast');
+    const errorMessage = error.message || "ポッドキャストの作成に失敗しました";
     return {
       success: false,
       error: errorMessage,
     };
-  }
+  });
 }
