@@ -34,6 +34,7 @@ export default function CreateScreen() {
   const [isScriptGenerated, setIsScriptGenerated] = useState(false);
   const [scriptHistory, setScriptHistory] = useState<PromptScriptData[]>([]);
   const [additionalInstruction, setAdditionalInstruction] = useState("");
+  const [editableTitle, setEditableTitle] = useState("");
 
   const addUrlField = () => {
     setReferenceUrls([...referenceUrls, ""]);
@@ -52,6 +53,20 @@ export default function CreateScreen() {
     setReferenceUrls(newUrls);
   };
 
+  const handleTitleChange = (newTitle: string) => {
+    setEditableTitle(newTitle);
+
+    // 最新の履歴のタイトルを更新
+    if (scriptHistory.length > 0) {
+      const updatedHistory = [...scriptHistory];
+      updatedHistory[updatedHistory.length - 1] = {
+        ...updatedHistory[updatedHistory.length - 1],
+        title: newTitle,
+      };
+      setScriptHistory(updatedHistory);
+    }
+  };
+
   const handleGenerateScript = async () => {
     const validUrls = referenceUrls.filter((url) => url.trim() !== "");
 
@@ -67,8 +82,11 @@ export default function CreateScreen() {
       const requestData: PostCreateScriptRequest = {
         prompt: theme.trim() || "指定されたURLの内容について説明してください",
         previousScript: scriptHistory,
-        reference: validUrls.length > 0 ? validUrls : [],
+        reference:
+          validUrls.length > 0 ? validUrls.map((url) => ({ url })) : [],
         isSearch: webSearch,
+        title: "",
+        situation: "school",
       };
 
       console.log("Requesting script generation with:", requestData);
@@ -124,11 +142,15 @@ export default function CreateScreen() {
       // 履歴に現在の原稿を追加
       const currentScript: PromptScriptData = {
         prompt: requestData.prompt,
+        title: response.newScript.title,
         script: scriptArray,
         reference: response.newScript.reference || [],
         situation: requestData.situation || undefined,
       };
       setScriptHistory((prev) => [...prev, currentScript]);
+
+      // 編集可能タイトルを初期化
+      setEditableTitle(response.newScript.title);
 
       // APIから返された参考URLでreferenceUrlsを上書き
       if (
@@ -175,8 +197,10 @@ export default function CreateScreen() {
       const requestData: PostCreateScriptRequest = {
         prompt: additionalInstruction.trim(),
         previousScript: scriptHistory,
-        reference: validUrls,
+        reference: validUrls.map((url) => ({ url })),
         isSearch: webSearch,
+        title: editableTitle,
+        situation: "school",
       };
 
       console.log(
@@ -217,11 +241,15 @@ export default function CreateScreen() {
       // 履歴に追加指示による原稿を追加
       const currentScript: PromptScriptData = {
         prompt: additionalInstruction.trim(),
+        title: response.newScript.title,
         script: scriptArray,
         reference: response.newScript.reference || [],
         situation: undefined,
       };
       setScriptHistory((prev) => [...prev, currentScript]);
+
+      // 編集可能タイトルを更新
+      setEditableTitle(response.newScript.title);
 
       // 追加指示をクリア
       setAdditionalInstruction("");
@@ -265,7 +293,7 @@ export default function CreateScreen() {
             setIsScriptGenerated(false);
             setScriptHistory([]);
             setAdditionalInstruction("");
-
+            setEditableTitle("");
           },
         },
       ]
@@ -566,8 +594,8 @@ export default function CreateScreen() {
                 }
               }
             >
-              {/* テーマ表示 */}
-              {theme.trim() && (
+              {/* タイトル編集 */}
+              {editableTitle && (
                 <View style={{ marginBottom: 16 }}>
                   <Text
                     style={{
@@ -577,96 +605,26 @@ export default function CreateScreen() {
                       marginBottom: 8,
                     }}
                   >
-                    テーマ
+                    タイトル
                   </Text>
-                  <Text
+                  <TextInput
                     style={{
-                      fontSize: 18,
+                      fontSize: 20,
                       color: Colors.dark.text,
-                      lineHeight: 20,
+                      lineHeight: 28,
                       fontWeight: "bold",
                       backgroundColor: Colors.dark.background,
+                      borderRadius: 8,
+                      padding: 12,
+                      borderWidth: 1,
+                      borderColor: Colors.dark.border,
                     }}
-                  >
-                    {theme}
-                  </Text>
-                </View>
-              )}
-
-              {/* 参考URL表示 */}
-              {referenceUrls.some((url) => url.trim() !== "") && (
-                <View>
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      fontWeight: "600",
-                      color: Colors.dark.text,
-                      marginBottom: 8,
-                    }}
-                  >
-                    参考URL:
-                  </Text>
-                  {referenceUrls
-                    .filter((url) => url.trim() !== "")
-                    .map((url, index) => (
-                      <View
-                        key={index}
-                        style={{
-                          backgroundColor: Colors.dark.background,
-                          padding: 8,
-                          borderRadius: 8,
-                          marginBottom:
-                            index ===
-                            referenceUrls.filter((u) => u.trim() !== "")
-                              .length -
-                              1
-                              ? 0
-                              : 8,
-                        }}
-                      >
-                        <Text
-                          style={{
-                            fontSize: 12,
-                            color: Colors.dark.secondary,
-                            fontFamily: "monospace",
-                          }}
-                          numberOfLines={1}
-                          ellipsizeMode="middle"
-                        >
-                          {url}
-                        </Text>
-                      </View>
-                    ))}
-                </View>
-              )}
-
-              {/* Web検索状態表示 */}
-              {webSearch && (
-                <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    marginTop: 16,
-                    paddingTop: 16,
-                    borderTopWidth: 1,
-                    borderTopColor: Colors.dark.border,
-                  }}
-                >
-                  <Ionicons
-                    name="search"
-                    size={14}
-                    color={Colors.dark.secondary}
-                    style={{ marginRight: 8 }}
+                    value={editableTitle}
+                    onChangeText={handleTitleChange}
+                    placeholder="タイトルを入力"
+                    placeholderTextColor={Colors.dark.subtext}
+                    multiline
                   />
-                  <Text
-                    style={{
-                      fontSize: 12,
-                      color: Colors.dark.secondary,
-                      fontWeight: "600",
-                    }}
-                  >
-                    Web検索有効
-                  </Text>
                 </View>
               )}
             </View>
@@ -802,6 +760,51 @@ export default function CreateScreen() {
                 >
                   {additionalInstruction.length}/150文字
                 </Text>
+              </View>
+
+              {/* Web検索トグル */}
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginTop: 16,
+                  paddingTop: 16,
+                  borderTopWidth: 1,
+                  borderTopColor: Colors.dark.border,
+                }}
+              >
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      fontWeight: "600",
+                      color: Colors.dark.text,
+                      marginRight: 8,
+                    }}
+                  >
+                    Web検索
+                  </Text>
+                  <Switch
+                    value={webSearch}
+                    onValueChange={setWebSearch}
+                    trackColor={{
+                      false: Colors.dark.border,
+                      true: Colors.dark.primary,
+                    }}
+                    thumbColor={
+                      webSearch ? Colors.dark.text : Colors.dark.subtext
+                    }
+                    style={{
+                      transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }],
+                    }}
+                  />
+                </View>
               </View>
             </View>
           )}
@@ -1076,6 +1079,23 @@ export default function CreateScreen() {
                   生成された原稿
                 </Text>
               </View>
+
+              {/* タイトル表示 */}
+              {scriptHistory.length > 0 &&
+                scriptHistory[scriptHistory.length - 1].title && (
+                  <View style={{ marginBottom: 16 }}>
+                    <Text
+                      style={{
+                        fontSize: 20,
+                        fontWeight: "bold",
+                        color: Colors.dark.text,
+                        lineHeight: 28,
+                      }}
+                    >
+                      {scriptHistory[scriptHistory.length - 1].title}
+                    </Text>
+                  </View>
+                )}
 
               {/* 話者別原稿セクション */}
               {generatedScript.map((scriptData, index) => (

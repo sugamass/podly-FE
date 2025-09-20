@@ -1,8 +1,8 @@
 // 原稿作成API関連の型定義とサービス関数
 // docs/script.yaml を参照して実装
 
-import { withErrorHandling, toAppError } from '../utils/errorHandler';
-import { logger } from '../utils/logger';
+import { toAppError, withErrorHandling } from "../utils/errorHandler";
+import { logger } from "../utils/logger";
 
 // スキーマに基づく型定義
 export interface ScriptData {
@@ -18,6 +18,7 @@ export type Reference = {
 
 export interface PromptScriptData {
   prompt: string;
+  title: string;
   script?: ScriptData[];
   reference?: Reference[];
   situation?: string;
@@ -33,10 +34,11 @@ export type SituationType =
 export interface PostCreateScriptRequest {
   prompt: string;
   previousScript?: PromptScriptData[];
-  reference?: string[];
+  reference?: Reference[];
   isSearch?: boolean;
   wordCount?: number;
   situation?: SituationType;
+  title: string;
 }
 
 export interface PostCreateScriptResponse {
@@ -81,13 +83,6 @@ export const createScript = async (
       headers["Authorization"] = `Bearer ${apiKey}`;
     }
 
-    logger.info("Creating script", {
-      prompt: requestData.prompt.substring(0, 100),
-      situation: requestData.situation,
-      wordCount: requestData.wordCount,
-      hasReference: !!requestData.reference?.length
-    }, 'createScript');
-
     const response = await fetch(`${baseUrl}/script/create`, {
       method: "POST",
       headers,
@@ -96,25 +91,39 @@ export const createScript = async (
 
     if (!response.ok) {
       const errorText = await response.text();
-      logger.error("Script creation API failed", {
-        status: response.status,
-        statusText: response.statusText,
-        errorText,
-      }, 'createScript');
+      logger.error(
+        "Script creation API failed",
+        {
+          status: response.status,
+          statusText: response.statusText,
+          errorText,
+        },
+        "createScript"
+      );
 
+      // HTTPステータスを保持して正しく分類・リトライ判定できるようにする
       throw toAppError(
-        new Error(`Script creation failed: ${response.status} ${response.statusText}`),
-        'createScript'
+        {
+          status: response.status,
+          message:
+            errorText ||
+            `Script creation failed: ${response.status} ${response.statusText}`,
+        },
+        "createScript"
       );
     }
 
     const responseData: PostCreateScriptResponse = await response.json();
 
-    logger.info("Script created successfully", {
-      hasNewScript: !!responseData.newScript,
-      scriptLength: responseData.newScript?.script?.length || 0
-    }, 'createScript');
+    logger.info(
+      "Script created successfully",
+      {
+        hasNewScript: !!responseData.newScript,
+        scriptLength: responseData.newScript?.script?.length || 0,
+      },
+      "createScript"
+    );
 
     return responseData;
-  }, 'createScript');
+  }, "createScript");
 };
